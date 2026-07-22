@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
+import { printPDF } from '../utils/pdf';
 
 const statusVariant = {
   'Concluído': 'success',
@@ -156,39 +157,24 @@ export function FluxosPage({ navigate }) {
   };
 
   const handleExportPDF = (flow) => {
-    const date = new Date().toLocaleDateString('pt-BR');
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${flow.name}</title><style>
-      body { font-family: -apple-system, system-ui, sans-serif; color: #09090b; margin: 0; padding: 32px; font-size: 14px; line-height: 1.5; }
-      h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.02em; }
-      .meta { color: #71717a; font-size: 13px; margin-bottom: 24px; }
-      .section { margin-bottom: 20px; }
-      .section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #71717a; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid #e4e4e7; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
-      .grid .label { font-size: 12px; color: #71717a; }
-      .grid .value { font-weight: 500; }
-      .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e4e4e7; font-size: 11px; color: #a1a1aa; text-align: center; }
-      @media print { body { padding: 16px; } }
-    </style></head><body>
-      <h1>${flow.name}</h1>
-      <div class="meta">Gerado em ${date}</div>
-      <div class="section"><h2>Informações do Fluxo</h2>
-        <div class="grid">
-          <div><div class="label">Máquina</div><div class="value">${flow.machine || '—'}</div></div>
-          <div><div class="label">Produto</div><div class="value">${flow.product || '—'}</div></div>
-          <div><div class="label">Código</div><div class="value">${flow.code || '—'}</div></div>
-          <div><div class="label">Volumetria</div><div class="value">${flow.vol || '—'}</div></div>
-          <div><div class="label">Versão</div><div class="value">${flow.ver || '—'}</div></div>
-          <div><div class="label">Data</div><div class="value">${flow.date || '—'}</div></div>
-          <div><div class="label">Status</div><div class="value">${flow.status || 'Concluído'}</div></div>
-          ${flow.toolingCount !== undefined ? `<div><div class="label">Ferramentais</div><div class="value">${flow.toolingCount} de ${flow.toolingTotal} grupos</div></div>` : ''}
-        </div>
-      </div>
-      <div class="footer">Controle de Setup — Documento gerado automaticamente</div>
-      <script>window.print();</script>
-    </body></html>`;
-    const win = window.open('', '_blank');
-    if (win) { win.document.write(html); win.document.close(); }
-    else { toast('Permita pop-ups para exportar o PDF.', 'warning'); }
+    const fields = [
+      { label: 'Máquina', value: flow.machine },
+      { label: 'Produto', value: flow.product },
+      { label: 'Código', value: flow.code },
+      { label: 'Volumetria', value: flow.vol },
+      { label: 'Versão', value: flow.ver },
+      { label: 'Data', value: flow.date },
+      { label: 'Status', value: flow.status || 'Concluído' },
+    ];
+    if (flow.toolingCount !== undefined) {
+      fields.push({ label: 'Ferramentais', value: `${flow.toolingCount} de ${flow.toolingTotal} grupos` });
+    }
+    const blocks = [
+      { type: 'grid-start', title: 'Informações do Fluxo' },
+      ...fields,
+      { type: 'grid-end' },
+    ];
+    printPDF(flow.name, blocks, toast);
   };
 
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
