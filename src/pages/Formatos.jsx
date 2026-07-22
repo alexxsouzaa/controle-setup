@@ -40,6 +40,7 @@ export function FormatosPage({ navigate }) {
   const [modalCategory, setModalCategory] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [createStep, setCreateStep] = useState(1);
 
   const resetForm = () => {
     setProductSearch('');
@@ -50,6 +51,7 @@ export function FormatosPage({ navigate }) {
     setVolMin('');
     setVolMax('');
     setEditingId(null);
+    setCreateStep(1);
   };
 
   const pieceCount = Object.keys(selectedPieces).length;
@@ -65,6 +67,7 @@ export function FormatosPage({ navigate }) {
     (fmt.pieces || []).forEach(p => { piecesMap[p.pieceId] = p; });
     setSelectedPieces(piecesMap);
     setEditingId(fmt.id);
+    setCreateStep(1);
     setTab('create');
   };
 
@@ -182,106 +185,155 @@ export function FormatosPage({ navigate }) {
         )
       ) : (
         <div className="space-y-6">
-          <Card>
-            <h3 className="text-base font-semibold mb-4">1. Selecionar Produto</h3>
-            {selectedProduct ? (
-              <div className="p-4 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-[var(--accent)]">{selectedProduct.name}</div>
-                  <div className="text-xs text-[var(--fg-secondary)] mt-0.5">{selectedProduct.code} · {selectedProduct.category} · {selectedProduct.vol} {selectedProduct.unit}</div>
+          {/* Stepper */}
+          <div className="flex items-center gap-3 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg overflow-x-auto">
+            {[
+              { n: 1, label: 'Produto' },
+              { n: 2, label: 'Configuração' },
+              { n: 3, label: 'Peças' },
+            ].map(s => (
+              <div key={s.n} className="flex items-center gap-2 shrink-0">
+                {s.n > 1 && <div className={`w-6 h-0.5 ${s.n <= createStep ? 'bg-[var(--accent)]' : 'bg-[var(--border)]'}`} />}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${s.n === createStep ? 'bg-[var(--accent)] text-white shadow-[0_0_0_3px_var(--accent-light)]' : s.n < createStep ? 'bg-[var(--success-muted)] text-[var(--success)] border-2 border-[var(--success)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-2 border-[var(--border)]'}`}>
+                  {s.n < createStep ? '✓' : s.n}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(null); setProductSearch(''); }}>Trocar</Button>
+                <span className={`text-xs whitespace-nowrap ${s.n === createStep ? 'text-[var(--fg)] font-medium' : 'text-[var(--fg-secondary)]'}`}>{s.label}</span>
               </div>
-            ) : (
-              <>
-                <div className="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-4">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-                    <input className="shad-input pl-9" placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={e => setProductSearch(e.target.value.toLowerCase())} aria-label="Buscar produtos" />
-                  </div>
-                  {productSearch && productFiltered.length > 0 && (
-                    <div className="border border-[var(--border)] rounded-lg overflow-hidden max-h-60 overflow-y-auto">
-                      {productFiltered.map(p => (
-                        <button key={p.id} type="button" onClick={() => { setSelectedProduct(p); setProductSearch(''); }}
-                          className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
-                          <div>
-                            <div className="text-sm font-medium">{p.name}</div>
-                            <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.category} · {p.vol} {p.unit}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {productSearch && productFiltered.length === 0 && (
-                    <p className="text-sm text-[var(--fg-secondary)] py-2">Nenhum produto encontrado.</p>
-                  )}
-                </div>
-                {!productSearch && !selectedProduct && (
-                  <p className="text-sm text-[var(--fg-secondary)] py-2">Use a busca acima para localizar um produto pelo nome ou código.</p>
-                )}
-              </>
-            )}
-          </Card>
+            ))}
+          </div>
 
-          {selectedProduct && (
+          {/* Step 1: Produto */}
+          {createStep === 1 && (
             <Card>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-base font-semibold">2. Configuração do Formato</h3>
-                  <p className="text-xs text-[var(--fg-secondary)] mt-0.5">{pieceCount} peça{pieceCount !== 1 ? 's' : ''} selecionada{pieceCount !== 1 ? 's' : ''}</p>
+              <h3 className="text-base font-semibold mb-4">1. Selecionar Produto</h3>
+              {selectedProduct ? (
+                <div className="p-4 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--accent)]">{selectedProduct.name}</div>
+                    <div className="text-xs text-[var(--fg-secondary)] mt-0.5">{selectedProduct.code} · {selectedProduct.category} · {selectedProduct.vol} {selectedProduct.unit}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(null); setProductSearch(''); }}>Trocar</Button>
                 </div>
-                <Input placeholder="Nome do formato (opcional)" value={formatoName} onChange={e => setFormatoName(e.target.value)} className="max-w-xs" />
+              ) : (
+                <>
+                  <div className="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-4">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
+                      <input className="shad-input pl-9" placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={e => setProductSearch(e.target.value.toLowerCase())} aria-label="Buscar produtos" />
+                    </div>
+                    {productSearch && productFiltered.length > 0 && (
+                      <div className="border border-[var(--border)] rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                        {productFiltered.map(p => (
+                          <button key={p.id} type="button" onClick={() => { setSelectedProduct(p); setProductSearch(''); }}
+                            className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+                            <div>
+                              <div className="text-sm font-medium">{p.name}</div>
+                              <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.category} · {p.vol} {p.unit}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {productSearch && productFiltered.length === 0 && (
+                      <p className="text-sm text-[var(--fg-secondary)] py-2">Nenhum produto encontrado.</p>
+                    )}
+                  </div>
+                  {!productSearch && !selectedProduct && (
+                    <p className="text-sm text-[var(--fg-secondary)]">Use a busca acima para localizar um produto pelo nome ou código.</p>
+                  )}
+                </>
+              )}
+              <div className="flex justify-end mt-6">
+                <Button variant="primary" onClick={() => selectedProduct && setCreateStep(2)} disabled={!selectedProduct}>
+                  Avançar →
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Step 2: Configuração */}
+          {createStep === 2 && selectedProduct && (
+            <Card>
+              <h3 className="text-base font-semibold mb-1">2. Configuração do Formato</h3>
+              <p className="text-xs text-[var(--fg-secondary)] mb-5">Defina as características do formato para {selectedProduct.name}.</p>
+
+              <div className="mb-5 p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+                <label className="text-xs font-semibold text-[var(--fg)] uppercase tracking-wider mb-1 block">Nome do formato</label>
+                <p className="text-[11px] text-[var(--fg-secondary)] mb-2">Se não for informado, será gerado automaticamente com base no produto.</p>
+                <Input placeholder={`${selectedProduct.name} — 0 peças`} value={formatoName} onChange={e => setFormatoName(e.target.value)} />
               </div>
 
-              <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-6">
-                <div>
-                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Tipo de formato</label>
+              <div className="grid md:grid-cols-2 grid-cols-1 gap-5">
+                <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+                  <label className="text-xs font-semibold text-[var(--fg)] uppercase tracking-wider mb-3 block">Tipo</label>
                   <Select value={formatoType} onChange={e => setFormatoType(e.target.value)}>
-                    <option value="">Selecione</option>
+                    <option value="">Selecione o tipo</option>
                     <option value="Reto">Reto</option>
                     <option value="Boomerang">Boomerang</option>
                     <option value="Transforms">Transforms</option>
                     <option value="Angular">Angular</option>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-3 content-start">
-                  <div>
-                    <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Vol. mínima (ml)</label>
-                    <Input type="number" placeholder="0" value={volMin} onChange={e => setVolMin(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Vol. máxima (ml)</label>
-                    <Input type="number" placeholder="0" value={volMax} onChange={e => setVolMax(e.target.value)} />
+                <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+                  <label className="text-xs font-semibold text-[var(--fg)] uppercase tracking-wider mb-3 block">Volumetria (ml)</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] text-[var(--fg-secondary)] mb-0.5 block">Mínima</label>
+                      <Input type="number" placeholder="0" value={volMin} onChange={e => setVolMin(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-[var(--fg-secondary)] mb-0.5 block">Máxima</label>
+                      <Input type="number" placeholder="0" value={volMax} onChange={e => setVolMax(e.target.value)} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-base font-semibold mb-3">3. Selecionar Peças</h3>
-              <div className="grid lg:grid-cols-2 grid-cols-1 gap-3">
+              <div className="flex justify-between mt-6">
+                <Button variant="ghost" onClick={() => setCreateStep(1)}>← Produto</Button>
+                <Button variant="primary" onClick={() => setCreateStep(3)}>Avançar →</Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Step 3: Peças */}
+          {createStep === 3 && selectedProduct && (
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-semibold">3. Selecionar Peças</h3>
+                  <p className="text-xs text-[var(--fg-secondary)] mt-0.5">{pieceCount} peça{pieceCount !== 1 ? 's' : ''} selecionada{pieceCount !== 1 ? 's' : ''}</p>
+                </div>
+                {formatoType && <Badge>{formatoType}</Badge>}
+              </div>
+              <div className="space-y-2">
                 {Object.entries(piecesByCategory).map(([category, catPieces]) => {
                   const selCount = categorySelectedCount(category);
                   return (
                     <button key={category} type="button" onClick={() => setModalCategory(category)}
-                      className={`text-left p-4 rounded-lg border-2 transition-all duration-150 ${selCount > 0 ? 'border-[var(--success)] bg-[var(--success-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
+                      className={`w-full text-left flex items-start gap-3 p-4 rounded-lg border-2 transition-all duration-150 ${selCount > 0 ? 'border-[var(--success)] bg-[var(--success-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
                     >
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${selCount > 0 ? 'bg-[var(--success)] text-white' : 'bg-[var(--bg)] text-[var(--fg-secondary)]'}`}>
-                          {selCount > 0 ? '✓' : <Icon name={categoryIcons[category] || 'box'} size={16} />}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium">{category}</div>
-                          <div className="text-xs text-[var(--fg-secondary)]">{selCount > 0 ? `${selCount} selecionada${selCount !== 1 ? 's' : ''}` : `${catPieces.length} peça${catPieces.length !== 1 ? 's' : ''}`}</div>
-                        </div>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${selCount > 0 ? 'bg-[var(--success)] text-white' : 'bg-[var(--bg)] text-[var(--fg-secondary)]'}`}>
+                        {selCount > 0 ? '✓' : <Icon name={categoryIcons[category] || 'box'} size={16} />}
                       </div>
-                      {selCount > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {Object.values(selectedPieces).filter(p => p.pieceCategory === category).map(p => (
-                            <Badge key={p.pieceId}>{p.pieceName}</Badge>
-                          ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium">{category}</span>
+                          <span className="text-xs text-[var(--fg-secondary)] shrink-0">{selCount}/{catPieces.length}</span>
                         </div>
-                      )}
+                        {selCount > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {Object.values(selectedPieces).filter(p => p.pieceCategory === category).map(p => (
+                              <Badge key={p.pieceId}>{p.pieceName}</Badge>
+                            ))}
+                          </div>
+                        )}
+                        {selCount === 0 && (
+                          <span className="text-xs text-[var(--fg-muted)]">{catPieces.length} peça{catPieces.length !== 1 ? 's' : ''} disponíve{catPieces.length !== 1 ? 'is' : 'l'}</span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -339,11 +391,14 @@ export function FormatosPage({ navigate }) {
                 </div>
               )}
 
-              <div className="flex gap-2 mt-6">
-                <Button variant="primary" onClick={handleSave} disabled={!selectedProduct || pieceCount === 0}>
-                  <Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Formato'}
-                </Button>
-                <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+              <div className="flex justify-between mt-6">
+                <Button variant="ghost" onClick={() => setCreateStep(2)}>← Configuração</Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+                  <Button variant="primary" onClick={handleSave} disabled={pieceCount === 0}>
+                    <Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Formato'}
+                  </Button>
+                </div>
               </div>
             </Card>
           )}
