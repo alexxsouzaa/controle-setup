@@ -32,10 +32,8 @@ export function ExportPage() {
   const ctx = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const data = {};
-  const stats = {};
   ENTITIES.forEach(e => {
     data[e.key] = ctx[e.key] || [];
-    stats[e.key] = data[e.key].length;
   });
 
   const [selected, setSelected] = useState(() => new Set(ENTITIES.map(e => e.key)));

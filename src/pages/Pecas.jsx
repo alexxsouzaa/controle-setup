@@ -121,7 +121,7 @@ export function PecasPage() {
                     {['', 'Código', 'Nome', 'Categoria', 'Máquinas Compatíveis', 'Localização', 'Estoque', 'Estoque Mín.', 'Status', 'Ações'].map(h => {
                       const ks = { Código:'code', Nome:'name', Categoria:'category', 'Máquinas Compatíveis':'compat', Localização:'location', Estoque:'stock', 'Estoque Mín.':'min' };
                       const k = ks[h];
-                      return (<th key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
+                      return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
                   </tr>
                 </thead>

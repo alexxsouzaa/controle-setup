@@ -59,7 +59,7 @@ export function DashboardPage({ navigate }) {
           <thead>
             <tr className="bg-[var(--bg)]">
               {['Nome', 'Máquina', 'Data', 'Versão'].map(h => (
-                <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">{h}</th>
+                <th key={h} scope="col" className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>

@@ -111,7 +111,7 @@ export function AppDataProvider({ children }) {
 
   const actions = useMemo(() => ({
     // Machines
-    addMachine: (m) => save({ ...data, machines: [...data.machines, { ...m, id: uid('m'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
+    addMachine: (m) => save({ ...data, machines: [...data.machines, { ...m, id: uid('mac'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
     updateMachine: (id, updates) => save({ ...data, machines: data.machines.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date().toISOString().slice(0, 10) } : m) }),
     deleteMachine: (id) => save({ ...data, machines: data.machines.filter(m => m.id !== id) }),
 
@@ -131,7 +131,7 @@ export function AppDataProvider({ children }) {
     duplicateFlow: (id) => {
       const flow = data.flows.find(f => f.id === id);
       if (!flow) return;
-      const copy = { ...flow, id: uid('flow'), name: flow.name.replace(/\(v[\d.]+\)/, `(v${Date.now().toString(36)})`), date: new Date().toISOString().slice(0, 10) };
+      const copy = { ...flow, id: uid('flow'), name: flow.name.replace(/\(v[\d.]+\)/g, `(v${new Date().toISOString().slice(0, 10).replace(/-/g, '')})`) || `${flow.name} (cópia)`, date: new Date().toISOString().slice(0, 10) };
       save({ ...data, flows: [...data.flows, copy] });
     },
     deleteFlow: (id) => save({ ...data, flows: data.flows.filter(f => f.id !== id) }),
@@ -179,7 +179,6 @@ export function AppDataProvider({ children }) {
     totalProducts: data.products.length,
     totalPieces: data.pieces.length,
     totalFormatos: data.formatos.length,
-    activeMachines: data.machines.length,
     flowsToday: data.flows.filter(f => f.date === new Date().toISOString().slice(0, 10)).length,
     lowStockPieces: data.pieces.filter(p => p.stock <= p.min).length,
   }), [data]);

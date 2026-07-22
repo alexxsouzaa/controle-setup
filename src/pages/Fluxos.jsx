@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { useSortable } from '../hooks/useSortable';
@@ -13,6 +13,76 @@ const statusVariant = {
   'Pendente': 'info',
   'Cancelado': 'danger',
 };
+
+const STATUSES = ['Concluído', 'Em andamento', 'Pendente', 'Cancelado'];
+
+function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast }) {
+  const status = flow.status || 'Concluído';
+  const [localStatus, setLocalStatus] = useState(status);
+
+  const updateStatus = (newStatus) => {
+    setLocalStatus(newStatus);
+    updateFlow(flow.id, { status: newStatus });
+    logAction('update', 'Fluxo', `Status do fluxo alterado para ${newStatus}`);
+    toast(`Status alterado para ${newStatus}`);
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={onClose} onKeyDown={e => e.key === 'Escape' && onClose()} />
+      <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${flow.name}`} style={{ width: 'min(520px, 90vw)' }}
+        className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="file" size={18} /></div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold truncate">{flow.name}</h3>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <Badge variant={statusVariant[localStatus] || 'secondary'}>{localStatus}</Badge>
+                <select value={localStatus} onChange={e => updateStatus(e.target.value)}
+                  className="text-[10px] bg-transparent border border-[var(--border)] rounded px-1 py-0.5 text-[var(--fg-secondary)] cursor-pointer hover:border-[var(--accent)] outline-none"
+                  aria-label="Alterar status">
+                  {STATUSES.map(s => (<option key={s} value={s}>{s}</option>))}
+                </select>
+              </div>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              {[['Máquina', flow.machine], ['Produto', flow.product], ['Código', flow.code],
+                ['Volumetria', flow.vol], ['Data', flow.date], ['Versão', flow.ver],
+              ].map(([label, value]) => (
+                <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
+              ))}
+            </div>
+          </div>
+          {flow.toolingCount !== undefined && (
+            <div><h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Ferramentais</h4><div className="text-sm">{flow.toolingCount} de {flow.toolingTotal} grupos selecionados</div></div>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
+          <Button variant="secondary" size="sm" onClick={() => {
+            const json = JSON.stringify({ flows: [flow] }, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = `${flow.name.replace(/[<>:"/\\|?*]+/g, '_')}.json`;
+            a.click(); URL.revokeObjectURL(url);
+          }}><Icon name="download" size={14} />Exportar</Button>
+          <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction('duplicate', 'Fluxo', `${flow.name} duplicado`); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
+          <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction('delete', 'Fluxo', `${flow.name} excluído`); toast('Fluxo excluído com sucesso!'); onClose(); } }}
+            className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export function FluxosPage({ navigate }) {
   const { flows, deleteFlow, duplicateFlow, updateFlow, exportAll, logAction } = useContext(AppDataContext);
@@ -86,101 +156,7 @@ export function FluxosPage({ navigate }) {
 
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
-  const FlowDrawer = ({ flow, onClose }) => {
-    const status = flow.status || 'Concluído';
-    const [localStatus, setLocalStatus] = useState(status);
-
-    const updateStatus = (newStatus) => {
-      setLocalStatus(newStatus);
-      updateFlow(flow.id, { status: newStatus });
-      logAction('update', 'Fluxo', `Status do fluxo alterado para ${newStatus}`);
-      toast(`Status alterado para ${newStatus}`);
-    };
-
-    return (
-      <>
-        <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={onClose} onKeyDown={e => e.key === 'Escape' && onClose()} />
-        <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${flow.name}`} style={{ width: 'min(520px, 90vw)' }}
-          className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col translate-x-0 transition-transform duration-200">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="file" size={18} /></div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold truncate">{flow.name}</h3>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Badge variant={statusVariant[localStatus] || 'secondary'}>{localStatus}</Badge>
-                  <select value={localStatus} onChange={e => updateStatus(e.target.value)}
-                    className="text-[10px] bg-transparent border border-[var(--border)] rounded px-1 py-0.5 text-[var(--fg-secondary)] cursor-pointer hover:border-[var(--accent)] outline-none"
-                    aria-label="Alterar status">
-                    {['Concluído', 'Em andamento', 'Pendente', 'Cancelado'].map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                {[
-                  ['Máquina', flow.machine],
-                  ['Produto', flow.product],
-                  ['Código', flow.code],
-                  ['Volumetria', flow.vol],
-                  ['Data', flow.date],
-                  ['Versão', flow.ver],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <div className="text-xs text-[var(--fg-secondary)]">{label}</div>
-                    <div className="font-medium truncate">{value || '—'}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {flow.toolingCount !== undefined && (
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Ferramentais</h4>
-                <div className="text-sm">{flow.toolingCount} de {flow.toolingTotal} grupos selecionados</div>
-              </div>
-            )}
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Histórico</h4>
-              <div className="space-y-2">
-                {[{ label: 'Criado', date: flow.date, detail: 'Fluxo criado' }, { label: 'Versão', date: flow.date, detail: `Versão ${flow.ver}` }].map((h, i) => (
-                  <div key={i} className="flex items-start gap-3 pb-2 border-b border-[var(--border)] last:border-0">
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent)] mt-1.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium">{h.label}</div>
-                      <div className="text-xs text-[var(--fg-secondary)]">{h.detail}</div>
-                    </div>
-                    <div className="text-xs text-[var(--fg-muted)] shrink-0">{h.date}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
-            <Button variant="secondary" size="sm" onClick={() => {
-              const json = JSON.stringify({ flows: [flow] }, null, 2);
-              const blob = new Blob([json], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a'); a.href = url;
-              a.download = `${flow.name.replace(/[<>:"/\\|?*]+/g, '_')}.json`;
-              a.click(); URL.revokeObjectURL(url);
-            }}><Icon name="download" size={14} />Exportar</Button>
-            <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction('duplicate', 'Fluxo', `${flow.name} duplicado`); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
-            <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction('delete', 'Fluxo', `${flow.name} excluído`); toast('Fluxo excluído com sucesso!'); onClose(); } }}
-              className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
-          </div>
-        </div>
-      </>
-    );
-  };
+  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast]);
 
   return (
     <div className="p-6">
@@ -289,7 +265,7 @@ export function FluxosPage({ navigate }) {
         </div>
       )}
 
-      {drawerFlow && <FlowDrawer flow={drawerFlow} onClose={() => setDrawerFlow(null)} />}
+      {drawerFlow && <FlowDrawer flow={drawerFlow} onClose={() => setDrawerFlow(null)} {...drawerActions} />}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 
 export function ImportPage({ navigate }) {
-  const { flows, importData } = useContext(AppDataContext);
+  const { flows, importData, logAction } = useContext(AppDataContext);
   const [drag, setDrag] = useState(false);
   const [result, setResult] = useState(null);
   const [pendingData, setPendingData] = useState(null);

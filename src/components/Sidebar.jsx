@@ -47,7 +47,7 @@ export function Sidebar({ active, navigate }) {
         </div>
       ))}
       <div className="mt-auto px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
-        <span className="text-xs text-[var(--fg-secondary)]">Controle de Setup</span>
+        <a href="https://www.linkedin.com/in/tecnicobrunoalex/" target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--fg-muted)] hover:text-[var(--accent)] transition-colors no-underline">Bruno Alex</a>
         <button type="button" onClick={toggle} className="p-1.5 rounded-md hover:bg-[var(--bg)] text-[var(--fg-secondary)]" aria-label="Alternar tema">
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
         </button>

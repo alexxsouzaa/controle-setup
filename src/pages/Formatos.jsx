@@ -108,6 +108,56 @@ export function FormatosPage({ navigate }) {
     navigate('/novo-setup');
   };
 
+  const handleExportPDF = (fmt) => {
+    const prod = products.find(p => p.id === fmt.productId || p.code === fmt.productCode);
+    const date = new Date().toLocaleDateString('pt-BR');
+    const piecesList = (fmt.pieces || []).map((p, i) =>
+      `<tr><td style="padding:6px 10px;border:1px solid #ddd;text-align:center">${i + 1}</td><td style="padding:6px 10px;border:1px solid #ddd">${p.pieceName || p.name || ''}</td><td style="padding:6px 10px;border:1px solid #ddd;font-family:monospace;font-size:12px">${p.pieceCode || p.code || ''}</td></tr>`
+    ).join('');
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${fmt.name}</title><style>
+      body { font-family: -apple-system, system-ui, sans-serif; color: #09090b; margin: 0; padding: 32px; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+      h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.02em; }
+      .meta { color: #71717a; font-size: 13px; margin-bottom: 24px; }
+      .section { margin-bottom: 20px; }
+      .section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #71717a; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid #e4e4e7; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+      .grid .label { font-size: 12px; color: #71717a; }
+      .grid .value { font-weight: 500; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th { padding: 8px 10px; border: 1px solid #ddd; background: #f4f4f5; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #71717a; text-align: left; }
+      td { padding: 6px 10px; border: 1px solid #ddd; font-size: 13px; }
+      .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e4e4e7; font-size: 11px; color: #a1a1aa; text-align: center; }
+      @media print { body { padding: 16px; } }
+    </style></head><body>
+      <h1>${fmt.name}</h1>
+      <div class="meta">Gerado em ${date}</div>
+      <div class="section">
+        <h2>Informações</h2>
+        <div class="grid">
+          <div><div class="label">Produto</div><div class="value">${fmt.productName} (${fmt.productCode})</div></div>
+          <div><div class="label">Tipo</div><div class="value">${fmt.tipo || '—'}</div></div>
+          <div><div class="label">Volumetria</div><div class="value">${fmt.volMin || '—'} ml – ${fmt.volMax || '—'} ml</div></div>
+          <div><div class="label">Peças</div><div class="value">${(fmt.pieces || []).length} peça${(fmt.pieces || []).length !== 1 ? 's' : ''}</div></div>
+        </div>
+      </div>
+      <div class="section">
+        <h2>Peças do Formato</h2>
+        <table><thead><tr><th style="width:40px">#</th><th>Nome</th><th>Código</th></tr></thead><tbody>${piecesList}</tbody></table>
+      </div>
+      <div class="footer">Controle de Setup — Documento gerado automaticamente</div>
+      <script>window.print();</script>
+    </body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    } else {
+      toast('Permita pop-ups para exportar o PDF.', 'warning');
+    }
+  };
+
   const productFiltered = products.filter(p =>
     !productSearch || p.name.toLowerCase().includes(productSearch) || p.code.toLowerCase().includes(productSearch)
   );
@@ -168,7 +218,10 @@ export function FormatosPage({ navigate }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="primary" size="sm" onClick={() => handleUseFormato(fmt)}>Usar no Fluxo</Button>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => handleExportPDF(fmt)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">PDF</button>
+                      <Button variant="primary" size="sm" onClick={() => handleUseFormato(fmt)}>Usar no Fluxo</Button>
+                    </div>
                     <button type="button" onClick={() => startEdit(fmt)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Editar</button>
                     <button type="button" onClick={() => { if (confirm(`Excluir formato "${fmt.name}"?`)) { deleteFormato(fmt.id); logAction('delete', 'Formato', `${fmt.name} excluído`); toast('Formato excluído com sucesso!'); } }}
                       className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--danger)] transition-colors">Excluir</button>

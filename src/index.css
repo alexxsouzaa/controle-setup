@@ -88,6 +88,7 @@ body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
 
 @layer components {
   .shad-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500; line-height: 1; border: 1px solid transparent; cursor: pointer; transition: all 0.12s; text-decoration: none; }
