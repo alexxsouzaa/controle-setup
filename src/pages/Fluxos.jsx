@@ -75,6 +75,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
             a.download = `${flow.name.replace(/[<>:"/\\|?*]+/g, '_')}.json`;
             a.click(); URL.revokeObjectURL(url);
           }}><Icon name="download" size={14} />Exportar</Button>
+          <button type="button" onClick={() => { handleExportPDF(flow); }} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] transition-colors">PDF</button>
           <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction('duplicate', 'Fluxo', `${flow.name} duplicado`); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
           <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction('delete', 'Fluxo', `${flow.name} excluído`); toast('Fluxo excluído com sucesso!'); onClose(); } }}
             className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
@@ -152,6 +153,42 @@ export function FluxosPage({ navigate }) {
     logAction('delete', 'Fluxo', `${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
     toast(`${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
+  };
+
+  const handleExportPDF = (flow) => {
+    const date = new Date().toLocaleDateString('pt-BR');
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${flow.name}</title><style>
+      body { font-family: -apple-system, system-ui, sans-serif; color: #09090b; margin: 0; padding: 32px; font-size: 14px; line-height: 1.5; }
+      h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.02em; }
+      .meta { color: #71717a; font-size: 13px; margin-bottom: 24px; }
+      .section { margin-bottom: 20px; }
+      .section h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #71717a; margin: 0 0 8px; padding-bottom: 4px; border-bottom: 1px solid #e4e4e7; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+      .grid .label { font-size: 12px; color: #71717a; }
+      .grid .value { font-weight: 500; }
+      .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e4e4e7; font-size: 11px; color: #a1a1aa; text-align: center; }
+      @media print { body { padding: 16px; } }
+    </style></head><body>
+      <h1>${flow.name}</h1>
+      <div class="meta">Gerado em ${date}</div>
+      <div class="section"><h2>Informações do Fluxo</h2>
+        <div class="grid">
+          <div><div class="label">Máquina</div><div class="value">${flow.machine || '—'}</div></div>
+          <div><div class="label">Produto</div><div class="value">${flow.product || '—'}</div></div>
+          <div><div class="label">Código</div><div class="value">${flow.code || '—'}</div></div>
+          <div><div class="label">Volumetria</div><div class="value">${flow.vol || '—'}</div></div>
+          <div><div class="label">Versão</div><div class="value">${flow.ver || '—'}</div></div>
+          <div><div class="label">Data</div><div class="value">${flow.date || '—'}</div></div>
+          <div><div class="label">Status</div><div class="value">${flow.status || 'Concluído'}</div></div>
+          ${flow.toolingCount !== undefined ? `<div><div class="label">Ferramentais</div><div class="value">${flow.toolingCount} de ${flow.toolingTotal} grupos</div></div>` : ''}
+        </div>
+      </div>
+      <div class="footer">Controle de Setup — Documento gerado automaticamente</div>
+      <script>window.print();</script>
+    </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); }
+    else { toast('Permita pop-ups para exportar o PDF.', 'warning'); }
   };
 
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
@@ -243,7 +280,8 @@ export function FluxosPage({ navigate }) {
                     <td className="px-4 py-2.5">
                       <div className="flex gap-1">
                         <button type="button" onClick={() => setDrawerFlow(s)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Detalhes</button>
-                            <button type="button" onClick={() => { duplicateFlow(s.id); logAction('duplicate', 'Fluxo', `${s.name} duplicado`); toast('Fluxo duplicado com sucesso!'); }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Duplicar</button>
+                        <button type="button" onClick={() => handleExportPDF(s)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">PDF</button>
+                        <button type="button" onClick={() => { duplicateFlow(s.id); logAction('duplicate', 'Fluxo', `${s.name} duplicado`); toast('Fluxo duplicado com sucesso!'); }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Duplicar</button>
                         <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(s.id); logAction('delete', 'Fluxo', `${s.name} excluído`); toast('Fluxo excluído com sucesso!'); } }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--danger)] transition-colors">Excluir</button>
                       </div>
                     </td>
