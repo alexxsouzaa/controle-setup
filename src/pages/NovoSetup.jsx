@@ -57,6 +57,18 @@ export function NovoSetupPage({ navigate }) {
     const name = selectedProduct ? selectedProduct.name : newProduct.name || 'Fluxo';
     const code = selectedProduct ? selectedProduct.code : newProduct.code || '—';
     const vol = selectedProduct ? `${selectedProduct.vol} ${selectedProduct.unit}` : newProduct.vol ? `${newProduct.vol} ${newProduct.unit}` : '—';
+    const toolingList = Object.entries(toolingSelections)
+      .filter(([, pieceName]) => pieceName)
+      .map(([group, pieceName]) => {
+        const piece = pieces.find(p => p.name === pieceName);
+        return {
+          group,
+          pieceName,
+          pieceId: piece?.id || '',
+          pieceCode: piece?.code || '',
+          image: piece?.image || '',
+        };
+      });
     addFlow({
       name: `${code} - ${name} (v1.0)`,
       machine: selectedMachine?.name || '—',
@@ -65,6 +77,7 @@ export function NovoSetupPage({ navigate }) {
       vol,
       toolingCount: selectedCount,
       toolingTotal: toolingGroups.length,
+      tooling: toolingList,
       status: 'Concluído',
     });
     logAction('create', 'Fluxo', `${code} - ${name} criado`);

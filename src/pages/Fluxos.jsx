@@ -63,9 +63,28 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
               ))}
             </div>
           </div>
-          {flow.toolingCount !== undefined && (
+          {flow.tooling && flow.tooling.length > 0 ? (
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Peças Selecionadas ({flow.tooling.length})</h4>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {flow.tooling.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2.5 px-3 py-2 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+                    {t.image ? (
+                      <img src={t.image} alt={t.pieceName} className="w-7 h-7 rounded object-cover border border-[var(--border)] shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={12} /></div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium truncate">{t.pieceName}</div>
+                      <div className="text-[10px] text-[var(--fg-muted)]">{t.group} · {t.pieceCode}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : flow.toolingCount !== undefined ? (
             <div><h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Ferramentais</h4><div className="text-sm">{flow.toolingCount} de {flow.toolingTotal} grupos selecionados</div></div>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
           <Button variant="secondary" size="sm" onClick={() => {
@@ -174,6 +193,14 @@ export function FluxosPage({ navigate }) {
       ...fields,
       { type: 'grid-end' },
     ];
+    if (flow.tooling && flow.tooling.length > 0) {
+      blocks.push({
+        type: 'table',
+        title: `Peças Selecionadas (${flow.tooling.length})`,
+        headers: ['#', 'Grupo', 'Peça', 'Código'],
+        rows: flow.tooling.map((t, i) => [i + 1, t.group, t.pieceName, t.pieceCode]),
+      });
+    }
     printPDF(flow.name, blocks, toast);
   };
 
