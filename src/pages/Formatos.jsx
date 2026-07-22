@@ -38,6 +38,8 @@ export function FormatosPage({ navigate }) {
   const [volMin, setVolMin] = useState('');
   const [volMax, setVolMax] = useState('');
   const [modalCategory, setModalCategory] = useState(null);
+  const [pieceSearch, setPieceSearch] = useState('');
+  const [piecePage, setPiecePage] = useState(1);
   const [previewImage, setPreviewImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [createStep, setCreateStep] = useState(1);
@@ -52,6 +54,8 @@ export function FormatosPage({ navigate }) {
     setVolMax('');
     setEditingId(null);
     setCreateStep(1);
+    setPieceSearch('');
+    setPiecePage(1);
   };
 
   const pieceCount = Object.keys(selectedPieces).length;
@@ -342,52 +346,85 @@ export function FormatosPage({ navigate }) {
               </div>
 
               {modalCategory && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setModalCategory(null)} onKeyDown={e => e.key === 'Escape' && setModalCategory(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setModalCategory(null); setPieceSearch(''); setPiecePage(1); }} onKeyDown={e => e.key === 'Escape' && (setModalCategory(null), setPieceSearch(''), setPiecePage(1))}>
                   <div className="absolute inset-0 bg-[var(--overlay)]" />
                   <div role="dialog" aria-modal="true" aria-label={modalCategory} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-lg mx-4 p-6 z-10" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center justify-between mb-4">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <h3 className="text-base font-semibold">{modalCategory}</h3>
-                        <p className="text-xs text-[var(--fg-secondary)] mt-0.5">Selecione as peças desejadas</p>
+                        <div className="relative mt-2">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+                          <input className="shad-input pl-8 py-1.5 text-xs" placeholder="Buscar peça..." value={pieceSearch} onChange={e => { setPieceSearch(e.target.value); setPiecePage(1); }} aria-label="Buscar peças" />
+                        </div>
                       </div>
-                      <button type="button" onClick={() => setModalCategory(null)} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)]">
+                      <button type="button" onClick={() => { setModalCategory(null); setPieceSearch(''); setPiecePage(1); }} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0 ml-3">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                       </button>
                     </div>
-                    <div className="space-y-1 max-h-80 overflow-y-auto">
-                      {(piecesByCategory[modalCategory] || []).map(p => {
-                        const isSelected = !!selectedPieces[p.id];
+                    <div className="max-h-72 overflow-y-auto -mx-6 px-6" style={{ minHeight: 200 }}>
+                      {(() => {
+                        const allPieces = piecesByCategory[modalCategory] || [];
+                        const filtered = pieceSearch
+                          ? allPieces.filter(p => p.name.toLowerCase().includes(pieceSearch) || p.code.toLowerCase().includes(pieceSearch))
+                          : allPieces;
+                        const perPage = 8;
+                        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+                        const paged = filtered.slice((piecePage - 1) * perPage, piecePage * perPage);
+                        if (filtered.length === 0) {
+                          return <div className="flex items-center justify-center h-32 text-xs text-[var(--fg-muted)]">Nenhuma peça encontrada.</div>;
+                        }
                         return (
-                          <button key={p.id} type="button" onClick={() => togglePieceInCategory(p)}
-                            className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${isSelected ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
-                          >
-                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
-                              {isSelected && <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                          <>
+                            <div className="space-y-1">
+                              {paged.map(p => {
+                                const isSelected = !!selectedPieces[p.id];
+                                return (
+                                  <button key={p.id} type="button" onClick={() => togglePieceInCategory(p)}
+                                    className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${isSelected ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
+                                  >
+                                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${isSelected ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                                      {isSelected && <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                                    </div>
+                                    {p.image ? (
+                                      <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewImage(p.image); }}>
+                                        <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
+                                      </button>
+                                    ) : (
+                                      <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
+                                        <Icon name="box" size={16} />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm font-medium truncate">{p.name}</div>
+                                      <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
+                                        <span className="font-mono">{p.code}</span>
+                                        <span>·</span>
+                                        <span className={p.stock <= p.min ? 'text-[var(--danger)] font-medium' : ''}>Est: {p.stock}</span>
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
-                            {p.image ? (
-                              <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewImage(p.image); }}>
-                                <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
-                              </button>
-                            ) : (
-                              <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
-                                <Icon name="box" size={16} />
+                            {totalPages > 1 && (
+                              <div className="flex items-center justify-center gap-1 mt-3 pb-1">
+                                <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1}
+                                  className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                  <button key={p} type="button" onClick={() => setPiecePage(p)}
+                                    className={`w-7 h-7 rounded text-[11px] ${p === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
+                                ))}
+                                <button type="button" onClick={() => setPiecePage(p => Math.min(totalPages, p + 1))} disabled={piecePage === totalPages}
+                                  className={`w-7 h-7 rounded text-[11px] ${piecePage === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>›</button>
                               </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{p.name}</div>
-                              <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                                <span className="font-mono">{p.code}</span>
-                                <span>·</span>
-                                <span className={p.stock <= p.min ? 'text-[var(--danger)] font-medium' : ''}>Est: {p.stock}</span>
-                              </div>
-                            </div>
-                          </button>
+                          </>
                         );
-                      })}
+                      })()}
                     </div>
-                    <div className="mt-4 flex justify-between items-center">
+                    <div className="mt-3 pt-3 border-t border-[var(--border)] flex justify-between items-center">
                       <span className="text-xs text-[var(--fg-secondary)]">{categorySelectedCount(modalCategory)} selecionada{categorySelectedCount(modalCategory) !== 1 ? 's' : ''}</span>
-                      <Button variant="primary" size="sm" onClick={() => setModalCategory(null)}>Concluído</Button>
+                      <Button variant="primary" size="sm" onClick={() => { setModalCategory(null); setPieceSearch(''); setPiecePage(1); }}>Concluído</Button>
                     </div>
                   </div>
                 </div>
