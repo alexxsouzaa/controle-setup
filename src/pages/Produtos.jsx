@@ -96,11 +96,7 @@ export function ProdutosPage() {
                       <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.weight}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.created}</td>
                       <td className="px-4 py-2.5">
-                        <div className="flex gap-1">
-                          <button type="button" onClick={() => setDrawerItem(p)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Detalhes</button>
-                          <button type="button" onClick={() => startEdit(p)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Editar</button>
-                          <button type="button" onClick={() => { if (confirm(`Excluir ${p.name}?`)) { deleteProduct(p.id); logAction('delete', 'Produto', `${p.name} excluído`); toast('Produto excluído com sucesso!'); } }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--danger)] transition-colors">Excluir</button>
-                        </div>
+                        <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
                       </td>
                     </tr>
                   ))}

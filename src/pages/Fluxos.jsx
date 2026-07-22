@@ -264,12 +264,7 @@ export function FluxosPage({ navigate }) {
                     <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{s.date}</td>
                     <td className="px-4 py-2.5"><Badge>{s.ver}</Badge></td>
                     <td className="px-4 py-2.5">
-                      <div className="flex gap-1">
-                        <button type="button" onClick={() => setDrawerFlow(s)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Detalhes</button>
-                        <button type="button" onClick={() => handleExportPDF(s)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">PDF</button>
-                        <button type="button" onClick={() => { duplicateFlow(s.id); logAction('duplicate', 'Fluxo', `${s.name} duplicado`); toast('Fluxo duplicado com sucesso!'); }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Duplicar</button>
-                        <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(s.id); logAction('delete', 'Fluxo', `${s.name} excluído`); toast('Fluxo excluído com sucesso!'); } }} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--danger)] transition-colors">Excluir</button>
-                      </div>
+                      <button type="button" onClick={() => setDrawerFlow(s)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
                     </td>
                   </tr>
                 );
