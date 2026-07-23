@@ -9,8 +9,6 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 
-const categories = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
-
 export function ProdutosPage() {
   const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
@@ -115,8 +113,8 @@ export function ProdutosPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Código', 'Nome', 'Categoria', 'Volumetria', 'Criado em', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Categoria:'category', Volumetria:'vol', 'Criado em':'created' };
+                    {['Código', 'Nome', 'Volumetria', 'Criado em', 'Ações'].map(h => {
+                      const ks = { Código:'code', Nome:'name', Volumetria:'vol', 'Criado em':'created' };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -130,7 +128,6 @@ export function ProdutosPage() {
                         <button type="button" onClick={() => setDrawerItem(p)} className="hover:text-[var(--fg)] transition-colors">{p.code}</button>
                       </td>
                       <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.category}</td>
                       <td className="px-4 py-2.5 font-nums">{p.vol} {p.unit}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.created}</td>
                       <td className="px-4 py-2.5">
@@ -166,17 +163,15 @@ export function ProdutosPage() {
               <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label>
-              <Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
-                <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unid.</label>
-                <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
+                  <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unid.</label>
+                  <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
+                </div>
               </div>
             </div>
           </div>
@@ -204,7 +199,7 @@ export function ProdutosPage() {
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category],
+                  {[['Código', drawerItem.code],
                     ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Criado em', drawerItem.created],
                   ].map(([label, value]) => (
                     <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
