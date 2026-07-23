@@ -34,6 +34,8 @@ export function PecasPage() {
   const [drawerItem, setDrawerItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [page, setPage] = useState(1);
+  const perPage = 15;
   const [form, setForm] = useState({ code: '', name: '', category: '', compat: '', location: '', image: '' });
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
@@ -74,7 +76,8 @@ export function PecasPage() {
   };
 
   const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || p.category.toLowerCase().includes(search));
-  const paged = filtered;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
   const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
@@ -111,7 +114,7 @@ export function PecasPage() {
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
             <div className="relative max-w-sm flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar peças" />
+              <input className="shad-input pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar peças" />
             </div>
           </div>
           {selectedCount > 0 && (
@@ -141,7 +144,7 @@ export function PecasPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(p => (
+                  {paged.map(p => (
                     <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
                       <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5">
@@ -167,6 +170,16 @@ export function PecasPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 mt-4" role="navigation" aria-label="Navegação de páginas">
+              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-8 h-8 rounded text-xs ${page === 1 ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Anterior">‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button type="button" key={p} onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
+                  className={`w-8 h-8 rounded text-xs ${p === page ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
+              ))}
+              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-8 h-8 rounded text-xs ${page === totalPages ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Próxima">›</button>
             </div>
           )}
         </>

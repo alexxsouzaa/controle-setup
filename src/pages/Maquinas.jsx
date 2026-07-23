@@ -34,6 +34,8 @@ export function MaquinasPage() {
   const [drawerItem, setDrawerItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [page, setPage] = useState(1);
+  const perPage = 15;
   const [form, setForm] = useState({ name: '', line: '', uo: '', createdBy: '', image: '' });
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
@@ -68,7 +70,8 @@ export function MaquinasPage() {
   };
 
   const filtered = sorted.filter(m => (!search || m.name.toLowerCase().includes(search) || m.line.toLowerCase().includes(search)) && (!uoFilter || m.uo === uoFilter));
-  const paged = filtered;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
   const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
@@ -105,9 +108,9 @@ export function MaquinasPage() {
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
             <div className="relative max-w-sm flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar máquinas" />
+              <input className="shad-input pl-9" placeholder="Buscar por nome ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
             </div>
-            <Select value={uoFilter} onChange={e => { setUoFilter(e.target.value); clearSelection(); }}>
+            <Select value={uoFilter} onChange={e => { setUoFilter(e.target.value); setPage(1); clearSelection(); }}>
               <option value="">Todas as UOs</option>
               {uos.map(u => <option key={u} value={u}>{u}</option>)}
             </Select>
@@ -168,7 +171,18 @@ export function MaquinasPage() {
               </table>
             </div>
           )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 mt-4" role="navigation" aria-label="Navegação de páginas">
+              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-8 h-8 rounded text-xs ${page === 1 ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Anterior">‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button type="button" key={p} onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
+                  className={`w-8 h-8 rounded text-xs ${p === page ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
+              ))}
+              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-8 h-8 rounded text-xs ${page === totalPages ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Próxima">›</button>
+            </div>
+          )}
         </>
+
       ) : (
         <Card>
           <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Máquina' : 'Nova Máquina'}</h3>
