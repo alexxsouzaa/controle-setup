@@ -27,6 +27,8 @@ export function NovoSetupPage({ navigate }) {
   const [newProduct, setNewProduct] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml' });
   const [toolingSelections, setToolingSelections] = useState({});
   const [modalGroup, setModalGroup] = useState(null);
+  const [pieceSearch, setPieceSearch] = useState('');
+  const [piecePage, setPiecePage] = useState(1);
   const [previewImage, setPreviewImage] = useState(null);
 
   const selectedMachine = machines.find(m => m.id === selected);
@@ -211,55 +213,85 @@ export function NovoSetupPage({ navigate }) {
             <span className="text-xs text-[var(--fg-secondary)]">{selectedCount} de {toolingGroups.length} grupos selecionados</span>
           </div>
 
-          {modalGroup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setModalGroup(null)} onKeyDown={e => e.key === 'Escape' && setModalGroup(null)}>
+          {modalGroup && (() => {
+            const allPieces = piecesFor(modalGroup);
+            const filtered = pieceSearch
+              ? allPieces.filter(op => op.name.toLowerCase().includes(pieceSearch) || op.code.toLowerCase().includes(pieceSearch))
+              : allPieces;
+            const perPage = 8;
+            const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+            const paged = filtered.slice((piecePage - 1) * perPage, piecePage * perPage);
+            return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} onKeyDown={e => e.key === 'Escape' && (setModalGroup(null), setPieceSearch(''), setPiecePage(1))}>
               <div className="absolute inset-0 bg-[var(--overlay)]" />
-              <div role="dialog" aria-modal="true" aria-label={modalGroup} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-sm mx-4 p-6 z-10" onClick={e => e.stopPropagation()}>
+              <div role="dialog" aria-modal="true" aria-label={modalGroup} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-lg mx-4 p-6 z-10" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold">{modalGroup}</h3>
-                  <button type="button" onClick={() => setModalGroup(null)} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold">{modalGroup}</h3>
+                    <div className="relative mt-2">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+                      <input className="shad-input pl-8 py-1.5 text-xs" placeholder="Buscar peça..." value={pieceSearch} onChange={e => { setPieceSearch(e.target.value); setPiecePage(1); }} aria-label="Buscar peças" />
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0 ml-3"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 </div>
-                <p className="text-xs text-[var(--fg-secondary)] mb-4">Selecione a peça desejada:</p>
-                {piecesFor(modalGroup).length === 0 ? (
-                  <div className="p-6 text-center">
-                    <div className="w-10 h-10 rounded-full bg-[var(--danger-muted)] flex items-center justify-center mx-auto mb-3 text-[var(--danger)]"><Icon name="alert" size={20} /></div>
-                    <p className="text-sm font-medium text-[var(--fg)] mb-1">Nenhuma peça cadastrada</p>
-                    <p className="text-xs text-[var(--fg-secondary)]">Não existem peças na categoria "{modalGroup}" no catálogo.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {piecesFor(modalGroup).map(op => (
-                      <button key={op.id} type="button" onClick={() => selectPiece(modalGroup, op.name)}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${toolingSelections[modalGroup] === op.name ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)] font-medium' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
-                      >
-                        {op.image ? (
-                          <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewImage(op.image); }}>
-                            <img src={op.image} alt={op.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
+                <div className="max-h-72 overflow-y-auto -mx-6 px-6" style={{ minHeight: 200 }}>
+                  {allPieces.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-32 text-center">
+                      <div className="w-10 h-10 rounded-full bg-[var(--danger-muted)] flex items-center justify-center mx-auto mb-3 text-[var(--danger)]"><Icon name="alert" size={20} /></div>
+                      <p className="text-sm font-medium text-[var(--fg)] mb-1">Nenhuma peça cadastrada</p>
+                      <p className="text-xs text-[var(--fg-secondary)]">Não existem peças na categoria "{modalGroup}".</p>
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="flex items-center justify-center h-32 text-xs text-[var(--fg-muted)]">Nenhuma peça encontrada.</div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {paged.map(op => (
+                          <button key={op.id} type="button" onClick={() => selectPiece(modalGroup, op.name)}
+                            className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${toolingSelections[modalGroup] === op.name ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)] font-medium' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}
+                          >
+                            {op.image ? (
+                              <button type="button" onClick={(e) => { e.stopPropagation(); setPreviewImage(op.image); }}>
+                                <img src={op.image} alt={op.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
+                              </button>
+                            ) : (
+                              <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
+                                <Icon name="box" size={16} />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{op.name}</div>
+                              <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
+                                <span className="font-mono">{op.code}</span>
+                                <span>·</span>
+                                <span>Est: {op.stock} {op.unit}</span>
+                              </div>
+                            </div>
+                            {toolingSelections[modalGroup] === op.name && <Icon name="check-circle" size={16} />}
                           </button>
-                        ) : (
-                          <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
-                            <Icon name="box" size={16} />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{op.name}</div>
-                          <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                            <span className="font-mono">{op.code}</span>
-                            <span>·</span>
-                            <span>Est: {op.stock} {op.unit}</span>
-                          </div>
+                        ))}
+                      </div>
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-1 mt-3 pb-1">
+                          <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1}
+                            className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                            <button key={p} type="button" onClick={() => setPiecePage(p)}
+                              className={`w-7 h-7 rounded text-[11px] ${p === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
+                          ))}
+                          <button type="button" onClick={() => setPiecePage(p => Math.min(totalPages, p + 1))} disabled={piecePage === totalPages}
+                            className={`w-7 h-7 rounded text-[11px] ${piecePage === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>›</button>
                         </div>
-                        {toolingSelections[modalGroup] === op.name && <Icon name="check-circle" size={16} />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="mt-4"><Button variant="ghost" onClick={() => setModalGroup(null)} className="w-full">Fechar</Button></div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-[var(--border)]"><Button variant="ghost" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="w-full">Fechar</Button></div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <div className="flex justify-between mt-6">
             <Button variant="ghost" onClick={() => setStep(2)}>← Produto</Button>
