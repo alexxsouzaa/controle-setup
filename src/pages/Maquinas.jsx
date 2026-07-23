@@ -175,34 +175,39 @@ export function MaquinasPage() {
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da máquina *</label><Input placeholder="Ex: Norden C14" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Linha *</label><Input placeholder="Ex: C14" value={form.line} onChange={e => setForm({ ...form, line: e.target.value })} /></div>
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label><Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}><option value="">Selecione</option>{uos.map(u => <option key={u}>{u}</option>)}</Select></div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
+              <Input placeholder="Ex: Carlos Silva" value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
+            </div>
           </div>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label><Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}><option value="">Selecione</option>{uos.map(u => <option key={u}>{u}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label><Input placeholder="Ex: Carlos Silva" value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} /></div>
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Foto da máquina</label>
+              {form.image ? (
+                <div className="flex items-center gap-3 p-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+                  <img src={form.image} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-[var(--border)] shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">Foto da máquina</div>
+                    <div className="flex gap-2 mt-1">
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline">Trocar</button>
+                      <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover</button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="upload" size={18} /></div>
+                  <div className="text-left"><div className="text-sm text-[var(--fg)]">Adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • 500 KB máx</div></div>
+                </button>
+              )}
+              {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </div>
           </div>
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Máquina'}</Button>
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
-          </div>
-          <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-            <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da máquina</label>
-            {form.image ? (
-              <div className="flex items-center gap-3">
-                <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
-                <div>
-                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover foto</button>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline ml-3">Trocar</button>
-                </div>
-              </div>
-            ) : (
-              <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left">
-                <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
-                <div><div className="text-sm text-[var(--fg)]">Clique para adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • Máx. {MAX_IMAGE_SIZE / 1024} KB</div></div>
-              </button>
-            )}
-            {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
         </Card>
       )}
