@@ -33,12 +33,12 @@ export function PecasPage() {
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
-  const [form, setForm] = useState({ code: '', name: '', category: '', compat: '', location: '', stock: '', min: '', image: '' });
+  const [form, setForm] = useState({ code: '', name: '', category: '', compat: '', location: '', image: '' });
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ code: '', name: '', category: '', compat: '', location: '', stock: '', min: '', image: '' });
+    setForm({ code: '', name: '', category: '', compat: '', location: '', image: '' });
     setEditingId(null);
     setImageError('');
   };
@@ -47,30 +47,19 @@ export function PecasPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setImageError('Formato de imagem não suportado.');
-      return;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`);
-      return;
-    }
+    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
+    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
     setImageError('');
     try {
       const dataURL = await readFileAsDataURL(file);
       setForm(prev => ({ ...prev, image: dataURL }));
-    } catch {
-      setImageError('Erro ao processar a imagem.');
-    }
+    } catch { setImageError('Erro ao processar a imagem.'); }
   };
 
   const handleSave = () => {
-    if (!form.code || !form.name || !form.stock) return;
-    if (editingId) {
-      updatePiece(editingId, { ...form, stock: Number(form.stock), min: Number(form.min) || 0 });
-    } else {
-      addPiece({ ...form, stock: Number(form.stock), min: Number(form.min) || 0, unit: 'un' });
-    }
+    if (!form.code || !form.name) return;
+    if (editingId) { updatePiece(editingId, form); }
+    else { addPiece(form); }
     logAction(editingId ? 'update' : 'create', 'Peça', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
     toast(editingId ? 'Peça atualizada com sucesso!' : 'Peça cadastrada com sucesso!');
     resetForm();
@@ -78,15 +67,11 @@ export function PecasPage() {
   };
 
   const startEdit = (p) => {
-    setForm({
-      code: p.code, name: p.name, category: p.category || '', compat: p.compat || '',
-      location: p.location || '', stock: String(p.stock || ''), min: String(p.min || ''), image: p.image || '',
-    });
+    setForm({ code: p.code, name: p.name, category: p.category || '', compat: p.compat || '', location: p.location || '', image: p.image || '' });
     setEditingId(p.id);
     setTab('create');
   };
 
-  const stockBadge = (s, min) => s <= min ? 'danger' : s <= min * 2 ? 'warning' : 'success';
   const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || p.category.toLowerCase().includes(search));
 
   return (
@@ -97,7 +82,7 @@ export function PecasPage() {
           <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{pieces.length} peça{pieces.length !== 1 ? 's' : ''} cadastrada{pieces.length !== 1 ? 's' : ''}.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="box" size={16} />{tab === 'list' ? 'Estoque' : 'Ver Estoque'}</Button>
+          <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="box" size={16} />{tab === 'list' ? 'Catálogo' : 'Ver Catálogo'}</Button>
           <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Nova Peça'}</Button>
         </div>
       </div>
@@ -118,8 +103,8 @@ export function PecasPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[var(--bg)]">
-                    {['', 'Código', 'Nome', 'Categoria', 'Máquinas Compatíveis', 'Localização', 'Estoque', 'Estoque Mín.', 'Status', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Categoria:'category', 'Máquinas Compatíveis':'compat', Localização:'location', Estoque:'stock', 'Estoque Mín.':'min' };
+                    {['', 'Código', 'Nome', 'Categoria', 'Máquinas Compatíveis', 'Localização', 'Ações'].map(h => {
+                      const ks = { Código:'code', Nome:'name', Categoria:'category', 'Máquinas Compatíveis':'compat', Localização:'location' };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -146,13 +131,6 @@ export function PecasPage() {
                       <td className="px-4 py-2.5"><Badge>{p.category}</Badge></td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.compat}</td>
                       <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.location}</td>
-                      <td className="px-4 py-2.5 font-nums font-medium">{p.stock}</td>
-                      <td className="px-4 py-2.5 font-nums text-[var(--fg-secondary)]">{p.min}</td>
-                      <td className="px-4 py-2.5">
-                        <Badge variant={stockBadge(p.stock, p.min)}>
-                          {p.stock <= p.min ? 'Baixo' : p.stock <= p.min * 2 ? 'Atenção' : 'Normal'}
-                        </Badge>
-                      </td>
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
                       </td>
@@ -170,7 +148,12 @@ export function PecasPage() {
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label><Input placeholder="Ex: CP-PD-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label><Input placeholder="Ex: Copos Padrão" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
           </div>
-          <div className="mt-4 mb-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select></div>
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis</label><Input placeholder="Ex: Norden C5, C6" value={form.compat} onChange={e => setForm({ ...form, compat: e.target.value })} /></div>
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Localização</label><Input placeholder="Ex: Armário A3" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></div>
+          </div>
+          <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
             <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça</label>
             {form.image ? (
               <div className="flex items-center gap-3">
@@ -185,23 +168,11 @@ export function PecasPage() {
                 className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left"
               >
                 <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
-                <div>
-                  <div className="text-sm text-[var(--fg)]">Clique para adicionar foto</div>
-                  <div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
-                </div>
+                <div><div className="text-sm text-[var(--fg)]">Clique para adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • Máx. {MAX_IMAGE_SIZE / 1024} KB</div></div>
               </button>
             )}
             {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-          </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis</label><Input placeholder="Ex: Norden C5, C6" value={form.compat} onChange={e => setForm({ ...form, compat: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Localização</label><Input placeholder="Ex: Armário A3" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></div>
-          </div>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Quantidade em estoque *</label><Input type="number" placeholder="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Estoque mínimo</label><Input type="number" placeholder="0" value={form.min} onChange={e => setForm({ ...form, min: e.target.value })} /></div>
           </div>
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Peça'}</Button>
@@ -241,14 +212,8 @@ export function PecasPage() {
                   {[
                     ['Código', drawerItem.code], ['Categoria', drawerItem.category],
                     ['Máquinas Compatíveis', drawerItem.compat], ['Localização', drawerItem.location],
-                    ['Estoque', `${drawerItem.stock} ${drawerItem.unit}`],
-                    ['Estoque Mínimo', `${drawerItem.min} ${drawerItem.unit}`],
-                    ['Status', drawerItem.stock <= drawerItem.min ? 'Baixo' : drawerItem.stock <= drawerItem.min * 2 ? 'Atenção' : 'Normal'],
                   ].map(([label, value]) => (
-                    <div key={label}>
-                      <div className="text-xs text-[var(--fg-secondary)]">{label}</div>
-                      <div className="font-medium truncate">{value || '—'}</div>
-                    </div>
+                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
                   ))}
                 </div>
               </div>
