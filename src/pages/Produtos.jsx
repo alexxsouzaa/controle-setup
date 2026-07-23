@@ -156,12 +156,27 @@ export function ProdutosPage() {
       ) : (
         <Card>
           <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label><Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label><Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volumetria *</label><Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unidade</label><Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select></div>
+          <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label>
+              <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
+              <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label>
+              <Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volumetria *</label>
+              <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unidade</label>
+              <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
+            </div>
           </div>
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Produto'}</Button>
