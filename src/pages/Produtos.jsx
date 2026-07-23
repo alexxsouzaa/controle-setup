@@ -154,8 +154,7 @@ export function ProdutosPage() {
           )}
         </>
       ) : (
-        <div style={{ maxWidth: 480 }}>
-        <Card className="max-w-lg">
+        <Card>
           <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
           <div className="grid md:grid-cols-3 grid-cols-1 gap-3">
             <div>
@@ -184,7 +183,6 @@ export function ProdutosPage() {
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
           </div>
         </Card>
-        </div>
       )}
       {drawerItem && (
         <>
