@@ -14,7 +14,7 @@ const uos = ['Bisnagas', 'Potes', 'Refil'];
 const machineTypes = ['Enchedora de Bisnagas', 'Enchedora com Selagem a Quente', 'Enchedora de Pequeno Porte', 'Enchedora de Alta Velocidade', 'Enchedora de Potes', 'Dosadora de Potes', 'Enchedora de Refil', 'Rotuladora', 'Encaixotadora', 'Paletizadora'];
 
 export function MaquinasPage() {
-  const { machines, addMachine, deleteMachine, updateMachine, logAction } = useContext(AppDataContext);
+  const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator } = useSortable(machines, 'name');
   const [tab, setTab] = useState('list');
@@ -22,6 +22,7 @@ export function MaquinasPage() {
   const [uoFilter, setUoFilter] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
+  const [selected, setSelected] = useState(new Set());
   const [form, setForm] = useState({ name: '', line: '', uo: '', type: '', outils: '', createdBy: '' });
 
   const resetForm = () => { setForm({ name: '', line: '', uo: '', type: '', outils: '', createdBy: '' }); setEditingId(null); };
@@ -45,7 +46,26 @@ export function MaquinasPage() {
     setTab('create');
   };
 
+  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelectAll = () => {
+    if (paged.every(s => selected.has(s.id))) { setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id)))); }
+    else { setSelected(new Set([...selected, ...paged.map(s => s.id)])); }
+  };
+  const clearSelection = () => setSelected(new Set());
+  const selectedCount = selected.size;
+
   const filtered = sorted.filter(m => (!search || m.name.toLowerCase().includes(search) || m.line.toLowerCase().includes(search)) && (!uoFilter || m.uo === uoFilter));
+  const paged = filtered;
+  const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
+
+  const handleBulkDelete = () => {
+    if (selectedCount === 0) return;
+    if (!confirm(`Excluir ${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
+    deleteMachines(Array.from(selected));
+    logAction('delete', 'Máquina', `${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa`);
+    toast(`${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    clearSelection();
+  };
 
   return (
     <div className="p-6">
@@ -64,13 +84,22 @@ export function MaquinasPage() {
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
             <div className="relative max-w-sm flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome ou linha..." value={search} onChange={e => setSearch(e.target.value.toLowerCase())} aria-label="Buscar máquinas" />
+              <input className="shad-input pl-9" placeholder="Buscar por nome ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar máquinas" />
             </div>
             <Select value={uoFilter} onChange={e => setUoFilter(e.target.value)}>
               <option value="">Todas as UOs</option>
               {uos.map(u => <option key={u} value={u}>{u}</option>)}
             </Select>
           </div>
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
+              <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
+              <div className="flex gap-2 ml-auto">
+                <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionadas</button>
+                <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
+              </div>
+            </div>
+          )}
           {filtered.length === 0 ? (
             <EmptyState icon={<Icon name="box" size={24} />} title="Nenhuma máquina encontrada" desc="Tente ajustar os filtros de busca."
               action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Nova Máquina</Button>}
@@ -80,6 +109,7 @@ export function MaquinasPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[var(--bg)]">
+                    <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
                     {['Nome', 'Linha', 'UO', 'Ferramentais', 'Última Atualização', 'Criado em', 'Criado por', 'Ações'].map(h => {
                       const ks = { Nome:'name', Linha:'line', UO:'uo', Ferramentais:'outils', 'Última Atualização':'updatedAt', 'Criado em':'createdAt', 'Criado por':'createdBy' };
                       const k = ks[h];
@@ -89,7 +119,8 @@ export function MaquinasPage() {
                 </thead>
                 <tbody>
                   {filtered.map(m => (
-                    <tr key={m.id} className="border-t border-[var(--border)] hover:bg-[var(--bg)]">
+                    <tr key={m.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-light)]' : ''}`}>
+                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5 font-medium">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>

@@ -114,16 +114,19 @@ export function AppDataProvider({ children }) {
     addMachine: (m) => save({ ...data, machines: [...data.machines, { ...m, id: uid('mac'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
     updateMachine: (id, updates) => save({ ...data, machines: data.machines.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date().toISOString().slice(0, 10) } : m) }),
     deleteMachine: (id) => save({ ...data, machines: data.machines.filter(m => m.id !== id) }),
+    deleteMachines: (ids) => { const set = new Set(ids); save({ ...data, machines: data.machines.filter(m => !set.has(m.id)) }); },
 
     // Products
     addProduct: (p) => save({ ...data, products: [...data.products, { ...p, id: p.id || uid('prd'), code: p.code, created: p.created || new Date().toISOString().slice(0, 10) }] }),
     updateProduct: (id, updates) => save({ ...data, products: data.products.map(p => p.id === id ? { ...p, ...updates } : p) }),
     deleteProduct: (id) => save({ ...data, products: data.products.filter(p => p.id !== id) }),
+    deleteProducts: (ids) => { const set = new Set(ids); save({ ...data, products: data.products.filter(p => !set.has(p.id)) }); },
 
     // Pieces
     addPiece: (p) => save({ ...data, pieces: [...data.pieces, { ...p, id: p.id || uid('pcs') }] }),
     updatePiece: (id, updates) => save({ ...data, pieces: data.pieces.map(p => p.id === id ? { ...p, ...updates } : p) }),
     deletePiece: (id) => save({ ...data, pieces: data.pieces.filter(p => p.id !== id) }),
+    deletePieces: (ids) => { const set = new Set(ids); save({ ...data, pieces: data.pieces.filter(p => !set.has(p.id)) }); },
 
     // Flows
     addFlow: (f) => save({ ...data, flows: [...data.flows, { ...f, id: uid('flow'), date: f.date || new Date().toISOString().slice(0, 10), ver: f.ver || 'v1.0' }] }),

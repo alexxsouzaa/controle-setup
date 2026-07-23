@@ -25,7 +25,7 @@ function readFileAsDataURL(file) {
 }
 
 export function PecasPage() {
-  const { pieces, addPiece, deletePiece, updatePiece, logAction } = useContext(AppDataContext);
+  const { pieces, addPiece, deletePiece, deletePieces, updatePiece, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator } = useSortable(pieces, 'name');
   const [tab, setTab] = useState('list');
@@ -33,6 +33,7 @@ export function PecasPage() {
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [selected, setSelected] = useState(new Set());
   const [form, setForm] = useState({ code: '', name: '', category: '', compat: '', location: '', image: '' });
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
@@ -73,6 +74,25 @@ export function PecasPage() {
   };
 
   const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || p.category.toLowerCase().includes(search));
+  const paged = filtered;
+
+  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelectAll = () => {
+    if (paged.every(s => selected.has(s.id))) { setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id)))); }
+    else { setSelected(new Set([...selected, ...paged.map(s => s.id)])); }
+  };
+  const clearSelection = () => setSelected(new Set());
+  const selectedCount = selected.size;
+  const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
+
+  const handleBulkDelete = () => {
+    if (selectedCount === 0) return;
+    if (!confirm(`Excluir ${selectedCount} peça${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
+    deletePieces(Array.from(selected));
+    logAction('delete', 'Peça', `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa`);
+    toast(`${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    clearSelection();
+  };
 
   return (
     <div className="p-6">
@@ -91,9 +111,18 @@ export function PecasPage() {
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
             <div className="relative max-w-sm flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => setSearch(e.target.value.toLowerCase())} aria-label="Buscar peças" />
+              <input className="shad-input pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar peças" />
             </div>
           </div>
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
+              <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
+              <div className="flex gap-2 ml-auto">
+                <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionadas</button>
+                <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
+              </div>
+            </div>
+          )}
           {filtered.length === 0 ? (
             <EmptyState icon={<Icon name="box" size={24} />} title="Nenhuma peça encontrada" desc="Tente ajustar sua busca ou cadastre uma nova peça."
               action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Nova Peça</Button>}
@@ -103,6 +132,7 @@ export function PecasPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[var(--bg)]">
+                    <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
                     {['', 'Código', 'Nome', 'Categoria', 'Máquinas Compatíveis', 'Localização', 'Ações'].map(h => {
                       const ks = { Código:'code', Nome:'name', Categoria:'category', 'Máquinas Compatíveis':'compat', Localização:'location' };
                       const k = ks[h];
@@ -112,16 +142,15 @@ export function PecasPage() {
                 </thead>
                 <tbody>
                   {filtered.map(p => (
-                    <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--bg)]">
+                    <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
+                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5">
                         {p.image ? (
                           <button type="button" onClick={() => setPreviewImage(p.image)} className="cursor-pointer">
                             <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-[var(--border)] hover:ring-2 hover:ring-[var(--accent)] transition-all" />
                           </button>
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)]">
-                            <Icon name="box" size={18} />
-                          </div>
+                          <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)]"><Icon name="box" size={18} /></div>
                         )}
                       </td>
                       <td className="px-4 py-2.5 font-mono text-xs text-[var(--accent)]">
@@ -209,8 +238,7 @@ export function PecasPage() {
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[
-                    ['Código', drawerItem.code], ['Categoria', drawerItem.category],
+                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category],
                     ['Máquinas Compatíveis', drawerItem.compat], ['Localização', drawerItem.location],
                   ].map(([label, value]) => (
                     <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>

@@ -14,24 +14,22 @@ const families = ['Capilar', 'Corporal', 'Facial', 'Oral', 'Solar'];
 const packagingOpts = ['Bisnaga PEAD', 'Bisnaga PEBD', 'Bisnaga Alumínio', 'Frasco PET', 'Pote PP'];
 
 export function ProdutosPage() {
-  const { products, addProduct, deleteProduct, updateProduct, logAction } = useContext(AppDataContext);
+  const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator } = useSortable(products, 'name');
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
+  const [selected, setSelected] = useState(new Set());
   const [form, setForm] = useState({ code: '', name: '', category: '', family: '', vol: '', unit: 'ml', packaging: '', weight: '' });
 
   const resetForm = () => { setForm({ code: '', name: '', category: '', family: '', vol: '', unit: 'ml', packaging: '', weight: '' }); setEditingId(null); };
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) return;
-    if (editingId) {
-      updateProduct(editingId, { ...form, vol: Number(form.vol) });
-    } else {
-      addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) });
-    }
+    if (editingId) { updateProduct(editingId, { ...form, vol: Number(form.vol) }); }
+    else { addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) }); }
     logAction(editingId ? 'update' : 'create', 'Produto', editingId ? `${form.name} atualizado` : `${form.name} cadastrado`);
     toast(editingId ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!');
     resetForm();
@@ -45,6 +43,25 @@ export function ProdutosPage() {
   };
 
   const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
+  const paged = filtered;
+
+  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelectAll = () => {
+    if (paged.every(s => selected.has(s.id))) { setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id)))); }
+    else { setSelected(new Set([...selected, ...paged.map(s => s.id)])); }
+  };
+  const clearSelection = () => setSelected(new Set());
+  const selectedCount = selected.size;
+  const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
+
+  const handleBulkDelete = () => {
+    if (selectedCount === 0) return;
+    if (!confirm(`Excluir ${selectedCount} produto${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
+    deleteProducts(Array.from(selected));
+    logAction('delete', 'Produto', `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
+    toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    clearSelection();
+  };
 
   return (
     <div className="p-6">
@@ -63,9 +80,18 @@ export function ProdutosPage() {
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
             <div className="relative max-w-sm flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={e => setSearch(e.target.value.toLowerCase())} aria-label="Buscar produtos" />
+              <input className="shad-input pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar produtos" />
             </div>
           </div>
+          {selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
+              <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
+              <div className="flex gap-2 ml-auto">
+                <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionados</button>
+                <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
+              </div>
+            </div>
+          )}
           {filtered.length === 0 ? (
             <EmptyState icon={<Icon name="grid-3x3" size={24} />} title="Nenhum produto encontrado" desc="Tente ajustar sua busca ou crie um novo produto."
               action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Novo Produto</Button>}
@@ -75,6 +101,7 @@ export function ProdutosPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-[var(--bg)]">
+                    <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
                     {['Código', 'Nome', 'Categoria', 'Família', 'Volumetria', 'Embalagem', 'Peso', 'Criado em', 'Ações'].map(h => {
                       const ks = { Código:'code', Nome:'name', Categoria:'category', Família:'family', Volumetria:'vol', Embalagem:'packaging', Peso:'weight', 'Criado em':'created' };
                       const k = ks[h];
@@ -84,7 +111,8 @@ export function ProdutosPage() {
                 </thead>
                 <tbody>
                   {filtered.map(p => (
-                    <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--bg)]">
+                    <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
+                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5 font-mono text-xs text-[var(--accent)]">
                         <button type="button" onClick={() => setDrawerItem(p)} className="hover:text-[var(--fg)] transition-colors">{p.code}</button>
                       </td>
@@ -146,15 +174,11 @@ export function ProdutosPage() {
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[
-                    ['Código', drawerItem.code], ['Categoria', drawerItem.category], ['Família', drawerItem.family],
+                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category], ['Família', drawerItem.family],
                     ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Embalagem', drawerItem.packaging],
                     ['Peso', drawerItem.weight], ['Criado em', drawerItem.created],
                   ].map(([label, value]) => (
-                    <div key={label}>
-                      <div className="text-xs text-[var(--fg-secondary)]">{label}</div>
-                      <div className="font-medium truncate">{value || '—'}</div>
-                    </div>
+                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
                   ))}
                 </div>
               </div>
