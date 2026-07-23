@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { useSortable } from '../hooks/useSortable';
@@ -9,9 +9,19 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
+import { ImagePreview } from '../components/ImagePreview';
 
 const uos = ['Bisnagas', 'Potes', 'Refil'];
-const machineTypes = ['Enchedora de Bisnagas', 'Enchedora com Selagem a Quente', 'Enchedora de Pequeno Porte', 'Enchedora de Alta Velocidade', 'Enchedora de Potes', 'Dosadora de Potes', 'Enchedora de Refil', 'Rotuladora', 'Encaixotadora', 'Paletizadora'];
+const MAX_IMAGE_SIZE = 500 * 1024;
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function MaquinasPage() {
   const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction } = useContext(AppDataContext);
@@ -22,18 +32,29 @@ export function MaquinasPage() {
   const [uoFilter, setUoFilter] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
   const [selected, setSelected] = useState(new Set());
-  const [form, setForm] = useState({ name: '', line: '', uo: '', type: '', outils: '', createdBy: '' });
+  const [form, setForm] = useState({ name: '', line: '', uo: '', createdBy: '', image: '' });
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef(null);
 
-  const resetForm = () => { setForm({ name: '', line: '', uo: '', type: '', outils: '', createdBy: '' }); setEditingId(null); };
+  const resetForm = () => { setForm({ name: '', line: '', uo: '', createdBy: '', image: '' }); setEditingId(null); setImageError(''); };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
+    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
+    setImageError('');
+    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
+    catch { setImageError('Erro ao processar a imagem.'); }
+  };
 
   const handleSave = () => {
-    if (!form.name || !form.line || !form.uo || !form.type || !form.outils) return;
-    if (editingId) {
-      updateMachine(editingId, { ...form, outils: Number(form.outils) });
-    } else {
-      addMachine({ ...form, outils: Number(form.outils) });
-    }
+    if (!form.name || !form.line || !form.uo) return;
+    if (editingId) { updateMachine(editingId, form); }
+    else { addMachine(form); }
     logAction(editingId ? 'update' : 'create', 'Máquina', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
     toast(editingId ? 'Máquina atualizada com sucesso!' : 'Máquina cadastrada com sucesso!');
     resetForm();
@@ -41,10 +62,13 @@ export function MaquinasPage() {
   };
 
   const startEdit = (m) => {
-    setForm({ name: m.name, line: m.line, uo: m.uo, type: m.type, outils: String(m.outils), createdBy: m.createdBy || '' });
+    setForm({ name: m.name, line: m.line, uo: m.uo, createdBy: m.createdBy || '', image: m.image || '' });
     setEditingId(m.id);
     setTab('create');
   };
+
+  const filtered = sorted.filter(m => (!search || m.name.toLowerCase().includes(search) || m.line.toLowerCase().includes(search)) && (!uoFilter || m.uo === uoFilter));
+  const paged = filtered;
 
   const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
@@ -53,9 +77,6 @@ export function MaquinasPage() {
   };
   const clearSelection = () => setSelected(new Set());
   const selectedCount = selected.size;
-
-  const filtered = sorted.filter(m => (!search || m.name.toLowerCase().includes(search) || m.line.toLowerCase().includes(search)) && (!uoFilter || m.uo === uoFilter));
-  const paged = filtered;
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
   const handleBulkDelete = () => {
@@ -86,7 +107,7 @@ export function MaquinasPage() {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
               <input className="shad-input pl-9" placeholder="Buscar por nome ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar máquinas" />
             </div>
-            <Select value={uoFilter} onChange={e => setUoFilter(e.target.value)}>
+            <Select value={uoFilter} onChange={e => { setUoFilter(e.target.value); clearSelection(); }}>
               <option value="">Todas as UOs</option>
               {uos.map(u => <option key={u} value={u}>{u}</option>)}
             </Select>
@@ -110,8 +131,8 @@ export function MaquinasPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Nome', 'Linha', 'UO', 'Ferramentais', 'Última Atualização', 'Criado em', 'Criado por', 'Ações'].map(h => {
-                      const ks = { Nome:'name', Linha:'line', UO:'uo', Ferramentais:'outils', 'Última Atualização':'updatedAt', 'Criado em':'createdAt', 'Criado por':'createdBy' };
+                    {['Nome', 'Linha', 'UO', 'Última Atualização', 'Criado em', 'Criado por', 'Ações'].map(h => {
+                      const ks = { Nome:'name', Linha:'line', UO:'uo', 'Última Atualização':'updatedAt', 'Criado em':'createdAt', 'Criado por':'createdBy' };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -123,13 +144,18 @@ export function MaquinasPage() {
                       <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5 font-medium">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+                          {m.image ? (
+                            <button type="button" onClick={() => setPreviewImage(m.image)} className="cursor-pointer shrink-0">
+                              <img src={m.image} alt={m.name} className="w-8 h-8 rounded-lg object-cover border border-[var(--border)] hover:ring-2 hover:ring-[var(--accent)] transition-all" />
+                            </button>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={16} /></div>
+                          )}
                           <button type="button" onClick={() => setDrawerItem(m)} className="font-medium text-left hover:text-[var(--accent)] transition-colors">{m.name}</button>
                         </div>
                       </td>
                       <td className="px-4 py-2.5 font-mono text-xs text-[var(--fg-secondary)]">{m.line}</td>
                       <td className="px-4 py-2.5"><Badge>{m.uo}</Badge></td>
-                      <td className="px-4 py-2.5 font-nums">{m.outils} grupos</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{m.updatedAt}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{m.createdAt}</td>
                       <td className="px-4 py-2.5 text-xs">{m.createdBy}</td>
@@ -150,18 +176,33 @@ export function MaquinasPage() {
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da máquina *</label><Input placeholder="Ex: Norden C14" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Linha *</label><Input placeholder="Ex: C14" value={form.line} onChange={e => setForm({ ...form, line: e.target.value })} /></div>
           </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label><Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}><option value="">Selecione</option>{uos.map(u => <option key={u}>{u}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Tipo *</label><Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option value="">Selecione</option>{machineTypes.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Ferramentais *</label><Input type="number" placeholder="6" value={form.outils} onChange={e => setForm({ ...form, outils: e.target.value })} /></div>
-          </div>
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
+            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label><Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}><option value="">Selecione</option>{uos.map(u => <option key={u}>{u}</option>)}</Select></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label><Input placeholder="Ex: Carlos Silva" value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} /></div>
-            <div />
           </div>
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Máquina'}</Button>
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+          </div>
+          <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+            <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da máquina</label>
+            {form.image ? (
+              <div className="flex items-center gap-3">
+                <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
+                <div>
+                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover foto</button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline ml-3">Trocar</button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
+                <div><div className="text-sm text-[var(--fg)]">Clique para adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • Máx. {MAX_IMAGE_SIZE / 1024} KB</div></div>
+              </button>
+            )}
+            {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
         </Card>
       )}
@@ -172,7 +213,11 @@ export function MaquinasPage() {
             className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={18} /></div>
+                {drawerItem.image ? (
+                  <img src={drawerItem.image} alt={drawerItem.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0" />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={18} /></div>
+                )}
                 <h3 className="text-sm font-semibold truncate">{drawerItem.name}</h3>
               </div>
               <button type="button" onClick={() => setDrawerItem(null)} aria-label="Fechar" className="p-1.5 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0">
@@ -180,19 +225,21 @@ export function MaquinasPage() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+              {drawerItem.image && (
+                <div className="flex justify-center">
+                  <button type="button" onClick={() => setPreviewImage(drawerItem.image)} className="cursor-pointer">
+                    <img src={drawerItem.image} alt={drawerItem.name} className="w-32 h-32 rounded-xl object-cover border border-[var(--border)] hover:ring-2 hover:ring-[var(--accent)] transition-all" />
+                  </button>
+                </div>
+              )}
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[
-                    ['Linha', drawerItem.line], ['UO', drawerItem.uo], ['Tipo', drawerItem.type],
-                    ['Ferramentais', `${drawerItem.outils} grupos`],
+                  {[['Linha', drawerItem.line], ['UO', drawerItem.uo],
                     ['Última Atualização', drawerItem.updatedAt], ['Criado em', drawerItem.createdAt],
                     ['Criado por', drawerItem.createdBy],
                   ].map(([label, value]) => (
-                    <div key={label}>
-                      <div className="text-xs text-[var(--fg-secondary)]">{label}</div>
-                      <div className="font-medium truncate">{value || '—'}</div>
-                    </div>
+                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
                   ))}
                 </div>
               </div>
@@ -205,6 +252,7 @@ export function MaquinasPage() {
           </div>
         </>
       )}
+      {previewImage && <ImagePreview src={previewImage} alt="Foto da máquina" onClose={() => setPreviewImage(null)} />}
     </div>
   );
 }
