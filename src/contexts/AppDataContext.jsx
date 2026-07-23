@@ -135,6 +135,7 @@ export function AppDataProvider({ children }) {
       save({ ...data, flows: [...data.flows, copy] });
     },
     deleteFlow: (id) => save({ ...data, flows: data.flows.filter(f => f.id !== id) }),
+    deleteFlows: (ids) => { const set = new Set(ids); save({ ...data, flows: data.flows.filter(f => !set.has(f.id)) }); },
 
     // Formatos
     addFormato: (f) => save({ ...data, formatos: [...data.formatos, { ...f, id: uid('fmt'), createdAt: new Date().toISOString().slice(0, 10) }] }),

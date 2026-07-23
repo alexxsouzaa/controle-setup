@@ -106,7 +106,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
 }
 
 export function FluxosPage({ navigate }) {
-  const { flows, deleteFlow, duplicateFlow, updateFlow, exportAll, logAction } = useContext(AppDataContext);
+  const { flows, deleteFlow, deleteFlows, duplicateFlow, updateFlow, exportAll, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator, sortKey } = useSortable(flows, 'date');
   const [search, setSearch] = useState('');
@@ -169,10 +169,11 @@ export function FluxosPage({ navigate }) {
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
-    selected.forEach(id => deleteFlow(id));
-    logAction('delete', 'Fluxo', `${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
-    toast(`${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    const ids = Array.from(selected);
     clearSelection();
+    deleteFlows(ids);
+    logAction('delete', 'Fluxo', `${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} em massa`);
+    toast(`${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} com sucesso!`);
   };
 
   const handleExportPDF = (flow) => {
