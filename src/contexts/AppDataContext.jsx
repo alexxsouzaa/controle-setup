@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useState, useCallback, useMemo, useRef } from 'react';
 
 const STORAGE_KEY = 'controle-setup-data';
 
@@ -103,60 +103,66 @@ export const AppDataContext = createContext(SHAPE);
 
 export function AppDataProvider({ children }) {
   const [data, setData] = useState(loadData);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   const save = useCallback((newData) => {
+    dataRef.current = newData;
     setData(newData);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newData)); } catch (e) { /* quota exceeded */ }
   }, []);
 
-  const actions = useMemo(() => ({
+  const actions = useMemo(() => {
+    const d = () => dataRef.current;
+    return {
     // Machines
-    addMachine: (m) => save({ ...data, machines: [...data.machines, { ...m, id: uid('mac'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
-    updateMachine: (id, updates) => save({ ...data, machines: data.machines.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date().toISOString().slice(0, 10) } : m) }),
-    deleteMachine: (id) => save({ ...data, machines: data.machines.filter(m => m.id !== id) }),
-    deleteMachines: (ids) => { const set = new Set(ids); save({ ...data, machines: data.machines.filter(m => !set.has(m.id)) }); },
+    addMachine: (m) => save({ ...d(), machines: [...d().machines, { ...m, id: uid('mac'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
+    updateMachine: (id, updates) => save({ ...d(), machines: d().machines.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date().toISOString().slice(0, 10) } : m) }),
+    deleteMachine: (id) => save({ ...d(), machines: d().machines.filter(m => m.id !== id) }),
+    deleteMachines: (ids) => { const set = new Set(ids); save({ ...d(), machines: d().machines.filter(m => !set.has(m.id)) }); },
 
     // Products
-    addProduct: (p) => save({ ...data, products: [...data.products, { ...p, id: p.id || uid('prd'), code: p.code, created: p.created || new Date().toISOString().slice(0, 10) }] }),
-    updateProduct: (id, updates) => save({ ...data, products: data.products.map(p => p.id === id ? { ...p, ...updates } : p) }),
-    deleteProduct: (id) => save({ ...data, products: data.products.filter(p => p.id !== id) }),
-    deleteProducts: (ids) => { const set = new Set(ids); save({ ...data, products: data.products.filter(p => !set.has(p.id)) }); },
+    addProduct: (p) => save({ ...d(), products: [...d().products, { ...p, id: p.id || uid('prd'), code: p.code, created: p.created || new Date().toISOString().slice(0, 10) }] }),
+    updateProduct: (id, updates) => save({ ...d(), products: d().products.map(p => p.id === id ? { ...p, ...updates } : p) }),
+    deleteProduct: (id) => save({ ...d(), products: d().products.filter(p => p.id !== id) }),
+    deleteProducts: (ids) => { const set = new Set(ids); save({ ...d(), products: d().products.filter(p => !set.has(p.id)) }); },
 
     // Pieces
-    addPiece: (p) => save({ ...data, pieces: [...data.pieces, { ...p, id: p.id || uid('pcs') }] }),
-    updatePiece: (id, updates) => save({ ...data, pieces: data.pieces.map(p => p.id === id ? { ...p, ...updates } : p) }),
-    deletePiece: (id) => save({ ...data, pieces: data.pieces.filter(p => p.id !== id) }),
-    deletePieces: (ids) => { const set = new Set(ids); save({ ...data, pieces: data.pieces.filter(p => !set.has(p.id)) }); },
+    addPiece: (p) => save({ ...d(), pieces: [...d().pieces, { ...p, id: p.id || uid('pcs') }] }),
+    updatePiece: (id, updates) => save({ ...d(), pieces: d().pieces.map(p => p.id === id ? { ...p, ...updates } : p) }),
+    deletePiece: (id) => save({ ...d(), pieces: d().pieces.filter(p => p.id !== id) }),
+    deletePieces: (ids) => { const set = new Set(ids); save({ ...d(), pieces: d().pieces.filter(p => !set.has(p.id)) }); },
 
     // Flows
-    addFlow: (f) => save({ ...data, flows: [...data.flows, { ...f, id: uid('flow'), date: f.date || new Date().toISOString().slice(0, 10), ver: f.ver || 'v1.0' }] }),
-    updateFlow: (id, updates) => save({ ...data, flows: data.flows.map(f => f.id === id ? { ...f, ...updates } : f) }),
+    addFlow: (f) => save({ ...d(), flows: [...d().flows, { ...f, id: uid('flow'), date: f.date || new Date().toISOString().slice(0, 10), ver: f.ver || 'v1.0' }] }),
+    updateFlow: (id, updates) => save({ ...d(), flows: d().flows.map(f => f.id === id ? { ...f, ...updates } : f) }),
     duplicateFlow: (id) => {
-      const flow = data.flows.find(f => f.id === id);
+      const flow = d().flows.find(f => f.id === id);
       if (!flow) return;
       const copy = { ...flow, id: uid('flow'), name: flow.name.replace(/\(v[\d.]+\)/g, `(v${new Date().toISOString().slice(0, 10).replace(/-/g, '')})`) || `${flow.name} (cópia)`, date: new Date().toISOString().slice(0, 10) };
-      save({ ...data, flows: [...data.flows, copy] });
+      save({ ...d(), flows: [...d().flows, copy] });
     },
-    deleteFlow: (id) => save({ ...data, flows: data.flows.filter(f => f.id !== id) }),
-    deleteFlows: (ids) => { const set = new Set(ids); save({ ...data, flows: data.flows.filter(f => !set.has(f.id)) }); },
+    deleteFlow: (id) => save({ ...d(), flows: d().flows.filter(f => f.id !== id) }),
+    deleteFlows: (ids) => { const set = new Set(ids); save({ ...d(), flows: d().flows.filter(f => !set.has(f.id)) }); },
 
     // Formatos
-    addFormato: (f) => save({ ...data, formatos: [...data.formatos, { ...f, id: uid('fmt'), createdAt: new Date().toISOString().slice(0, 10) }] }),
-    updateFormato: (id, updates) => save({ ...data, formatos: data.formatos.map(f => f.id === id ? { ...f, ...updates } : f) }),
-    deleteFormato: (id) => save({ ...data, formatos: data.formatos.filter(f => f.id !== id) }),
+    addFormato: (f) => save({ ...d(), formatos: [...d().formatos, { ...f, id: uid('fmt'), createdAt: new Date().toISOString().slice(0, 10) }] }),
+    updateFormato: (id, updates) => save({ ...d(), formatos: d().formatos.map(f => f.id === id ? { ...f, ...updates } : f) }),
+    deleteFormato: (id) => save({ ...d(), formatos: d().formatos.filter(f => f.id !== id) }),
 
     // History
     logAction: (type, entity, detail) => save({
-      ...data,
-      history: [{ id: uid('log'), type, entity, detail, date: new Date().toISOString() }, ...data.history].slice(0, 200),
+      ...d(),
+      history: [{ id: uid('log'), type, entity, detail, date: new Date().toISOString() }, ...d().history].slice(0, 200),
     }),
-    clearHistory: () => save({ ...data, history: [] }),
+    clearHistory: () => save({ ...d(), history: [] }),
 
     // Export / Import
-    exportAll: () => JSON.stringify(data, null, 2),
+    exportAll: () => JSON.stringify(d(), null, 2),
     importData: (imported) => {
       if (!imported || typeof imported !== 'object') return 0;
-      const merged = { ...data };
+      const current = d();
+      const merged = { ...current };
       let total = 0;
       const ENTITY_KEYS = ['flows', 'machines', 'products', 'pieces', 'formatos'];
       ENTITY_KEYS.forEach(key => {
@@ -168,14 +174,14 @@ export function AppDataProvider({ children }) {
             date: key === 'flows' ? (item.date || new Date().toISOString().slice(0, 10)) : item.date,
             ver: key === 'flows' ? (item.ver || 'v1.0') : item.ver,
           }));
-          merged[key] = [...data[key], ...newItems];
+          merged[key] = [...current[key], ...newItems];
           total += newItems.length;
         }
       });
       if (total > 0) save(merged);
       return total;
     },
-  }), [data, save]);
+  }}, [save]);
 
   const stats = useMemo(() => ({
     totalFlows: data.flows.length,
