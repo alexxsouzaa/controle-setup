@@ -178,7 +178,7 @@ export function ProdutosPage() {
                 <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
                 <Select value={form.formato} onChange={e => setForm({ ...form, formato: e.target.value })}>
                   <option value="">Selecione</option>
-                  <option>Bisnaga</option><option>Frasco</option><option>Pote</option><option>Sachê</option><option>Ampola</option>
+                  <option>Reto</option><option>Boomerang</option><option>Transforms</option><option>Angular</option>
                 </Select>
               </div>
             </div>
