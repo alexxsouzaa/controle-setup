@@ -1,7 +1,6 @@
 import { useState, useContext } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
-import { useSortable } from '../hooks/useSortable';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
@@ -12,7 +11,19 @@ import { EmptyState } from '../components/EmptyState';
 export function ProdutosPage() {
   const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-  const { sorted, toggle, indicator } = useSortable(products, 'name');
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
+  const toggle = (key) => {
+    if (key === sortKey) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+  const indicator = (key) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+  const sorted = products.slice().sort((a, b) => {
+    const aVal = (a[sortKey] ?? '').toString().toLowerCase();
+    const bVal = (b[sortKey] ?? '').toString().toLowerCase();
+    const cmp = aVal.localeCompare(bVal, 'pt-BR', { numeric: true });
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
