@@ -119,9 +119,8 @@ export function ExportPage() {
         <Button variant="ghost" size="sm" onClick={() => {
           if (confirm('Tem certeza? Todos os dados serão perdidos permanentemente.')) {
             if (confirm('Esta ação não pode ser desfeita. Confirma a exclusão total dos dados?')) {
-              localStorage.removeItem('controle-setup-data');
-              localStorage.removeItem('cs-theme');
-              window.location.reload();
+localStorage.clear();
+window.location.href = window.location.pathname + '?reset=' + Date.now();
             }
           }
         }}><Icon name="alert" size={16} />Resetar todos os dados</Button>
