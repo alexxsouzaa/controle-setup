@@ -154,9 +154,9 @@ export function ProdutosPage() {
           )}
         </>
       ) : (
-        <Card>
+        <Card className="max-w-lg">
           <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+          <div className="grid md:grid-cols-3 grid-cols-1 gap-3">
             <div>
               <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label>
               <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
