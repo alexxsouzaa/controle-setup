@@ -112,6 +112,20 @@ export function ExportPage() {
           <Icon name="download" size={16} />Exportar {selected.size} entidade{selected.size !== 1 ? 's' : ''}
         </Button>
       </div>
+
+      <div className="mt-12 pt-6 border-t border-[var(--border)]">
+        <h3 className="text-sm font-semibold text-[var(--danger)] mb-2">Zona de Perigo</h3>
+        <p className="text-xs text-[var(--fg-secondary)] mb-3">Remove todos os dados cadastrados e restaura o sistema ao estado inicial.</p>
+        <Button variant="ghost" size="sm" onClick={() => {
+          if (confirm('Tem certeza? Todos os dados serão perdidos permanentemente.')) {
+            if (confirm('Esta ação não pode ser desfeita. Confirma a exclusão total dos dados?')) {
+              localStorage.removeItem('controle-setup-data');
+              localStorage.removeItem('cs-theme');
+              window.location.reload();
+            }
+          }
+        }}><Icon name="alert" size={16} />Resetar todos os dados</Button>
+      </div>
     </div>
   );
 }
