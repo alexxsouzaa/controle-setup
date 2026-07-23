@@ -119,7 +119,9 @@ export function ExportPage() {
         <Button variant="ghost" size="sm" onClick={() => {
           if (confirm('Tem certeza? Todos os dados serão perdidos permanentemente.')) {
             if (confirm('Esta ação não pode ser desfeita. Confirma a exclusão total dos dados?')) {
-localStorage.clear();
+const empty = JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] });
+localStorage.setItem('controle-setup-data', empty);
+localStorage.removeItem('cs-theme');
 window.location.href = window.location.pathname + '?reset=' + Date.now();
             }
           }

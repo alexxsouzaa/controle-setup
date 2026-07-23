@@ -10,8 +10,6 @@ import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 
 const categories = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
-const families = ['Capilar', 'Corporal', 'Facial', 'Oral', 'Solar'];
-const packagingOpts = ['Bisnaga PEAD', 'Bisnaga PEBD', 'Bisnaga Alumínio', 'Frasco PET', 'Pote PP'];
 
 export function ProdutosPage() {
   const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
@@ -24,9 +22,9 @@ export function ProdutosPage() {
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ code: '', name: '', category: '', family: '', vol: '', unit: 'ml', packaging: '', weight: '' });
+  const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml' });
 
-  const resetForm = () => { setForm({ code: '', name: '', category: '', family: '', vol: '', unit: 'ml', packaging: '', weight: '' }); setEditingId(null); };
+  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml' }); setEditingId(null); };
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) return;
@@ -39,7 +37,7 @@ export function ProdutosPage() {
   };
 
   const startEdit = (p) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', family: p.family || '', vol: String(p.vol || ''), unit: p.unit || 'ml', packaging: p.packaging || '', weight: p.weight || '' });
+    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml' });
     setEditingId(p.id);
     setTab('create');
   };
@@ -66,6 +64,17 @@ export function ProdutosPage() {
     clearSelection();
   };
 
+  const handleExportList = () => {
+    const json = JSON.stringify({ products: filtered }, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `produtos-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -74,6 +83,7 @@ export function ProdutosPage() {
           <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{products.length} produto{products.length !== 1 ? 's' : ''} cadastrado{products.length !== 1 ? 's' : ''}.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={handleExportList}><Icon name="download" size={16} />Exportar</Button>
           <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="grid-3x3" size={16} />{tab === 'list' ? 'Lista' : 'Ver Lista'}</Button>
           <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Novo Produto'}</Button>
         </div>
@@ -105,8 +115,8 @@ export function ProdutosPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Código', 'Nome', 'Categoria', 'Família', 'Volumetria', 'Embalagem', 'Peso', 'Criado em', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Categoria:'category', Família:'family', Volumetria:'vol', Embalagem:'packaging', Peso:'weight', 'Criado em':'created' };
+                    {['Código', 'Nome', 'Categoria', 'Volumetria', 'Criado em', 'Ações'].map(h => {
+                      const ks = { Código:'code', Nome:'name', Categoria:'category', Volumetria:'vol', 'Criado em':'created' };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -121,10 +131,7 @@ export function ProdutosPage() {
                       </td>
                       <td className="px-4 py-2.5 font-medium">{p.name}</td>
                       <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.category}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.family}</td>
                       <td className="px-4 py-2.5 font-nums">{p.vol} {p.unit}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.packaging}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.weight}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.created}</td>
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
@@ -152,16 +159,9 @@ export function ProdutosPage() {
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label><Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label><Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Família</label><Select value={form.family} onChange={e => setForm({ ...form, family: e.target.value })}><option value="">Selecione</option>{families.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Embalagem</label><Select value={form.packaging} onChange={e => setForm({ ...form, packaging: e.target.value })}><option value="">Selecione</option>{packagingOpts.map(o => <option key={o}>{o}</option>)}</Select></div>
-          </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volumetria *</label><Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} /></div>
             <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unidade</label><Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Peso estimado</label><Input placeholder="Ex: 420 g" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} /></div>
           </div>
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Produto'}</Button>
@@ -187,9 +187,8 @@ export function ProdutosPage() {
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category], ['Família', drawerItem.family],
-                    ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Embalagem', drawerItem.packaging],
-                    ['Peso', drawerItem.weight], ['Criado em', drawerItem.created],
+                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category],
+                    ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Criado em', drawerItem.created],
                   ].map(([label, value]) => (
                     <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
                   ))}
