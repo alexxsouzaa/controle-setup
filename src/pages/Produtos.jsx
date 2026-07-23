@@ -163,8 +163,8 @@ export function ProdutosPage() {
               <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
               <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
-            <div className="md:col-span-2">
-              <div className="grid grid-cols-3 gap-2">
+            <div className="md:col-span-2 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
                   <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
@@ -173,13 +173,13 @@ export function ProdutosPage() {
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unid.</label>
                   <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
-                  <Select value={form.formato} onChange={e => setForm({ ...form, formato: e.target.value })}>
-                    <option value="">Selecione</option>
-                    <option>Bisnaga</option><option>Frasco</option><option>Pote</option><option>Sachê</option><option>Ampola</option>
-                  </Select>
-                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
+                <Select value={form.formato} onChange={e => setForm({ ...form, formato: e.target.value })}>
+                  <option value="">Selecione</option>
+                  <option>Bisnaga</option><option>Frasco</option><option>Pote</option><option>Sachê</option><option>Ampola</option>
+                </Select>
               </div>
             </div>
           </div>
