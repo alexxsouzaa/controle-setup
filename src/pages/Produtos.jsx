@@ -20,9 +20,9 @@ export function ProdutosPage() {
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml' });
+  const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' });
 
-  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml' }); setEditingId(null); };
+  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' }); setEditingId(null); };
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) return;
@@ -35,7 +35,7 @@ export function ProdutosPage() {
   };
 
   const startEdit = (p) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml' });
+    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '' });
     setEditingId(p.id);
     setTab('create');
   };
@@ -113,8 +113,8 @@ export function ProdutosPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Código', 'Nome', 'Volumetria', 'Criado em', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Volumetria:'vol', 'Criado em':'created' };
+                    {['Código', 'Nome', 'Volumetria', 'Formato', 'Criado em', 'Ações'].map(h => {
+                      const ks = { Código:'code', Nome:'name', Volumetria:'vol', Formato:'formato', 'Criado em':'created' };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -129,6 +129,7 @@ export function ProdutosPage() {
                       </td>
                       <td className="px-4 py-2.5 font-medium">{p.name}</td>
                       <td className="px-4 py-2.5 font-nums">{p.vol} {p.unit}</td>
+                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.formato}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.created}</td>
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
@@ -163,7 +164,7 @@ export function ProdutosPage() {
               <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div>
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
                   <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
@@ -171,6 +172,13 @@ export function ProdutosPage() {
                 <div>
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unid.</label>
                   <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
+                  <Select value={form.formato} onChange={e => setForm({ ...form, formato: e.target.value })}>
+                    <option value="">Selecione</option>
+                    <option>Bisnaga</option><option>Frasco</option><option>Pote</option><option>Sachê</option><option>Ampola</option>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -200,7 +208,7 @@ export function ProdutosPage() {
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   {[['Código', drawerItem.code],
-                    ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Criado em', drawerItem.created],
+                    ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Formato', drawerItem.formato], ['Criado em', drawerItem.created],
                   ].map(([label, value]) => (
                     <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
                   ))}
