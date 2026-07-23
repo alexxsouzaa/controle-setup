@@ -25,7 +25,7 @@ export function ProdutosPage() {
   const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' }); setEditingId(null); };
 
   const handleSave = () => {
-    if (!form.code || !form.name || !form.vol) return;
+    if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatórios: Código, Nome e Volume.', 'warning'); return; }
     if (editingId) { updateProduct(editingId, { ...form, vol: Number(form.vol) }); }
     else { addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) }); }
     logAction(editingId ? 'update' : 'create', 'Produto', editingId ? `${form.name} atualizado` : `${form.name} cadastrado`);
