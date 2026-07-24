@@ -127,12 +127,14 @@ export function AppDataProvider({ children }) {
     // Machines
     addMachine: (m) => {
       const lines = m.lines || (m.line ? [m.line] : []);
+      const toolingCategories = m.toolingCategories || m.ferramentais || [];
       const user = m.createdBy || getCurrentUser();
-      save({ ...d(), machines: [...d().machines, { ...m, lines, id: uid('mac'), updatedAt: nowISO(), createdAt: m.createdAt || nowISO(), createdBy: user }] });
+      save({ ...d(), machines: [...d().machines, { ...m, lines, toolingCategories, id: uid('mac'), updatedAt: nowISO(), createdAt: m.createdAt || nowISO(), createdBy: user }] });
     },
     updateMachine: (id, updates) => {
       const merged = { ...updates };
       if (updates.lines) merged.lines = updates.lines;
+      if (updates.toolingCategories) merged.toolingCategories = updates.toolingCategories;
       save({ ...d(), machines: d().machines.map(m => m.id === id ? { ...m, ...merged, updatedAt: nowISO() } : m) });
     },
     deleteMachine: (id) => save({ ...d(), machines: d().machines.filter(m => m.id !== id) }),

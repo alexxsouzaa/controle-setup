@@ -8,7 +8,7 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
-import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../utils/compatibility';
+import { suggestFormatos, getMachineTooling } from '../utils/compatibility';
 
 const FORMAT_TYPES = ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
@@ -97,23 +97,17 @@ export function FormatosPage({ navigate }) {
 
   const handleMachineNext = () => {
     if (!selectedMachineId) { toast('Selecione uma máquina compatível.', 'warning'); return; }
-    const primaries = suggestPrimaryParts({ pieces: [], name: formatType }, pieces);
-    const filteredPieces = pieces.filter(p => {
-      const compat = p.compat || '';
-      const names = compat.split(',').map(s => s.trim());
-      return names.some(n => (selectedMachine?.name || '').includes(n) || n.includes(selectedMachine?.name || ''));
-    });
-    const withAlts = suggestAlternativeParts(
-      filteredPieces.map(p => ({ pieceId: p.id, pieceName: p.name, pieceCode: p.code || '', pieceCategory: p.category || '', isPrimary: true, available: (p.stock || 0) > (p.min || 0) })),
-      selectedMachine?.name || '', pieces
-    );
-    setPartsWithAlternatives(withAlts);
+    const tooling = getMachineTooling(selectedMachine);
+    const groupedPieces = tooling.map(cat => {
+      const catPieces = pieces.filter(p => p.category === cat).sort((a, b) => a.name.localeCompare(b.name));
+      return { category: cat, pieces: catPieces };
+    }).filter(g => g.pieces.length > 0);
+    setPartsWithAlternatives(groupedPieces);
     const selIds = [];
     const altIds = [];
-    withAlts.forEach(p => {
-      const catPieces = filteredPieces.filter(fp => fp.category === p.pieceCategory);
-      if (catPieces.length > 0) { selIds.push(catPieces[0].id); }
-      if (p.alternatives && p.alternatives.length > 0) { altIds.push(p.alternatives[0].piece.id); }
+    groupedPieces.forEach(g => {
+      if (g.pieces.length > 0) selIds.push(g.pieces[0].id);
+      if (g.pieces.length > 1) altIds.push(g.pieces[1].id);
     });
     setSelectedPartIds(selIds);
     setSelectedAltPartIds(altIds);
@@ -396,16 +390,15 @@ export function FormatosPage({ navigate }) {
                 </div>
               </div>
               <div className="space-y-3">
-                {partsWithAlternatives.length > 0 ? partsWithAlternatives.map(part => {
-                  const group = part.pieceCategory || '';
-                  const catPieces = pieces.filter(p => p.category === group);
+                {partsWithAlternatives.length > 0 ? partsWithAlternatives.map(group => {
+                  const catPieces = group.pieces || pieces.filter(p => p.category === group.category);
                   const selectedInCat = selectedPartIds.filter(id => catPieces.some(p => p.id === id));
                   const altInCat = selectedAltPartIds.filter(id => catPieces.some(p => p.id === id));
                   return (
-                    <div key={group} className="border border-[var(--border)] rounded-lg overflow-hidden">
+                    <div key={group.category} className="border border-[var(--border)] rounded-lg overflow-hidden">
                       <div className="p-3 bg-[var(--bg)]">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold uppercase">{group}</span>
+                          <span className="text-xs font-semibold uppercase">{group.category}</span>
                           <span className="text-xs text-[var(--fg-secondary)]">{selectedInCat.length} selecionada{selectedInCat.length !== 1 ? 's' : ''}</span>
                         </div>
                         <div className="space-y-1.5">

@@ -9,6 +9,7 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 import { ImagePreview } from '../components/ImagePreview';
+import { ALL_TOOLING_CATEGORIES } from '../utils/compatibility';
 
 const MAX_IMAGE_SIZE = 500 * 1024;
 
@@ -34,11 +35,13 @@ export function MaquinasPage({ navigate }) {
   const [page, setPage] = useState(1);
   const [step, setStep] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser() });
+  const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });
   const [imageError, setImageError] = useState('');
   const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
   const [lineSearch, setLineSearch] = useState('');
   const [lineInput, setLineInput] = useState('');
+  const [toolingDropdownOpen, setToolingDropdownOpen] = useState(false);
+  const [toolingSearch, setToolingSearch] = useState('');
   const fileInputRef = useRef(null);
   const [savedName, setSavedName] = useState('');
 
@@ -54,9 +57,10 @@ export function MaquinasPage({ navigate }) {
   const allUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
 
   const filteredLines = lineSearch ? allLines.filter(l => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
+  const filteredTooling = toolingSearch ? ALL_TOOLING_CATEGORIES.filter(c => c.toLowerCase().includes(toolingSearch.toLowerCase())) : ALL_TOOLING_CATEGORIES;
 
   const resetForm = () => {
-    setForm({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser() });
+    setForm({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });
     setEditingId(null); setImageError(''); setStep(1); setLineSearch(''); setLineInput('');
   };
 
@@ -64,6 +68,13 @@ export function MaquinasPage({ navigate }) {
     setForm(prev => ({
       ...prev,
       lines: prev.lines.includes(line) ? prev.lines.filter(l => l !== line) : [...prev.lines, line],
+    }));
+  };
+
+  const toggleTooling = (cat) => {
+    setForm(prev => ({
+      ...prev,
+      toolingCategories: prev.toolingCategories.includes(cat) ? prev.toolingCategories.filter(c => c !== cat) : [...prev.toolingCategories, cat],
     }));
   };
 
@@ -106,7 +117,7 @@ export function MaquinasPage({ navigate }) {
   };
 
   const startEdit = (m) => {
-    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || getCurrentUser() });
+    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || getCurrentUser(), toolingCategories: m.toolingCategories || [] });
     setEditingId(m.id);
     setTab('create');
     setStep(1);
@@ -330,6 +341,56 @@ export function MaquinasPage({ navigate }) {
 
           <Card>
             <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="wrench" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Ferramentais</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Selecione as categorias de peças que esta máquina utiliza. Essas categorias serão usadas para sugerir peças na criação de formatos.</p>
+              </div>
+            </div>
+            <div className="relative">
+              {form.toolingCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {form.toolingCategories.map(c => (
+                    <span key={c} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs font-medium">
+                      {c}
+                      <button type="button" onClick={() => toggleTooling(c)} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button type="button" onClick={() => setToolingDropdownOpen(!toolingDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
+                <span className={form.toolingCategories.length === 0 ? 'text-[var(--fg-muted)]' : 'font-medium'}>
+                  {form.toolingCategories.length === 0 ? 'Selecionar ferramentais...' : `${form.toolingCategories.length} ferramental${form.toolingCategories.length !== 1 ? 'is' : ''} selecionado${form.toolingCategories.length !== 1 ? 's' : ''}`}
+                </span>
+                <Icon name="arrow-right" size={14} className={`transition-transform ${toolingDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+              {toolingDropdownOpen && (
+                <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg">
+                  <div className="p-2 border-b border-[var(--border)]">
+                    <input className="shad-input w-full py-1.5 text-xs" placeholder="Buscar ferramental..." value={toolingSearch} onChange={e => setToolingSearch(e.target.value)} />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredTooling.length === 0 && (
+                      <div className="px-4 py-3 text-xs text-[var(--fg-muted)] text-center">Nenhum ferramental encontrado.</div>
+                    )}
+                    {filteredTooling.map(c => (
+                      <button key={c} type="button" onClick={() => { toggleTooling(c); }}
+                        className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm hover:bg-[var(--bg)] transition-colors ${form.toolingCategories.includes(c) ? 'bg-[var(--accent-light)]' : ''}`}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${form.toolingCategories.includes(c) ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                          {form.toolingCategories.includes(c) && <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                        </div>
+                        <span>{c}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
               <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
               <div>
                 <h3 className="text-sm font-semibold">Foto da máquina</h3>
@@ -397,7 +458,7 @@ export function MaquinasPage({ navigate }) {
               <Button variant="secondary" onClick={() => { resetForm(); setTab('create'); }}><Icon name="plus" size={16} />Criar nova máquina</Button>
             </div>
           </div>
-        </Card>
+          </Card>
       )}
 
       {drawerItem && (

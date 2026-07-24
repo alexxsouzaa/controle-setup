@@ -5,6 +5,20 @@
  * to recommend formats and parts for a given machine + line + product combination.
  */
 
+export const ALL_TOOLING_CATEGORIES = [
+  'Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador',
+  'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente',
+  'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente',
+  'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço',
+];
+
+export function getMachineTooling(machine) {
+  if (!machine) return [];
+  if (machine.toolingCategories && machine.toolingCategories.length > 0) return machine.toolingCategories;
+  if (machine.id && machine.id.startsWith('tgm')) return ALL_TOOLING_CATEGORIES.filter(c => ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Bico de Envase', 'Faca', 'Mordente', 'Régua do Mordente', 'Berço'].includes(c));
+  return [...ALL_TOOLING_CATEGORIES];
+}
+
 function compatLevel(points) {
   if (points >= 4) return { level: 'Alta', points, recommended: true };
   if (points >= 3) return { level: 'Média', points, recommended: false };
