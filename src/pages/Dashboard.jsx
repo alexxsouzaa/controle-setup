@@ -1,11 +1,10 @@
 import { useContext } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { Icon } from '../components/Icon';
-import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 
 export function DashboardPage({ navigate }) {
-  const { stats, flows, machines, pieces } = useContext(AppDataContext);
+  const { stats, flows } = useContext(AppDataContext);
 
   const recent = [...flows].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5);
 
@@ -49,7 +48,7 @@ export function DashboardPage({ navigate }) {
 
       <div className="grid lg:grid-cols-3 md:grid-cols-1 gap-4">
         <div className="lg:col-span-2 border border-[var(--border)] rounded-[8px] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
             <div className="flex items-center gap-2">
               <Icon name="file" size={15} />
               <span className="text-[13px] font-semibold text-[var(--fg)]">Fluxos Recentes</span>
@@ -58,40 +57,31 @@ export function DashboardPage({ navigate }) {
               Ver todos →
             </button>
           </div>
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {recent.length === 0 ? (
-              <div className="px-5 py-8 text-center">
-                <p className="text-[13px] text-[var(--fg-muted)]">Nenhum fluxo registrado.</p>
-                <Button variant="secondary" size="sm" className="mt-2" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
+          {recent.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <div className="w-9 h-9 rounded-[8px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--fg-muted)]">
+                <Icon name="file" size={18} />
               </div>
-            ) : (
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-muted)]">
-                    <th className="text-left px-5 py-2.5 font-medium">Nome</th>
-                    <th className="text-left px-5 py-2.5 font-medium hidden md:table-cell">Máquina</th>
-                    <th className="text-left px-5 py-2.5 font-medium w-20">Status</th>
-                    <th className="text-right px-5 py-2.5 font-medium w-24 hidden sm:table-cell">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recent.map(r => (
-                    <tr key={r.id} className="hover:bg-[var(--surface-hover)] cursor-pointer" onClick={() => navigate('/fluxos')}>
-                      <td className="px-5 py-2.5">
-                        <div className="font-medium truncate max-w-[300px]">{r.name}</div>
-                        <div className="text-[11px] text-[var(--fg-muted)] md:hidden">{r.machine} · {r.date}</div>
-                      </td>
-                      <td className="px-5 py-2.5 text-[var(--fg-secondary)] hidden md:table-cell">{r.machine}</td>
-                      <td className="px-5 py-2.5">
-                        <Badge>{r.ver || '—'}</Badge>
-                      </td>
-                      <td className="px-5 py-2.5 text-[11px] text-[var(--fg-muted)] font-mono text-right hidden sm:table-cell">{r.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+              <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
+              <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
+            </div>
+          ) : (
+            <div>
+              {recent.map(r => (
+                <button key={r.id} type="button" onClick={() => navigate('/fluxos')}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--success-muted)' }}>
+                    <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[12px] font-medium text-[var(--fg)] truncate">{r.name}</div>
+                    <div className="text-[11px] text-[var(--fg-muted)]">{r.machine} · {r.product}</div>
+                  </div>
+                  <div className="text-[10px] text-[var(--fg-muted)] font-mono whitespace-nowrap">{r.date}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
