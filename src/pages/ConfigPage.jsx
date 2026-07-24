@@ -8,27 +8,29 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 
 const UO_KEYS = [
-  { key: 'toolingCategories', label: 'Ferramentais', placeholder: 'Ex: Bico de Envase', desc: 'Categorias de peças usadas como ferramentais para esta UO.' },
-  { key: 'formatTypes', label: 'Tipos de Formato', placeholder: 'Ex: Frasco cilíndrico', desc: 'Tipos de formato disponíveis para esta UO.' },
+  { key: 'toolingCategories', label: 'Ferramentais', placeholder: 'Ex: Bico de Envase' },
+  { key: 'formatTypes', label: 'Tipos de Formato', placeholder: 'Ex: Frasco cilíndrico' },
 ];
 
-function ListEditor({ values, onAdd, onRemove, placeholder, inputVal, onInput }) {
+function TagList({ values, onRemove, onAdd, placeholder, inputVal, onInput }) {
   return (
-    <>
-      <div className="flex flex-wrap gap-1.5 mb-2">
+    <div>
+      <div className="flex flex-wrap gap-1.5 min-h-[28px] mb-2">
         {values.map(v => (
-          <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs font-medium">
+          <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px] font-medium text-[var(--fg)]">
             {v}
-            <button type="button" onClick={() => onRemove(v)} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
+            <button type="button" onClick={() => onRemove(v)} className="text-[var(--fg-muted)] hover:text-[var(--danger)] ml-0.5 leading-none">&times;</button>
           </span>
         ))}
-        {values.length === 0 && <span className="text-xs text-[var(--fg-muted)]">Nenhum item. Use o padrão do sistema.</span>}
+        {values.length === 0 && <span className="text-[11px] text-[var(--fg-muted)] leading-[26px]">Nenhum — usa o padrão do sistema.</span>}
       </div>
-      <div className="flex gap-2">
-        <Input placeholder={placeholder} value={inputVal} onChange={e => onInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') onAdd(); }} />
-        <Button variant="secondary" size="sm" onClick={onAdd} className="shrink-0">Adicionar</Button>
+      <div className="flex gap-1.5">
+        <div className="flex-1">
+          <Input placeholder={placeholder} value={inputVal} onChange={e => onInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') onAdd(); }} />
+        </div>
+        <Button variant="secondary" size="sm" onClick={onAdd}>Adicionar</Button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -45,15 +47,14 @@ export function ConfigPage() {
 
   const allUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
 
-  const getUoConfig = (uo) => uoConfigs.find(u => u.uo === uo);
-  const getUoValues = (uo, key) => getUoConfig(uo)?.[key] || [];
+  const getUoValues = (uo, key) => uoConfigs.find(u => u.uo === uo)?.[key] || [];
   const setUoValues = (uo, key, values) => setUoConfigs(prev => prev.map(u => u.uo === uo ? { ...u, [key]: values } : u));
 
   const addItem = (uo, key) => {
     const val = (uoInputs[`${uo}_${key}`] || '').trim();
     if (!val) return;
     const current = getUoValues(uo, key);
-    if (current.includes(val)) { toast(`"${val}" já existe.`, 'warning'); return; }
+    if (current.includes(val)) { toast(`"${val}" já existe nesta UO.`, 'warning'); return; }
     setUoValues(uo, key, [...current, val]);
     setUoInputs(prev => ({ ...prev, [`${uo}_${key}`]: '' }));
   };
@@ -86,56 +87,69 @@ export function ConfigPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Opções por UO</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">Configure ferramentais e tipos de formato específicos para cada Unidade Organizacional.</p>
+          <h1 className="text-[20px] font-semibold text-[var(--fg)]">Opções</h1>
+          <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Configure ferramentais e tipos de formato específicos para cada Unidade Organizacional.</p>
         </div>
         <Button variant="primary" onClick={handleSave}>
-          <Icon name="check-circle" size={16} />Salvar alterações
+          <Icon name="check-circle" size={15} />Salvar alterações
         </Button>
       </div>
 
-      <Card>
-        <div className="flex gap-2 mb-4">
-          <Select value={newUoName} onChange={e => setNewUoName(e.target.value)} className="flex-1">
-            <option value="">Selecione ou digite uma UO...</option>
+      <div className="flex gap-2 mb-6">
+        <div className="flex-1">
+          <Select value={newUoName} onChange={e => setNewUoName(e.target.value)}>
+            <option value="">Adicionar UO...</option>
             {allUos.filter(u => !uoConfigs.some(c => c.uo === u)).map(u => <option key={u}>{u}</option>)}
           </Select>
-          <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()}>Adicionar UO</Button>
         </div>
+        <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()}>Adicionar</Button>
+      </div>
 
-        {uoConfigs.length === 0 && (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3"><Icon name="settings" size={24} /></div>
-            <p className="text-sm font-medium mb-1">Nenhuma UO configurada</p>
-            <p className="text-xs text-[var(--fg-secondary)]">Adicione uma UO acima para personalizar ferramentais e formatos. Quando não configurado, o sistema usa os valores padrão.</p>
+      {uoConfigs.length === 0 ? (
+        <Card>
+          <div className="text-center py-10">
+            <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-4"><Icon name="settings" size={22} /></div>
+            <p className="text-[15px] font-medium text-[var(--fg)] mb-1">Nenhuma UO configurada</p>
+            <p className="text-[13px] text-[var(--fg-secondary)] max-w-sm mx-auto">Adicione uma Unidade Organizacional acima para personalizar os ferramentais e tipos de formato. Quando não configurado, o sistema usa os valores padrão.</p>
           </div>
-        )}
-
-        {uoConfigs.map(uo => (
-          <div key={uo.uo} className="mb-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] text-xs font-bold">{uo.uo.charAt(0)}</div>
-                <span className="text-sm font-semibold">{uo.uo}</span>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {uoConfigs.map(uo => (
+            <Card key={uo.uo}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[12px] font-semibold text-[var(--fg-secondary)] font-mono">
+                    {uo.uo.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-semibold text-[var(--fg)]">{uo.uo}</div>
+                    <div className="text-[11px] text-[var(--fg-muted)]">
+                      {uo.toolingCategories.length} ferramentais · {uo.formatTypes.length} formatos
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={() => removeUo(uo.uo)} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--danger)] transition-colors">Remover</button>
               </div>
-              <button type="button" onClick={() => removeUo(uo.uo)} className="text-xs text-[var(--danger)] hover:underline">Remover UO</button>
-            </div>
-            {UO_KEYS.map(k => (
-              <div key={k.key} className="mb-4 last:mb-0">
-                <label className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider mb-1 block">{k.label}</label>
-                <p className="text-[11px] text-[var(--fg-muted)] mb-2">{k.desc}</p>
-                <ListEditor
-                  values={uo[k.key]} onAdd={() => addItem(uo.uo, k.key)} onRemove={(v) => removeItem(uo.uo, k.key, v)}
-                  placeholder={k.placeholder} inputVal={uoInputs[`${uo.uo}_${k.key}`] || ''}
-                  onInput={(v) => setUoInputs(prev => ({ ...prev, [`${uo.uo}_${k.key}`]: v }))}
-                />
+              <div className="grid md:grid-cols-2 grid-cols-1 gap-5">
+                {UO_KEYS.map(k => (
+                  <div key={k.key}>
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-secondary)] mb-2 block">{k.label}</label>
+                    <TagList
+                      values={uo[k.key]} onRemove={(v) => removeItem(uo.uo, k.key, v)}
+                      onAdd={() => addItem(uo.uo, k.key)} placeholder={k.placeholder}
+                      inputVal={uoInputs[`${uo.uo}_${k.key}`] || ''}
+                      onInput={(v) => setUoInputs(prev => ({ ...prev, [`${uo.uo}_${k.key}`]: v }))}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ))}
-      </Card>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
