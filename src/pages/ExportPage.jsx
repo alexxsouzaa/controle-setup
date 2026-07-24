@@ -1,4 +1,4 @@
-import { useState, useContext, useMemo } from 'react';
+import { useState, useContext } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Button } from '../components/Button';
@@ -27,18 +27,10 @@ function jsonToXML(obj, root = 'data') {
 export function ExportPage() {
   const ctx = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-
-  const data = useMemo(() => {
-    const d = {};
-    ENTITIES.forEach(e => { d[e.key] = ctx[e.key] || []; });
-    return d;
-  }, [ctx]);
-
-  const counts = useMemo(() => {
-    const c = {};
-    ENTITIES.forEach(e => { c[e.key] = data[e.key].length; });
-    return c;
-  }, [data]);
+  const data = {};
+  ENTITIES.forEach(e => { data[e.key] = ctx[e.key] || []; });
+  const counts = {};
+  ENTITIES.forEach(e => { counts[e.key] = data[e.key].length; });
 
   const [selected, setSelected] = useState(() => new Set(ENTITIES.map(e => e.key)));
   const [format, setFormat] = useState('json');
