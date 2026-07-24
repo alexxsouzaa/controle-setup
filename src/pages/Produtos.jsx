@@ -163,27 +163,59 @@ export function ProdutosPage() {
           )}
         </>
       ) : (
-        <Card>
-          <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-3">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label>
-              <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
+              <h2 className="text-xl font-semibold tracking-tight">{editingId ? 'Editar Produto' : 'Novo Produto'}</h2>
+              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{editingId ? 'Altere as informações do produto.' : 'Cadastre um novo produto no catálogo.'}</p>
             </div>
-            <div className="md:col-span-2">
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
-              <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+          </div>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Identificação</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Informações básicas para identificar o produto.</p>
+              </div>
             </div>
-            <div className="md:col-span-2 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
-                  <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unid.</label>
-                  <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
-                </div>
+            <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label>
+                <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
+                <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Características</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Especificações técnicas do produto.</p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
+                <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unidade</label>
+                <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label>
+                <Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+                  <option value="">Selecione</option>
+                  <option>Shampoo</option><option>Condicionador</option><option>Creme</option>
+                  <option>Sérum</option><option>Loção</option><option>Gel</option>
+                  <option>Pomada</option><option>Óleo</option>
+                </Select>
               </div>
               <div>
                 <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
@@ -193,12 +225,13 @@ export function ProdutosPage() {
                 </Select>
               </div>
             </div>
-          </div>
-          <div className="flex gap-2 mt-6">
-            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Produto'}</Button>
+          </Card>
+
+          <div className="flex items-center justify-end gap-3">
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Produto'}</Button>
           </div>
-        </Card>
+        </div>
       )}
       {drawerItem && (
         <>
