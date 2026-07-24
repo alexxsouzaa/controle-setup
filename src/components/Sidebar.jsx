@@ -1,18 +1,18 @@
 import { Icon } from './Icon';
 
 const groups = [
-  { label: 'Principal', items: [
+  { label: 'Operação', items: [
     { id: '/dashboard', icon: 'home', label: 'Dashboard' },
-    { id: '/fluxos', icon: 'file', label: 'Fluxos de Setup' },
     { id: '/novo-setup', icon: 'wrench', label: 'Novo Fluxo' },
+    { id: '/fluxos', icon: 'file', label: 'Fluxos de Setup' },
   ]},
-  { label: 'Dados', items: [
+  { label: 'Catálogo', items: [
     { id: '/maquinas', icon: 'box', label: 'Máquinas' },
     { id: '/produtos', icon: 'grid-3x3', label: 'Produtos' },
     { id: '/pecas', icon: 'box', label: 'Peças' },
     { id: '/formatos', icon: 'grid-3x3', label: 'Formatos' },
   ]},
-  { label: 'Ferramentas', items: [
+  { label: 'Sistema', items: [
     { id: '/importar', icon: 'upload', label: 'Importar' },
     { id: '/exportar', icon: 'download', label: 'Exportar' },
     { id: '/historico', icon: 'clock', label: 'Histórico' },
