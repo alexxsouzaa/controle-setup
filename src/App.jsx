@@ -14,6 +14,7 @@ import { PecasPage } from './pages/Pecas';
 import { FormatosPage } from './pages/Formatos';
 import { ExportPage } from './pages/ExportPage';
 import { HistoricoPage } from './pages/HistoricoPage';
+import { ConfigPage } from './pages/ConfigPage';
 
 function renderRoutes(navigate) {
   return {
@@ -27,6 +28,7 @@ function renderRoutes(navigate) {
     '/formatos': { title: 'Formatos', page: <FormatosPage navigate={navigate} /> },
     '/exportar': { title: 'Exportar', page: <ExportPage /> },
     '/historico': { title: 'Histórico', page: <HistoricoPage /> },
+    '/opcoes': { title: 'Opções', page: <ConfigPage /> },
   };
 }
 

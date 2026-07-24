@@ -75,6 +75,16 @@ const DEFAULT_FLOWS = [
 
 const DEFAULT_FORMATOS = [];
 const DEFAULT_HISTORY = [];
+const DEFAULT_CONFIG = {
+  toolingCategories: [
+    'Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador',
+    'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente',
+    'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente',
+    'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço',
+  ],
+  formatTypes: ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'],
+  productCategories: ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'],
+};
 
 function loadData() {
   try {
@@ -88,6 +98,7 @@ function loadData() {
         flows: parsed.flows || DEFAULT_FLOWS,
         formatos: parsed.formatos || DEFAULT_FORMATOS,
         history: parsed.history || DEFAULT_HISTORY,
+        config: { ...DEFAULT_CONFIG, ...parsed.config },
       };
     }
   } catch (e) { /* ignore */ }
@@ -98,6 +109,7 @@ function loadData() {
     flows: DEFAULT_FLOWS,
     formatos: DEFAULT_FORMATOS,
     history: DEFAULT_HISTORY,
+    config: DEFAULT_CONFIG,
   };
 }
 
@@ -107,7 +119,7 @@ function uid(prefix) {
   return `${prefix}-${Date.now()}-${nextId}`;
 }
 
-const SHAPE = { machines: [], products: [], pieces: [], flows: [], formatos: [], history: [], stats: { totalFlows: 0, totalMachines: 0, totalProducts: 0, totalPieces: 0, totalFormatos: 0, activeMachines: 0, flowsToday: 0, lowStockPieces: 0 }, getCurrentUser: () => 'Operador', setCurrentUser: () => {} };
+const SHAPE = { machines: [], products: [], pieces: [], flows: [], formatos: [], history: [], config: DEFAULT_CONFIG, stats: { totalFlows: 0, totalMachines: 0, totalProducts: 0, totalPieces: 0, totalFormatos: 0, activeMachines: 0, flowsToday: 0, lowStockPieces: 0 }, getCurrentUser: () => 'Operador', setCurrentUser: () => {}, updateConfig: () => {} };
 export const AppDataContext = createContext(SHAPE);
 
 export function AppDataProvider({ children }) {
@@ -267,6 +279,7 @@ export function AppDataProvider({ children }) {
       if (total > 0) save(merged);
       return total;
     },
+    updateConfig: (updates) => save({ ...d(), config: { ...d().config, ...updates } }),
   }}, [save]);
 
   const stats = useMemo(() => ({
