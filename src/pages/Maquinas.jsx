@@ -34,7 +34,7 @@ export function MaquinasPage({ navigate }) {
   const [page, setPage] = useState(1);
   const [step, setStep] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '' });
+  const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser() });
   const [imageError, setImageError] = useState('');
   const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
   const [lineSearch, setLineSearch] = useState('');
@@ -56,7 +56,7 @@ export function MaquinasPage({ navigate }) {
   const filteredLines = lineSearch ? allLines.filter(l => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
 
   const resetForm = () => {
-    setForm({ name: '', lines: [], uo: '', image: '' });
+    setForm({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser() });
     setEditingId(null); setImageError(''); setStep(1); setLineSearch(''); setLineInput('');
   };
 
@@ -91,8 +91,7 @@ export function MaquinasPage({ navigate }) {
       toast('Já existe uma máquina com este nome.', 'warning'); return;
     }
     const createdAt = new Date().toISOString().slice(0, 10);
-    const createdBy = getCurrentUser();
-    const machineData = { ...form, createdBy, createdAt, updatedAt: createdAt };
+    const machineData = { ...form, createdAt, updatedAt: createdAt };
     if (editingId) {
       updateMachine(editingId, machineData);
       logAction('update', 'Máquina', `${form.name} atualizada`);
@@ -107,7 +106,7 @@ export function MaquinasPage({ navigate }) {
   };
 
   const startEdit = (m) => {
-    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '' });
+    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || getCurrentUser() });
     setEditingId(m.id);
     setTab('create');
     setStep(1);
@@ -370,7 +369,7 @@ export function MaquinasPage({ navigate }) {
             <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
               <div>
                 <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
-                <Input value={getCurrentUser()} disabled className="opacity-70" />
+                <Input value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
               </div>
               <div>
                 <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
