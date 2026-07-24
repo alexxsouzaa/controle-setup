@@ -137,8 +137,42 @@ export function AppDataProvider({ children }) {
     deleteProducts: (ids) => { const set = new Set(ids); save({ ...d(), products: d().products.filter(p => !set.has(p.id)) }); },
 
     // Pieces
-    addPiece: (p) => save({ ...d(), pieces: [...d().pieces, { ...p, id: p.id || uid('pcs') }] }),
-    updatePiece: (id, updates) => save({ ...d(), pieces: d().pieces.map(p => p.id === id ? { ...p, ...updates } : p) }),
+    addPiece: (p) => {
+      const code = p.code || (() => {
+        const existing = d().pieces.length + 1;
+        return `PC-${String(existing).padStart(3, '0')}`;
+      })();
+      const machinesList = d().machines;
+      const compatFromIds = (p.compatibleMachineIds || []).map(id => {
+        const m = machinesList.find(mch => mch.id === id);
+        return m?.name || '';
+      }).filter(Boolean).join(', ');
+      const user = p.createdBy || getCurrentUser();
+      save({ ...d(), pieces: [...d().pieces, {
+        ...p,
+        id: p.id || uid('pcs'),
+        code,
+        specification: p.specification || '',
+        compatibleMachineIds: p.compatibleMachineIds || [],
+        compat: p.compat || compatFromIds || '',
+        category: p.category || '',
+        location: p.location || '',
+        stock: p.stock ?? 0,
+        min: p.min ?? 0,
+        unit: p.unit || 'un',
+        createdBy: user,
+        createdAt: p.createdAt || nowISO(),
+        image: p.image || p.imageUrl || '',
+      }] });
+    },
+    updatePiece: (id, updates) => {
+      const machinesList = d().machines;
+      const compatFromIds = (updates.compatibleMachineIds || []).map(mid => {
+        const m = machinesList.find(mch => mch.id === mid);
+        return m?.name || '';
+      }).filter(Boolean).join(', ');
+      save({ ...d(), pieces: d().pieces.map(p => p.id === id ? { ...p, ...updates, compat: updates.compat || compatFromIds || p.compat || '' } : p) });
+    },
     deletePiece: (id) => save({ ...d(), pieces: d().pieces.filter(p => p.id !== id) }),
     deletePieces: (ids) => { const set = new Set(ids); save({ ...d(), pieces: d().pieces.filter(p => !set.has(p.id)) }); },
 

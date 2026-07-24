@@ -7,7 +7,6 @@ import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
-import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 import { ImagePreview } from '../components/ImagePreview';
 
@@ -24,8 +23,16 @@ function readFileAsDataURL(file) {
   });
 }
 
+function guessCategory(name) {
+  const lower = (name || '').toLowerCase();
+  for (const cat of categories) {
+    if (lower.includes(cat.toLowerCase())) return cat;
+  }
+  return '';
+}
+
 export function PecasPage() {
-  const { pieces, addPiece, deletePiece, deletePieces, updatePiece, logAction } = useContext(AppDataContext);
+  const { pieces, machines, addPiece, deletePiece, deletePieces, updatePiece, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator } = useSortable(pieces, 'name');
   const [tab, setTab] = useState('list');
@@ -36,21 +43,30 @@ export function PecasPage() {
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ code: '', name: '', category: '', compat: '', location: '', image: '' });
+  const [form, setForm] = useState({ name: '', specification: '', compatibleMachineIds: [], image: '' });
   const [imageError, setImageError] = useState('');
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ code: '', name: '', category: '', compat: '', location: '', image: '' });
+    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '' });
     setEditingId(null);
     setImageError('');
+  };
+
+  const toggleMachine = (id) => {
+    setForm(prev => {
+      const ids = prev.compatibleMachineIds.includes(id)
+        ? prev.compatibleMachineIds.filter(mid => mid !== id)
+        : [...prev.compatibleMachineIds, id];
+      return { ...prev, compatibleMachineIds: ids };
+    });
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
+    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado. Use JPG, PNG ou WEBP.'); return; }
     if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
     setImageError('');
     try {
@@ -60,22 +76,31 @@ export function PecasPage() {
   };
 
   const handleSave = () => {
-    if (!form.code || !form.name) return;
-    if (editingId) { updatePiece(editingId, form); }
-    else { addPiece(form); }
+    if (!form.name) { toast('Informe o nome da peça.', 'warning'); return; }
+    if (!form.specification) { toast('Informe a especificação da peça.', 'warning'); return; }
+    if (form.compatibleMachineIds.length === 0) { toast('Selecione pelo menos uma máquina compatível.', 'warning'); return; }
+    if (!form.image) { toast('Adicione uma foto da peça.', 'warning'); return; }
+    const category = guessCategory(form.name);
+    if (editingId) { updatePiece(editingId, { ...form, category }); }
+    else { addPiece({ ...form, category }); }
     logAction(editingId ? 'update' : 'create', 'Peça', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
-    toast(editingId ? 'Peça atualizada com sucesso!' : 'Peça cadastrada com sucesso!');
+    toast(editingId ? 'Peça atualizada com sucesso!' : `Peça "${form.name} — ${form.specification}" cadastrada com sucesso!`);
     resetForm();
     setTab('list');
   };
 
   const startEdit = (p) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', compat: p.compat || '', location: p.location || '', image: p.image || '' });
+    setForm({
+      name: p.name || '',
+      specification: p.specification || '',
+      compatibleMachineIds: p.compatibleMachineIds || [],
+      image: p.image || '',
+    });
     setEditingId(p.id);
     setTab('create');
   };
 
-  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || p.category.toLowerCase().includes(search));
+  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -95,6 +120,14 @@ export function PecasPage() {
     logAction('delete', 'Peça', `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa`);
     toast(`${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
+  };
+
+  const compNames = (p) => {
+    if (p.compatibleMachineIds && p.compatibleMachineIds.length > 0) {
+      return p.compatibleMachineIds.map(id => machines.find(m => m.id === id)?.name).filter(Boolean);
+    }
+    if (p.compat) return p.compat.split(',').map(s => s.trim()).filter(Boolean);
+    return [];
   };
 
   return (
@@ -136,15 +169,17 @@ export function PecasPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['', 'Código', 'Nome', 'Categoria', 'Máquinas Compatíveis', 'Localização', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Categoria:'category', 'Máquinas Compatíveis':'compat', Localização:'location' };
+                    {['', 'Código', 'Nome', 'Especificação', 'Compatível com', 'Ações'].map(h => {
+                      const ks = { Código:'code', Nome:'name', Especificação:'specification', 'Compatível com': null };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map(p => (
+                  {paged.map(p => {
+                    const names = compNames(p);
+                    return (
                     <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
                       <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5">
@@ -160,14 +195,18 @@ export function PecasPage() {
                         <button type="button" onClick={() => setDrawerItem(p)} className="hover:text-[var(--fg)] transition-colors">{p.code}</button>
                       </td>
                       <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                      <td className="px-4 py-2.5"><Badge>{p.category}</Badge></td>
-                      <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.compat}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.location}</td>
+                      <td className="px-4 py-2.5 text-xs font-mono text-[var(--fg-secondary)]">{p.specification || '—'}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {names.length > 0 ? names.map(n => <Badge key={n}>{n}</Badge>) : <span className="text-xs text-[var(--fg-muted)]">—</span>}
+                        </div>
+                      </td>
                       <td className="px-4 py-2.5">
                         <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -186,36 +225,59 @@ export function PecasPage() {
       ) : (
         <Card>
           <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label><Input placeholder="Ex: CP-PD-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label><Input placeholder="Ex: Copos Padrão" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          </div>
-          <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label><Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}><option value="">Selecione</option>{categories.map(o => <option key={o}>{o}</option>)}</Select></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis</label><Input placeholder="Ex: Norden C5, C6" value={form.compat} onChange={e => setForm({ ...form, compat: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Localização</label><Input placeholder="Ex: Armário A3" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></div>
-          </div>
-          <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-            <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça</label>
-            {form.image ? (
-              <div className="flex items-center gap-3">
-                <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
-                <div>
-                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover foto</button>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline ml-3">Trocar</button>
-                </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label>
+              <Input placeholder="Ex: Bico de Envase" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Especificação *</label>
+              <Input placeholder="Ex: 250 mm ou F9-F10" value={form.specification} onChange={e => setForm({ ...form, specification: e.target.value })} />
+              <p className="text-[11px] text-[var(--fg-muted)] mt-0.5">Especificação dimensional (mm) ou referência alfanumérica da peça.</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis *</label>
+              <p className="text-[11px] text-[var(--fg-muted)] mb-2">Selecione as máquinas onde esta peça pode ser utilizada.</p>
+              <div className="grid md:grid-cols-3 grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+                {machines.map(m => (
+                  <label key={m.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${form.compatibleMachineIds.includes(m.id) ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                    <input type="checkbox" checked={form.compatibleMachineIds.includes(m.id)} onChange={() => toggleMachine(m.id)} className="accent-[var(--accent)] cursor-pointer shrink-0" />
+                    <span className="text-xs leading-tight">{m.name}</span>
+                  </label>
+                ))}
               </div>
-            ) : (
-              <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
-                <div><div className="text-sm text-[var(--fg)]">Clique para adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • Máx. {MAX_IMAGE_SIZE / 1024} KB</div></div>
-              </button>
-            )}
-            {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              {form.compatibleMachineIds.length > 0 && (
+                <p className="text-xs text-[var(--fg-secondary)] mt-1">{form.compatibleMachineIds.length} máquina{form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada{form.compatibleMachineIds.length !== 1 ? 's' : ''}</p>
+              )}
+            </div>
+
+            <div className="p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+              <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça *</label>
+              {form.image ? (
+                <div className="flex items-center gap-3">
+                  <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
+                  <div>
+                    <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover foto</button>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline ml-3">Trocar</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={20} /></div>
+                  <div><div className="text-sm text-[var(--fg)]">Adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">Arraste ou clique para selecionar</div></div>
+                  <div className="text-[11px] text-[var(--fg-muted)]">PNG, JPG, WEBP • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
+                </button>
+              )}
+              {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
+              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+            </div>
           </div>
+
           <div className="flex gap-2 mt-6">
             <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Peça'}</Button>
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
@@ -250,12 +312,18 @@ export function PecasPage() {
               )}
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[['Código', drawerItem.code], ['Categoria', drawerItem.category],
-                    ['Máquinas Compatíveis', drawerItem.compat], ['Localização', drawerItem.location],
+                <div className="space-y-3 text-sm">
+                  {[['Código', drawerItem.code], ['Especificação', drawerItem.specification], ['Criado por', drawerItem.createdBy], ['Criado em', drawerItem.createdAt],
                   ].map(([label, value]) => (
-                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
+                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium">{value || '—'}</div></div>
                   ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Máquinas compatíveis</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {compNames(drawerItem).map(n => <Badge key={n}>{n}</Badge>)}
+                  {compNames(drawerItem).length === 0 && <span className="text-xs text-[var(--fg-muted)]">Nenhuma máquina compatível</span>}
                 </div>
               </div>
             </div>
