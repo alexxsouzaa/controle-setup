@@ -76,14 +76,6 @@ const DEFAULT_FLOWS = [
 const DEFAULT_FORMATOS = [];
 const DEFAULT_HISTORY = [];
 const DEFAULT_CONFIG = {
-  toolingCategories: [
-    'Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador',
-    'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente',
-    'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente',
-    'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço',
-  ],
-  formatTypes: ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'],
-  productCategories: ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'],
   uoConfigs: {},
 };
 

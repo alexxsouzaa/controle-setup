@@ -13,19 +13,13 @@ export const ALL_TOOLING_CATEGORIES = [
 ];
 
 export function getToolingOptions(uo, config) {
-  if (!config) return [...ALL_TOOLING_CATEGORIES];
-  if (uo && config.uoConfigs && config.uoConfigs[uo] && config.uoConfigs[uo].toolingCategories) {
-    return config.uoConfigs[uo].toolingCategories;
-  }
-  return config.toolingCategories || [...ALL_TOOLING_CATEGORIES];
+  if (uo && config?.uoConfigs?.[uo]?.toolingCategories) return config.uoConfigs[uo].toolingCategories;
+  return [...ALL_TOOLING_CATEGORIES];
 }
 
 export function getFormatTypeOptions(uo, config) {
-  if (!config) return ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
-  if (uo && config.uoConfigs && config.uoConfigs[uo] && config.uoConfigs[uo].formatTypes) {
-    return config.uoConfigs[uo].formatTypes;
-  }
-  return config.formatTypes || ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
+  if (uo && config?.uoConfigs?.[uo]?.formatTypes) return config.uoConfigs[uo].formatTypes;
+  return ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
 }
 
 export function getMachineTooling(machine, config) {
