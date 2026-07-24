@@ -212,8 +212,26 @@ export function AppDataProvider({ children }) {
     deleteFlows: (ids) => { const set = new Set(ids); save({ ...d(), flows: d().flows.filter(f => !set.has(f.id)) }); },
 
     // Formatos
-    addFormato: (f) => save({ ...d(), formatos: [...d().formatos, { ...f, id: uid('fmt'), createdAt: new Date().toISOString().slice(0, 10) }] }),
-    updateFormato: (id, updates) => save({ ...d(), formatos: d().formatos.map(f => f.id === id ? { ...f, ...updates } : f) }),
+    addFormato: (f) => {
+      const user = f.createdBy || getCurrentUser();
+      save({ ...d(), formatos: [...d().formatos, {
+        ...f,
+        id: uid('fmt'),
+        formatType: f.formatType || f.tipo || '',
+        volume: f.volume ?? (f.volMin ?? null),
+        volumeUnit: f.volumeUnit || 'ml',
+        machineId: f.machineId || '',
+        partIds: f.partIds || [],
+        alternativePartIds: f.alternativePartIds || [],
+        pieces: f.pieces || (f.partIds || []).map(id => {
+          const p = d().pieces.find(pc => pc.id === id);
+          return p ? { pieceId: p.id, pieceName: p.name, pieceCode: p.code || '', pieceCategory: p.category || '' } : null;
+        }).filter(Boolean),
+        createdBy: user,
+        createdAt: f.createdAt || nowISO(),
+      }] });
+    },
+    updateFormato: (id, updates) => save({ ...d(), formatos: d().formatos.map(f => f.id === id ? { ...f, ...updates, updatedBy: getCurrentUser(), updatedAt: nowISO() } : f) }),
     deleteFormato: (id) => save({ ...d(), formatos: d().formatos.filter(f => f.id !== id) }),
 
     // History
