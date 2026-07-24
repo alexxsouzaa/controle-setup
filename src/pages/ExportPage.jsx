@@ -1,9 +1,7 @@
 import { useState, useContext } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
-import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 
 const ENTITIES = [
@@ -32,9 +30,7 @@ export function ExportPage() {
   const ctx = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const data = {};
-  ENTITIES.forEach(e => {
-    data[e.key] = ctx[e.key] || [];
-  });
+  ENTITIES.forEach(e => { data[e.key] = ctx[e.key] || []; });
 
   const [selected, setSelected] = useState(() => new Set(ENTITIES.map(e => e.key)));
   const [format, setFormat] = useState('json');
@@ -47,13 +43,12 @@ export function ExportPage() {
     });
   };
 
-  const toggleAll = () => {
-    if (selected.size === ENTITIES.length) setSelected(new Set());
-    else setSelected(new Set(ENTITIES.map(e => e.key)));
-  };
+  const counts = { machines: ctx.machines?.length || 0, products: ctx.products?.length || 0, pieces: ctx.pieces?.length || 0, flows: ctx.flows?.length || 0, formatos: ctx.formatos?.length || 0 };
+  const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
+  const selectedCount = selected.size;
 
   const handleExport = () => {
-    if (selected.size === 0) { toast('Selecione ao menos uma entidade para exportar.', 'warning'); return; }
+    if (selectedCount === 0) { toast('Selecione ao menos uma entidade.', 'warning'); return; }
     const exportData = {};
     selected.forEach(key => { exportData[key] = data[key]; });
     const content = format === 'xml' ? jsonToXML(exportData, 'export') : JSON.stringify(exportData, null, 2);
@@ -68,64 +63,67 @@ export function ExportPage() {
     toast('Arquivo exportado com sucesso!');
   };
 
-  const counts = { machines: ctx.machines?.length || 0, products: ctx.products?.length || 0, pieces: ctx.pieces?.length || 0, flows: ctx.flows?.length || 0, formatos: ctx.formatos?.length || 0 };
-
   return (
-    <div className="p-6 max-w-2xl">
-      <h2 className="text-xl font-semibold tracking-tight mb-1">Exportar Dados</h2>
-      <p className="text-sm text-[var(--fg-secondary)] mb-6">Selecione as entidades e o formato para exportar.</p>
-
-      <Card className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold">Entidades</h3>
-          <button type="button" onClick={toggleAll} className="text-xs text-[var(--accent)] hover:underline">
-            {selected.size === ENTITIES.length ? 'Desmarcar todos' : 'Selecionar todos'}
-          </button>
+    <div className="p-6 max-w-xl">
+      <div className="border border-[var(--border)] rounded-[8px] overflow-hidden mb-6">
+        <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <h3 className="text-[13px] font-semibold text-[var(--fg)]">Entidades</h3>
         </div>
-        <div className="space-y-2">
+        <div className="divide-y divide-[var(--border-subtle)]">
           {ENTITIES.map(e => (
-            <label key={e.key} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--bg)] cursor-pointer transition-colors">
-              <input type="checkbox" checked={selected.has(e.key)} onChange={() => toggleEntity(e.key)} className="accent-[var(--accent)]" />
-              <span className="flex-1 text-sm font-medium">{e.label}</span>
-              <Badge>{counts[e.key]} registro{counts[e.key] !== 1 ? 's' : ''}</Badge>
+            <label key={e.key} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--surface-hover)] cursor-pointer transition-colors">
+              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${selected.has(e.key) ? 'bg-[var(--fg)] border-[var(--fg)]' : 'border-[var(--border)]'}`}>
+                {selected.has(e.key) && <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+              </div>
+              <span className="flex-1 text-[13px] font-medium text-[var(--fg)]">{e.label}</span>
+              <span className="text-[11px] font-mono text-[var(--fg-muted)]">{counts[e.key]}</span>
             </label>
           ))}
         </div>
-      </Card>
+        <div className="px-5 py-2.5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-between">
+          <span className="text-[11px] text-[var(--fg-muted)]">{selectedCount} de {ENTITIES.length} selecionada{selectedCount !== 1 ? 's' : ''}</span>
+          <button type="button" onClick={() => setSelected(selected.size === ENTITIES.length ? new Set() : new Set(ENTITIES.map(e => e.key)))}
+            className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+            {selected.size === ENTITIES.length ? 'Limpar' : 'Selecionar todos'}
+          </button>
+        </div>
+      </div>
 
-      <Card className="mb-6">
-        <h3 className="text-base font-semibold mb-3">Formato</h3>
-        <div className="flex gap-3">
+      <div className="border border-[var(--border)] rounded-[8px] overflow-hidden mb-6">
+        <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <h3 className="text-[13px] font-semibold text-[var(--fg)]">Formato</h3>
+        </div>
+        <div className="flex gap-3 p-4">
           {['json', 'xml'].map(f => (
             <button key={f} type="button" onClick={() => setFormat(f)}
-              className={`flex-1 px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${format === f ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}
-            >
+              className={`flex-1 px-4 py-3 rounded-[6px] border text-[13px] font-medium transition-all ${
+                format === f ? 'border-[var(--fg)] bg-[var(--fg)] text-[var(--bg)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)]'
+              }`}>
               .{f.toUpperCase()}
-              <div className="text-xs font-normal mt-0.5 opacity-70">{f === 'json' ? 'Estruturado' : 'Universal'}</div>
+              <div className="text-[11px] font-normal mt-0.5 opacity-60">{f === 'json' ? 'Estruturado' : 'Universal'}</div>
             </button>
           ))}
         </div>
-      </Card>
-
-      <div className="flex gap-2">
-        <Button variant="primary" onClick={handleExport} disabled={selected.size === 0}>
-          <Icon name="download" size={16} />Exportar {selected.size} entidade{selected.size !== 1 ? 's' : ''}
-        </Button>
       </div>
 
+      <Button variant="primary" onClick={handleExport} disabled={selectedCount === 0}>
+        <Icon name="download" size={15} />Exportar arquivo
+      </Button>
+
       <div className="mt-12 pt-6 border-t border-[var(--border)]">
-        <h3 className="text-sm font-semibold text-[var(--danger)] mb-2">Zona de Perigo</h3>
-        <p className="text-xs text-[var(--fg-secondary)] mb-3">Remove todos os dados cadastrados e restaura o sistema ao estado inicial.</p>
-        <Button variant="ghost" size="sm" onClick={() => {
-          if (confirm('Tem certeza? Todos os dados serão perdidos permanentemente.')) {
-            if (confirm('Esta ação não pode ser desfeita. Confirma a exclusão total dos dados?')) {
-const empty = JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] });
-localStorage.setItem('controle-setup-data', empty);
-localStorage.removeItem('cs-theme');
-window.location.href = window.location.pathname + '?reset=' + Date.now();
+        <h3 className="text-[13px] font-semibold text-[var(--danger)] mb-1">Zona de Perigo</h3>
+        <p className="text-[12px] text-[var(--fg-secondary)] mb-3">Remove todos os dados e restaura o sistema ao estado inicial.</p>
+        <button type="button" onClick={() => {
+          if (confirm('Tem certeza? Todos os dados serão perdidos.')) {
+            if (confirm('Confirma a exclusão total dos dados?')) {
+              localStorage.setItem('controle-setup-data', JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }));
+              localStorage.removeItem('cs-theme');
+              window.location.href = window.location.pathname + '?reset=' + Date.now();
             }
           }
-        }}><Icon name="alert" size={16} />Resetar todos os dados</Button>
+        }} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[12px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">
+          Resetar dados
+        </button>
       </div>
     </div>
   );
