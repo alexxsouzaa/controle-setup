@@ -86,15 +86,10 @@ export function ConfigPage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-[20px] font-semibold text-[var(--fg)]">Opções</h1>
-          <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Configure ferramentais e tipos de formato específicos para cada Unidade Organizacional.</p>
-        </div>
-        <Button variant="primary" onClick={handleSave}>
-          <Icon name="check-circle" size={15} />Salvar alterações
-        </Button>
+    <div className="p-6 max-w-3xl mx-auto pb-24">
+      <div className="mb-6">
+        <h1 className="text-[20px] font-semibold text-[var(--fg)]">Opções</h1>
+        <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Configure ferramentais e tipos de formato específicos para cada Unidade Organizacional.</p>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -150,6 +145,19 @@ export function ConfigPage() {
           ))}
         </div>
       )}
+
+      <div className="fixed bottom-0 left-0 right-0 ml-60 bg-[var(--bg)] border-t border-[var(--border)] px-6 py-3 flex items-center justify-end gap-3 z-10">
+        <span className="text-[12px] text-[var(--fg-muted)] mr-auto">
+          {uoConfigs.reduce((acc, uo) => acc + uo.toolingCategories.length + uo.formatTypes.length, 0)} itens configurados
+        </span>
+        <Button variant="ghost" size="sm" onClick={() => {
+          setUoConfigs(Object.entries(config.uoConfigs || {}).map(([uo, cfg]) => ({ uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])] })));
+          toast('Alterações descartadas.');
+        }}>Descartar</Button>
+        <Button variant="primary" onClick={handleSave}>
+          <Icon name="check-circle" size={15} />Salvar alterações
+        </Button>
+      </div>
     </div>
   );
 }
