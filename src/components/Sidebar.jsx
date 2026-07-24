@@ -1,5 +1,3 @@
-import { useContext } from 'react';
-import { ThemeContext } from '../contexts/ThemeContext';
 import { Icon } from './Icon';
 
 const groups = [
@@ -23,7 +21,6 @@ const groups = [
 ];
 
 export function Sidebar({ active, navigate }) {
-  const { theme, toggle } = useContext(ThemeContext);
   return (
     <aside className="w-60 border-r border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col fixed top-0 left-0 bottom-0 z-20">
       <div className="flex items-center gap-2.5 px-[18px] py-4 border-b border-[var(--border)] h-[52px]">
@@ -65,13 +62,6 @@ export function Sidebar({ active, navigate }) {
             <div className="text-[13px] font-medium text-[var(--fg)]">Operador</div>
             <div className="text-[11px] text-[var(--fg-muted)]">Usuário do sistema</div>
           </div>
-        </div>
-        <div className="flex items-center justify-between px-2.5 pt-2">
-          <button type="button" onClick={toggle} className="flex items-center gap-2 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />
-            {theme === 'dark' ? 'Claro' : 'Escuro'}
-          </button>
-          <span className="text-[10px] text-[var(--fg-muted)]">v2.4</span>
         </div>
       </div>
     </aside>
