@@ -359,16 +359,29 @@ export function MaquinasPage({ navigate }) {
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
           </Card>
 
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-[var(--fg-secondary)]">
-              Criado por: <span className="font-medium">{getCurrentUser()}</span>
-              <span className="mx-2">·</span>
-              Data: <span className="font-medium">{new Date().toISOString().slice(0, 10)}</span>
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="clock" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Registro</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Informações de criação geradas automaticamente.</p>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <Button variant="ghost" onClick={() => { if (form.name || form.lines.length > 0 || form.uo || form.image) { if (confirm('Descartar cadastro?\n\nAs informações preenchidas serão perdidas.')) { resetForm(); setTab('list'); } } else { resetForm(); setTab('list'); } }}>Cancelar</Button>
-              <Button variant="primary" onClick={handleSave} disabled={!form.name || !form.uo || form.lines.length === 0}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Máquina'}</Button>
+            <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
+                <Input value={getCurrentUser()} disabled className="opacity-70" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
+                <Input type="date" value={new Date().toISOString().slice(0, 10)} disabled className="opacity-70" />
+              </div>
             </div>
+          </Card>
+
+          <div className="flex items-center justify-end gap-3">
+            <Button variant="ghost" onClick={() => { if (form.name || form.lines.length > 0 || form.uo || form.image) { if (confirm('Descartar cadastro?\n\nAs informações preenchidas serão perdidas.')) { resetForm(); setTab('list'); } } else { resetForm(); setTab('list'); } }}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSave} disabled={!form.name || !form.uo || form.lines.length === 0}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Máquina'}</Button>
           </div>
         </div>
       ) : (
