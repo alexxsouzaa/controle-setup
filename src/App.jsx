@@ -45,7 +45,7 @@ export default function App() {
           <Sidebar active={hash} navigate={navigate} />
           <div className="flex-1 ml-60 flex flex-col">
             <Topbar title={route.title} onNew={route.allowNew ? () => navigate('/novo-setup') : null} />
-            <main className="flex-1 flex flex-col" aria-label="Conteúdo principal">{route.page}</main>
+            <main className="flex-1 flex flex-col overflow-y-auto" aria-label="Conteúdo principal">{route.page}</main>
           </div>
         </div>
         </ToastProvider>
