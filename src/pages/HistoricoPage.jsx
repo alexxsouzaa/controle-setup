@@ -7,7 +7,7 @@ import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
 
 const TYPE_ICONS = { create: 'check-circle', update: 'wrench', delete: 'alert', import: 'upload', export: 'download', duplicate: 'file' };
-const TYPE_COLORS = { create: 'var(--success)', update: 'var(--info)', delete: 'var(--danger)', import: 'var(--accent)', export: 'var(--fg-secondary)', duplicate: 'var(--warning)' };
+const TYPE_COLORS = { create: 'var(--success)', update: 'var(--accent)', delete: 'var(--danger)', import: 'var(--accent)', export: 'var(--fg-secondary)', duplicate: 'var(--warning)' };
 const TYPE_VARIANTS = { create: 'success', update: 'info', delete: 'danger', import: 'info', export: 'secondary', duplicate: 'warning' };
 
 export function HistoricoPage() {

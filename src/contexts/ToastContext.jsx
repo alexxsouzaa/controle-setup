@@ -27,7 +27,7 @@ export function ToastProvider({ children }) {
       <div className="fixed top-4 right-4 z-[2000] flex flex-col gap-2 pointer-events-none">
         {toasts.map(t => (
           <div key={t.id} role="alert"
-            className={`pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium ${t.type === 'success' ? 'bg-[var(--surface)] border-[var(--success)] text-[var(--success)] border-l-[3px]' : t.type === 'error' ? 'bg-[var(--surface)] border-[var(--danger)] text-[var(--danger)] border-l-[3px]' : t.type === 'warning' ? 'bg-[var(--surface)] border-[var(--warning)] text-[var(--warning)] border-l-[3px]' : 'bg-[var(--surface)] border-[var(--info)] text-[var(--info)] border-l-[3px]'}`}
+            className={`pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded border text-sm font-medium border-l-[3px] ${t.type === 'success' ? 'bg-[var(--surface)] border-[var(--success)] text-[var(--success)] border-l-[var(--success)]' : t.type === 'error' ? 'bg-[var(--surface)] border-[var(--danger)] text-[var(--danger)] border-l-[var(--danger)]' : t.type === 'warning' ? 'bg-[var(--surface)] border-[var(--warning)] text-[var(--warning)] border-l-[var(--warning)]' : 'bg-[var(--surface)] border-[var(--border)] text-[var(--fg)] border-l-[var(--accent)]'}`}
             style={{ minWidth: 280, maxWidth: 420, animation: 'toastIn 0.25s ease-out' }}
           >
             <span className="text-lg shrink-0">
