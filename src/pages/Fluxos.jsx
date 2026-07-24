@@ -17,7 +17,7 @@ const statusVariant = {
 
 const STATUSES = ['Concluído', 'Em andamento', 'Pendente', 'Cancelado'];
 
-function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast }) {
+function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate }) {
   const status = flow.status || 'Concluído';
   const [localStatus, setLocalStatus] = useState(status);
 
@@ -87,6 +87,11 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
           ) : null}
         </div>
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
+          <Button variant="primary" size="sm" onClick={() => {
+            sessionStorage.setItem('cs-edit-flow', JSON.stringify(flow));
+            navigate('/novo-setup');
+            onClose();
+          }}><Icon name="edit" size={14} />Editar</Button>
           <Button variant="secondary" size="sm" onClick={() => {
             const json = JSON.stringify({ flows: [flow] }, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
@@ -207,7 +212,7 @@ export function FluxosPage({ navigate }) {
 
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
-  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast]);
+  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate]);
 
   return (
     <div className="p-6">

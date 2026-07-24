@@ -1,6 +1,15 @@
 import { createContext, useState, useCallback, useMemo, useRef } from 'react';
 
 const STORAGE_KEY = 'controle-setup-data';
+const USER_KEY = 'cs-user';
+
+function getCurrentUser() {
+  try { return localStorage.getItem(USER_KEY) || 'Operador'; } catch { return 'Operador'; }
+}
+function setCurrentUser(name) {
+  try { localStorage.setItem(USER_KEY, name); } catch { /* ignore */ }
+}
+const nowISO = () => new Date().toISOString().slice(0, 10);
 
 const DEFAULT_MACHINES = [
   { id: 'norden-c5',  name: 'Norden C5',  line: 'C5',  uo: 'Bisnagas', type: 'Enchedora de Bisnagas',      outils: 6,  updatedAt: '2025-07-10', createdAt: '2024-03-15', createdBy: 'Carlos Silva' },
@@ -98,7 +107,7 @@ function uid(prefix) {
   return `${prefix}-${Date.now()}-${nextId}`;
 }
 
-const SHAPE = { machines: [], products: [], pieces: [], flows: [], formatos: [], history: [], stats: { totalFlows: 0, totalMachines: 0, totalProducts: 0, totalPieces: 0, totalFormatos: 0, activeMachines: 0, flowsToday: 0, lowStockPieces: 0 } };
+const SHAPE = { machines: [], products: [], pieces: [], flows: [], formatos: [], history: [], stats: { totalFlows: 0, totalMachines: 0, totalProducts: 0, totalPieces: 0, totalFormatos: 0, activeMachines: 0, flowsToday: 0, lowStockPieces: 0 }, getCurrentUser: () => 'Operador', setCurrentUser: () => {} };
 export const AppDataContext = createContext(SHAPE);
 
 export function AppDataProvider({ children }) {
@@ -134,12 +143,32 @@ export function AppDataProvider({ children }) {
     deletePieces: (ids) => { const set = new Set(ids); save({ ...d(), pieces: d().pieces.filter(p => !set.has(p.id)) }); },
 
     // Flows
-    addFlow: (f) => save({ ...d(), flows: [...d().flows, { ...f, id: uid('flow'), date: f.date || new Date().toISOString().slice(0, 10), ver: f.ver || 'v1.0' }] }),
-    updateFlow: (id, updates) => save({ ...d(), flows: d().flows.map(f => f.id === id ? { ...f, ...updates } : f) }),
+    addFlow: (f) => {
+      const existingVersions = d().flows.filter(fl => fl.code === f.code || fl.product === f.product).length;
+      const user = f.createdBy || getCurrentUser();
+      if (!getCurrentUser() || getCurrentUser() === 'Operador') setCurrentUser(user);
+      save({ ...d(), flows: [...d().flows, {
+        ...f,
+        id: uid('flow'),
+        date: f.date || nowISO(),
+        ver: f.ver || `V${existingVersions + 1}`,
+        machineId: f.machineId || '',
+        line: f.line || '',
+        productId: f.productId || '',
+        formatId: f.formatId || '',
+        parts: f.parts || { primary: [], alternative: [] },
+        createdBy: user,
+        createdAt: f.createdAt || nowISO(),
+        updatedBy: user,
+        updatedAt: nowISO(),
+      }] });
+    },
+    updateFlow: (id, updates) => save({ ...d(), flows: d().flows.map(f => f.id === id ? { ...f, ...updates, updatedBy: updates.updatedBy || getCurrentUser(), updatedAt: nowISO() } : f) }),
     duplicateFlow: (id) => {
       const flow = d().flows.find(f => f.id === id);
       if (!flow) return;
-      const copy = { ...flow, id: uid('flow'), name: flow.name.replace(/\(v[\d.]+\)/g, `(v${new Date().toISOString().slice(0, 10).replace(/-/g, '')})`) || `${flow.name} (cópia)`, date: new Date().toISOString().slice(0, 10) };
+      const existingVersions = d().flows.filter(fl => fl.code === flow.code).length;
+      const copy = { ...flow, id: uid('flow'), date: nowISO(), ver: `V${existingVersions + 1}`, createdBy: getCurrentUser(), createdAt: nowISO(), updatedBy: getCurrentUser(), updatedAt: nowISO() };
       save({ ...d(), flows: [...d().flows, copy] });
     },
     deleteFlow: (id) => save({ ...d(), flows: d().flows.filter(f => f.id !== id) }),
@@ -194,7 +223,7 @@ export function AppDataProvider({ children }) {
   }), [data]);
 
   return (
-    <AppDataContext.Provider value={{ ...data, ...actions, stats }}>
+    <AppDataContext.Provider value={{ ...data, ...actions, stats, getCurrentUser, setCurrentUser }}>
       {children}
     </AppDataContext.Provider>
   );
