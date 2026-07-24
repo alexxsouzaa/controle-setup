@@ -45,6 +45,7 @@ export function PecasPage() {
   const perPage = 15;
   const [form, setForm] = useState({ name: '', specification: '', compatibleMachineIds: [], image: '' });
   const [imageError, setImageError] = useState('');
+  const [machineDropdownOpen, setMachineDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
@@ -241,17 +242,45 @@ export function PecasPage() {
             <div>
               <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis *</label>
               <p className="text-[11px] text-[var(--fg-muted)] mb-2">Selecione as máquinas onde esta peça pode ser utilizada.</p>
-              <div className="grid md:grid-cols-3 grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-                {machines.map(m => (
-                  <label key={m.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${form.compatibleMachineIds.includes(m.id) ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                    <input type="checkbox" checked={form.compatibleMachineIds.includes(m.id)} onChange={() => toggleMachine(m.id)} className="accent-[var(--accent)] cursor-pointer shrink-0" />
-                    <span className="text-xs leading-tight">{m.name}</span>
-                  </label>
-                ))}
+              <div className="relative">
+                {form.compatibleMachineIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {form.compatibleMachineIds.map(id => {
+                      const m = machines.find(mch => mch.id === id);
+                      return m ? (
+                        <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs">
+                          {m.name}
+                          <button type="button" onClick={() => setForm(prev => ({ ...prev, compatibleMachineIds: prev.compatibleMachineIds.filter(mid => mid !== id) }))} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+                <button type="button" onClick={() => setMachineDropdownOpen(!machineDropdownOpen)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
+                  <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : ''}>
+                    {form.compatibleMachineIds.length === 0 ? 'Selecione as máquinas...' : `${form.compatibleMachineIds.length} máquina${form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada${form.compatibleMachineIds.length !== 1 ? 's' : ''}`}
+                  </span>
+                  <Icon name="arrow-right" size={14} className={`transition-transform ${machineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+                </button>
+                {machineDropdownOpen && (
+                  <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                    {machines.map(m => {
+                      const checked = form.compatibleMachineIds.includes(m.id);
+                      return (
+                        <button key={m.id} type="button" onClick={() => toggleMachine(m.id)}
+                          className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm hover:bg-[var(--bg)] transition-colors ${checked ? 'bg-[var(--accent-light)]' : ''}`}>
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                            {checked && <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                          </div>
+                          <span>{m.name}</span>
+                          <span className="text-xs text-[var(--fg-secondary)] ml-auto">{m.line}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              {form.compatibleMachineIds.length > 0 && (
-                <p className="text-xs text-[var(--fg-secondary)] mt-1">{form.compatibleMachineIds.length} máquina{form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada{form.compatibleMachineIds.length !== 1 ? 's' : ''}</p>
-              )}
             </div>
 
             <div className="p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
