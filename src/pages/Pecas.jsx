@@ -222,31 +222,51 @@ export function PecasPage() {
           )}
         </>
       ) : (
-        <Card>
-          <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
-
-          <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label>
-              <Input placeholder="Ex: Bico de Envase" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <h2 className="text-xl font-semibold tracking-tight">{editingId ? 'Editar Peça' : 'Nova Peça'}</h2>
+              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{editingId ? 'Altere as informações da peça.' : 'Cadastre uma nova peça no catálogo.'}</p>
             </div>
+          </div>
 
-            <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Especificação *</label>
-              <Input placeholder="Ex: 250 mm ou F9-F10" value={form.specification} onChange={e => setForm({ ...form, specification: e.target.value })} />
-              <p className="text-[11px] text-[var(--fg-muted)] mt-0.5">Especificação dimensional (mm) ou referência alfanumérica da peça.</p>
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Identificação</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Informações básicas para identificar a peça.</p>
+              </div>
             </div>
+            <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label>
+                <Input placeholder="Ex: Bico de Envase" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Especificação *</label>
+                <Input placeholder="Ex: 250 mm" value={form.specification} onChange={e => setForm({ ...form, specification: e.target.value })} />
+                <p className="text-[11px] text-[var(--fg-muted)] mt-0.5">Dimensional (mm) ou ref. alfanumérica.</p>
+              </div>
+            </div>
+          </Card>
 
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="settings" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Compatibilidade</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Máquinas onde esta peça pode ser utilizada.</p>
+              </div>
+            </div>
             <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Máquinas compatíveis *</label>
-              <p className="text-[11px] text-[var(--fg-muted)] mb-2">Selecione as máquinas onde esta peça pode ser utilizada.</p>
               <div className="relative">
                 {form.compatibleMachineIds.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {form.compatibleMachineIds.map(id => {
                       const m = machines.find(mch => mch.id === id);
                       return m ? (
-                        <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs">
+                        <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs font-medium">
                           {m.name}
                           <button type="button" onClick={() => setForm(prev => ({ ...prev, compatibleMachineIds: prev.compatibleMachineIds.filter(mid => mid !== id) }))} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
                         </span>
@@ -255,9 +275,9 @@ export function PecasPage() {
                   </div>
                 )}
                 <button type="button" onClick={() => setMachineDropdownOpen(!machineDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
-                  <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : ''}>
-                    {form.compatibleMachineIds.length === 0 ? 'Selecione as máquinas...' : `${form.compatibleMachineIds.length} máquina${form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada${form.compatibleMachineIds.length !== 1 ? 's' : ''}`}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
+                  <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : 'font-medium'}>
+                    {form.compatibleMachineIds.length === 0 ? 'Selecione as máquinas compatíveis...' : `${form.compatibleMachineIds.length} máquina${form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada${form.compatibleMachineIds.length !== 1 ? 's' : ''}`}
                   </span>
                   <Icon name="arrow-right" size={14} className={`transition-transform ${machineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
                 </button>
@@ -280,47 +300,64 @@ export function PecasPage() {
                 )}
               </div>
             </div>
+          </Card>
 
-            <div className="p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-              <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça</label>
-              {form.image ? (
-                <div className="flex items-center gap-3">
-                  <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
-                  <div>
-                    <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover foto</button>
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline ml-3">Trocar</button>
-                  </div>
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Foto da peça</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Adicione uma imagem para facilitar a identificação visual.</p>
+              </div>
+            </div>
+            {form.image ? (
+              <div className="flex items-center gap-4">
+                <img src={form.image} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-[var(--border)]" />
+                <div className="space-y-2">
+                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline block">Remover foto</button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline block">Trocar imagem</button>
                 </div>
-              ) : (
-                <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center gap-2 px-4 py-6 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full"
-                >
-                  <div className="w-10 h-10 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={20} /></div>
-                  <div><div className="text-sm text-[var(--fg)]">Adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">Arraste ou clique para selecionar</div></div>
-                  <div className="text-[11px] text-[var(--fg-muted)]">PNG, JPG, WEBP • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
-                </button>
-              )}
-              {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
-              <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
-            </div>
-          </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center gap-2 px-4 py-8 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full"
+              >
+                <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={24} /></div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-[var(--fg)]">Clique para adicionar foto</div>
+                  <div className="text-xs text-[var(--fg-secondary)] mt-0.5">PNG, JPG, WEBP • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
+                </div>
+              </button>
+            )}
+            {imageError && <p className="text-xs text-[var(--danger)] mt-2">{imageError}</p>}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+          </Card>
 
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-            <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
-              <Input value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="clock" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Registro</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Informações de criação.</p>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
-              <Input type="date" value={form.createdAt} onChange={e => setForm({ ...form, createdAt: e.target.value })} />
+            <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
+                <Input value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
+                <Input type="date" value={form.createdAt} onChange={e => setForm({ ...form, createdAt: e.target.value })} />
+              </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="flex gap-2 mt-6">
-            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Peça'}</Button>
+          <div className="flex items-center justify-end gap-3">
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Peça'}</Button>
           </div>
-        </Card>
+        </div>
       )}
       {drawerItem && (
         <>
