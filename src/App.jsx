@@ -21,7 +21,7 @@ function renderRoutes(navigate) {
     '/fluxos': { title: 'Fluxos de Setup', page: <FluxosPage navigate={navigate} /> },
     '/novo-setup': { title: 'Novo Fluxo', page: <NovoSetupPage navigate={navigate} />, allowNew: true },
     '/importar': { title: 'Importar', page: <ImportPage navigate={navigate} /> },
-    '/maquinas': { title: 'Máquinas', page: <MaquinasPage /> },
+    '/maquinas': { title: 'Máquinas', page: <MaquinasPage navigate={navigate} /> },
     '/produtos': { title: 'Produtos', page: <ProdutosPage /> },
     '/pecas': { title: 'Peças', page: <PecasPage /> },
     '/formatos': { title: 'Formatos', page: <FormatosPage navigate={navigate} /> },

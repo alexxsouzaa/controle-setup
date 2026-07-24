@@ -1,7 +1,6 @@
-import { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef, useMemo } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
-import { useSortable } from '../hooks/useSortable';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
@@ -11,7 +10,6 @@ import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 import { ImagePreview } from '../components/ImagePreview';
 
-const uos = ['Bisnagas', 'Potes', 'Refil'];
 const MAX_IMAGE_SIZE = 500 * 1024;
 
 function readFileAsDataURL(file) {
@@ -23,10 +21,9 @@ function readFileAsDataURL(file) {
   });
 }
 
-export function MaquinasPage() {
-  const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction } = useContext(AppDataContext);
+export function MaquinasPage({ navigate }) {
+  const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction, getCurrentUser } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-  const { sorted, toggle, indicator } = useSortable(machines, 'name');
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
   const [uoFilter, setUoFilter] = useState('');
@@ -35,12 +32,47 @@ export function MaquinasPage() {
   const [previewImage, setPreviewImage] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
+  const [step, setStep] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ name: '', line: '', uo: '', createdBy: '', image: '' });
+  const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '' });
   const [imageError, setImageError] = useState('');
+  const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
+  const [lineSearch, setLineSearch] = useState('');
+  const [lineInput, setLineInput] = useState('');
   const fileInputRef = useRef(null);
+  const [savedName, setSavedName] = useState('');
 
-  const resetForm = () => { setForm({ name: '', line: '', uo: '', createdBy: '', image: '' }); setEditingId(null); setImageError(''); };
+  const allLines = useMemo(() => {
+    const lines = new Set();
+    machines.forEach(m => {
+      if (m.lines && Array.isArray(m.lines)) m.lines.forEach(l => lines.add(l));
+      else if (m.line) lines.add(m.line);
+    });
+    return [...lines].sort();
+  }, [machines]);
+
+  const allUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
+
+  const filteredLines = lineSearch ? allLines.filter(l => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
+
+  const resetForm = () => {
+    setForm({ name: '', lines: [], uo: '', image: '' });
+    setEditingId(null); setImageError(''); setStep(1); setLineSearch(''); setLineInput('');
+  };
+
+  const toggleLine = (line) => {
+    setForm(prev => ({
+      ...prev,
+      lines: prev.lines.includes(line) ? prev.lines.filter(l => l !== line) : [...prev.lines, line],
+    }));
+  };
+
+  const addNewLine = () => {
+    const val = lineInput.trim();
+    if (!val) return;
+    if (!form.lines.includes(val)) setForm(prev => ({ ...prev, lines: [...prev.lines, val] }));
+    setLineInput('');
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -54,22 +86,37 @@ export function MaquinasPage() {
   };
 
   const handleSave = () => {
-    if (!form.name || !form.line || !form.uo) return;
-    if (editingId) { updateMachine(editingId, form); }
-    else { addMachine(form); }
-    logAction(editingId ? 'update' : 'create', 'Máquina', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
-    toast(editingId ? 'Máquina atualizada com sucesso!' : 'Máquina cadastrada com sucesso!');
-    resetForm();
-    setTab('list');
+    if (!form.name || !form.uo || form.lines.length === 0) { toast('Preencha todos os campos obrigatórios.', 'warning'); return; }
+    if (machines.some(m => m.name.toLowerCase() === form.name.toLowerCase() && m.id !== editingId)) {
+      toast('Já existe uma máquina com este nome.', 'warning'); return;
+    }
+    const createdAt = new Date().toISOString().slice(0, 10);
+    const createdBy = getCurrentUser();
+    const machineData = { ...form, createdBy, createdAt, updatedAt: createdAt };
+    if (editingId) {
+      updateMachine(editingId, machineData);
+      logAction('update', 'Máquina', `${form.name} atualizada`);
+      toast('Máquina atualizada com sucesso!');
+    } else {
+      addMachine(machineData);
+      logAction('create', 'Máquina', `${form.name} cadastrada`);
+      toast('Máquina cadastrada com sucesso!');
+    }
+    setSavedName(form.name);
+    setStep(2);
   };
 
   const startEdit = (m) => {
-    setForm({ name: m.name, line: m.line, uo: m.uo, createdBy: m.createdBy || '', image: m.image || '' });
+    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '' });
     setEditingId(m.id);
     setTab('create');
+    setStep(1);
   };
 
-  const filtered = sorted.filter(m => (!search || m.name.toLowerCase().includes(search) || m.line.toLowerCase().includes(search)) && (!uoFilter || m.uo === uoFilter));
+  const filtered = machines.filter(m =>
+    (!search || m.name.toLowerCase().includes(search.toLowerCase()) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(search.toLowerCase()))) &&
+    (!uoFilter || m.uo === uoFilter)
+  );
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -91,18 +138,21 @@ export function MaquinasPage() {
     clearSelection();
   };
 
+  const getLines = (m) => m.lines || (m.line ? [m.line] : []);
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Máquinas</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{machines.length} equipamento{machines.length !== 1 ? 's' : ''} cadastrado{machines.length !== 1 ? 's' : ''} em {uos.length} UO{uos.length !== 1 ? 's' : ''}.</p>
+          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{machines.length} máquina{machines.length !== 1 ? 's' : ''} cadastrada{machines.length !== 1 ? 's' : ''}.</p>
         </div>
         <div className="flex gap-2">
           <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="box" size={16} />{tab === 'list' ? 'Lista' : 'Ver Lista'}</Button>
           <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Nova Máquina'}</Button>
         </div>
       </div>
+
       {tab === 'list' ? (
         <>
           <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
@@ -112,7 +162,7 @@ export function MaquinasPage() {
             </div>
             <Select value={uoFilter} onChange={e => { setUoFilter(e.target.value); setPage(1); clearSelection(); }}>
               <option value="">Todas as UOs</option>
-              {uos.map(u => <option key={u} value={u}>{u}</option>)}
+              {allUos.map(u => <option key={u} value={u}>{u}</option>)}
             </Select>
           </div>
           {selectedCount > 0 && (
@@ -134,15 +184,16 @@ export function MaquinasPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Nome', 'Linha', 'UO', 'Última Atualização', 'Criado em', 'Criado por', 'Ações'].map(h => {
-                      const ks = { Nome:'name', Linha:'line', UO:'uo', 'Última Atualização':'updatedAt', 'Criado em':'createdAt', 'Criado por':'createdBy' };
-                      const k = ks[h];
-                      return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
-                    })}
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider cursor-pointer hover:text-[var(--fg)] select-none" onClick={() => {}}>Nome</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Linhas</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">UO</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Criado em</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Criado por</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(m => (
+                  {paged.map(m => (
                     <tr key={m.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-light)]' : ''}`}>
                       <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
                       <td className="px-4 py-2.5 font-medium">
@@ -157,9 +208,12 @@ export function MaquinasPage() {
                           <button type="button" onClick={() => setDrawerItem(m)} className="font-medium text-left hover:text-[var(--accent)] transition-colors">{m.name}</button>
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-[var(--fg-secondary)]">{m.line}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {getLines(m).map(l => <Badge key={l}>{l}</Badge>)}
+                        </div>
+                      </td>
                       <td className="px-4 py-2.5"><Badge>{m.uo}</Badge></td>
-                      <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{m.updatedAt}</td>
                       <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{m.createdAt}</td>
                       <td className="px-4 py-2.5 text-xs">{m.createdBy}</td>
                       <td className="px-4 py-2.5">
@@ -182,49 +236,158 @@ export function MaquinasPage() {
             </div>
           )}
         </>
-
-      ) : (
-        <Card>
-          <h3 className="text-base font-semibold mb-4">{editingId ? 'Editar Máquina' : 'Nova Máquina'}</h3>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da máquina *</label><Input placeholder="Ex: Norden C14" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Linha *</label><Input placeholder="Ex: C14" value={form.line} onChange={e => setForm({ ...form, line: e.target.value })} /></div>
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label><Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}><option value="">Selecione</option>{uos.map(u => <option key={u}>{u}</option>)}</Select></div>
+      ) : step === 1 ? (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
-              <Input placeholder="Ex: Carlos Silva" value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
+              <h2 className="text-xl font-semibold tracking-tight">{editingId ? 'Editar Máquina' : 'Nova Máquina'}</h2>
+              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">Cadastre uma nova máquina e associe as linhas de produção compatíveis.</p>
             </div>
           </div>
-          <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mt-4">
-            <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Foto da máquina</label>
-              {form.image ? (
-                <div className="flex items-center gap-3 p-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-                  <img src={form.image} alt="Preview" className="w-12 h-12 rounded-lg object-cover border border-[var(--border)] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">Foto da máquina</div>
-                    <div className="flex gap-2 mt-1">
-                      <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline">Trocar</button>
-                      <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline">Remover</button>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Identificação</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Informações básicas para identificar a máquina.</p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da máquina *</label>
+                <Input placeholder="Ex: Máquina de Envase 01" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label>
+                <Select value={form.uo} onChange={e => setForm({ ...form, uo: e.target.value })}>
+                  <option value="">Selecione a UO</option>
+                  {allUos.map(u => <option key={u}>{u}</option>)}
+                </Select>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="settings" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Linhas compatíveis</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Selecione as linhas de produção onde esta máquina atua.</p>
+              </div>
+            </div>
+            {allLines.length === 0 && filteredLines.length === 0 && !lineInput ? (
+              <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)] text-center">
+                <p className="text-sm text-[var(--fg-secondary)] mb-2">Nenhuma linha cadastrada.</p>
+                <p className="text-xs text-[var(--fg-muted)]">Digite o nome de uma linha abaixo para criar e associar.</p>
+              </div>
+            ) : null}
+            <div className="relative">
+              {form.lines.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {form.lines.map(l => (
+                    <span key={l} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs font-medium">
+                      {l}
+                      <button type="button" onClick={() => setForm(prev => ({ ...prev, lines: prev.lines.filter(ln => ln !== l) }))} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button type="button" onClick={() => setLineDropdownOpen(!lineDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
+                <span className={form.lines.length === 0 ? 'text-[var(--fg-muted)]' : 'font-medium'}>
+                  {form.lines.length === 0 ? 'Selecionar linhas...' : `${form.lines.length} linha${form.lines.length !== 1 ? 's' : ''} selecionada${form.lines.length !== 1 ? 's' : ''}`}
+                </span>
+                <Icon name="arrow-right" size={14} className={`transition-transform ${lineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+              {lineDropdownOpen && (
+                <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg">
+                  <div className="p-2 border-b border-[var(--border)]">
+                    <div className="flex gap-2">
+                      <input className="shad-input flex-1 py-1.5 text-xs" placeholder="Buscar ou criar linha..." value={lineSearch || lineInput} onChange={e => { setLineSearch(e.target.value); setLineInput(e.target.value); }} />
+                      {lineInput.trim() && !allLines.includes(lineInput.trim()) && (
+                        <button type="button" onClick={() => { addNewLine(); setLineSearch(''); }} className="px-2 py-1 rounded text-xs bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] shrink-0">Criar</button>
+                      )}
                     </div>
                   </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredLines.length === 0 && !lineInput.trim() && (
+                      <div className="px-4 py-3 text-xs text-[var(--fg-muted)] text-center">Nenhuma linha disponível. Digite para criar uma nova.</div>
+                    )}
+                    {filteredLines.map(l => (
+                      <button key={l} type="button" onClick={() => { toggleLine(l); setLineSearch(''); setLineInput(''); }}
+                        className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm hover:bg-[var(--bg)] transition-colors ${form.lines.includes(l) ? 'bg-[var(--accent-light)]' : ''}`}>
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${form.lines.includes(l) ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                          {form.lines.includes(l) && <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                        </div>
+                        <span>{l}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full text-left">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="upload" size={18} /></div>
-                  <div className="text-left"><div className="text-sm text-[var(--fg)]">Adicionar foto</div><div className="text-xs text-[var(--fg-secondary)]">PNG, JPG • 500 KB máx</div></div>
-                </button>
               )}
-              {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
+              <div>
+                <h3 className="text-sm font-semibold">Foto da máquina</h3>
+                <p className="text-xs text-[var(--fg-secondary)]">Opcional. Facilita a identificação visual da máquina.</p>
+              </div>
+            </div>
+            {form.image ? (
+              <div className="flex items-center gap-4">
+                <img src={form.image} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-[var(--border)]" />
+                <div className="space-y-2">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline block">Trocar imagem</button>
+                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline block">Remover foto</button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center gap-2 px-4 py-8 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full">
+                <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={24} /></div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-[var(--fg)]">Adicionar foto</div>
+                  <div className="text-xs text-[var(--fg-secondary)] mt-0.5">PNG, JPG, WEBP • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
+                </div>
+              </button>
+            )}
+            {imageError && <p className="text-xs text-[var(--danger)] mt-2">{imageError}</p>}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+          </Card>
+
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-[var(--fg-secondary)]">
+              Criado por: <span className="font-medium">{getCurrentUser()}</span>
+              <span className="mx-2">·</span>
+              Data: <span className="font-medium">{new Date().toISOString().slice(0, 10)}</span>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="ghost" onClick={() => { if (form.name || form.lines.length > 0 || form.uo || form.image) { if (confirm('Descartar cadastro?\n\nAs informações preenchidas serão perdidas.')) { resetForm(); setTab('list'); } } else { resetForm(); setTab('list'); } }}>Cancelar</Button>
+              <Button variant="primary" onClick={handleSave} disabled={!form.name || !form.uo || form.lines.length === 0}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Máquina'}</Button>
             </div>
           </div>
-          <div className="flex gap-2 mt-6">
-            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Máquina'}</Button>
-            <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+        </div>
+      ) : (
+        <Card>
+          <div className="text-center py-8">
+            <div className="w-16 h-16 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
+              <Icon name="check-circle" size={32} />
+            </div>
+            <h3 className="text-xl font-semibold mb-1">{editingId ? 'Máquina atualizada com sucesso!' : 'Máquina criada com sucesso!'}</h3>
+            <div className="text-base font-medium text-[var(--accent)] mt-2 mb-1">{savedName}</div>
+            <p className="text-sm text-[var(--fg-secondary)] mb-8 max-w-sm mx-auto">A máquina foi cadastrada e está disponível para utilização nos fluxos de setup.</p>
+            <div className="flex gap-3 justify-center">
+              <Button variant="primary" onClick={() => { navigate('/maquinas'); }}><Icon name="box" size={16} />Ver máquinas</Button>
+              <Button variant="secondary" onClick={() => { resetForm(); setTab('create'); }}><Icon name="plus" size={16} />Criar nova máquina</Button>
+            </div>
           </div>
         </Card>
       )}
+
       {drawerItem && (
         <>
           <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} onKeyDown={e => e.key === 'Escape' && setDrawerItem(null)} />
@@ -253,13 +416,11 @@ export function MaquinasPage() {
               )}
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[['Linha', drawerItem.line], ['UO', drawerItem.uo],
-                    ['Última Atualização', drawerItem.updatedAt], ['Criado em', drawerItem.createdAt],
-                    ['Criado por', drawerItem.createdBy],
-                  ].map(([label, value]) => (
-                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
-                  ))}
+                <div className="space-y-3 text-sm">
+                  <div><div className="text-xs text-[var(--fg-secondary)]">UO</div><div className="font-medium">{drawerItem.uo || '—'}</div></div>
+                  <div><div className="text-xs text-[var(--fg-secondary)]">Linhas</div><div className="flex flex-wrap gap-1 mt-1">{getLines(drawerItem).map(l => <Badge key={l}>{l}</Badge>)}</div></div>
+                  <div><div className="text-xs text-[var(--fg-secondary)]">Criado por</div><div className="font-medium">{drawerItem.createdBy || '—'}</div></div>
+                  <div><div className="text-xs text-[var(--fg-secondary)]">Criado em</div><div className="font-medium">{drawerItem.createdAt || '—'}</div></div>
                 </div>
               </div>
             </div>

@@ -125,8 +125,16 @@ export function AppDataProvider({ children }) {
     const d = () => dataRef.current;
     return {
     // Machines
-    addMachine: (m) => save({ ...d(), machines: [...d().machines, { ...m, id: uid('mac'), updatedAt: new Date().toISOString().slice(0, 10), createdAt: m.createdAt || new Date().toISOString().slice(0, 10) }] }),
-    updateMachine: (id, updates) => save({ ...d(), machines: d().machines.map(m => m.id === id ? { ...m, ...updates, updatedAt: new Date().toISOString().slice(0, 10) } : m) }),
+    addMachine: (m) => {
+      const lines = m.lines || (m.line ? [m.line] : []);
+      const user = m.createdBy || getCurrentUser();
+      save({ ...d(), machines: [...d().machines, { ...m, lines, id: uid('mac'), updatedAt: nowISO(), createdAt: m.createdAt || nowISO(), createdBy: user }] });
+    },
+    updateMachine: (id, updates) => {
+      const merged = { ...updates };
+      if (updates.lines) merged.lines = updates.lines;
+      save({ ...d(), machines: d().machines.map(m => m.id === id ? { ...m, ...merged, updatedAt: nowISO() } : m) });
+    },
     deleteMachine: (id) => save({ ...d(), machines: d().machines.filter(m => m.id !== id) }),
     deleteMachines: (ids) => { const set = new Set(ids); save({ ...d(), machines: d().machines.filter(m => !set.has(m.id)) }); },
 
