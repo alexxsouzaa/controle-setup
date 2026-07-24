@@ -128,7 +128,7 @@ export function ConfigPage() {
                 </div>
                 <button type="button" onClick={() => removeUo(uo.uo)} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--danger)] transition-colors">Remover</button>
               </div>
-              <div className="grid md:grid-cols-2 grid-cols-1 gap-5">
+              <div className="space-y-5">
                 {UO_KEYS.map(k => (
                   <div key={k.key}>
                     <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-secondary)] mb-2 block">{k.label}</label>
