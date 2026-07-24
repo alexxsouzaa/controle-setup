@@ -32,7 +32,7 @@ function guessCategory(name) {
 }
 
 export function PecasPage() {
-  const { pieces, machines, addPiece, deletePiece, deletePieces, updatePiece, logAction } = useContext(AppDataContext);
+  const { pieces, machines, addPiece, deletePiece, deletePieces, updatePiece, logAction, getCurrentUser } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const { sorted, toggle, indicator } = useSortable(pieces, 'name');
   const [tab, setTab] = useState('list');
@@ -43,13 +43,13 @@ export function PecasPage() {
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
   const perPage = 15;
-  const [form, setForm] = useState({ name: '', specification: '', compatibleMachineIds: [], image: '' });
+  const [form, setForm] = useState({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
   const [imageError, setImageError] = useState('');
   const [machineDropdownOpen, setMachineDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const resetForm = () => {
-    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '' });
+    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
     setEditingId(null);
     setImageError('');
   };
@@ -95,6 +95,8 @@ export function PecasPage() {
       specification: p.specification || '',
       compatibleMachineIds: p.compatibleMachineIds || [],
       image: p.image || '',
+      createdBy: p.createdBy || getCurrentUser(),
+      createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     });
     setEditingId(p.id);
     setTab('create');
@@ -300,6 +302,17 @@ export function PecasPage() {
               )}
               {imageError && <p className="text-xs text-[var(--danger)] mt-1">{imageError}</p>}
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
+              <Input value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
+              <Input type="date" value={form.createdAt} onChange={e => setForm({ ...form, createdAt: e.target.value })} />
             </div>
           </div>
 
