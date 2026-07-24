@@ -17,7 +17,7 @@ const statusVariant = {
 
 const STATUSES = ['Concluído', 'Em andamento', 'Pendente', 'Cancelado'];
 
-function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate }) {
+function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF }) {
   const status = flow.status || 'Concluído';
   const [localStatus, setLocalStatus] = useState(status);
 
@@ -212,7 +212,7 @@ export function FluxosPage({ navigate }) {
 
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
-  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate]);
+  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF]);
 
   return (
     <div className="p-6">

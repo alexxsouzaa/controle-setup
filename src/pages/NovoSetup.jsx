@@ -58,6 +58,9 @@ export function NovoSetupPage({ navigate }) {
     if (!saved) return;
     try {
       const flow = JSON.parse(saved);
+      if (!flow.id) { toast('Erro: fluxo inválido para edição.', 'warning'); sessionStorage.removeItem('cs-edit-flow'); return; }
+      const currentFlow = flows.find(f => f.id === flow.id);
+      if (!currentFlow) { toast('Fluxo não encontrado. Ele pode ter sido excluído.', 'warning'); sessionStorage.removeItem('cs-edit-flow'); return; }
       setEditingFlowId(flow.id);
       const m = machines.find(mch => mch.id === flow.machineId || mch.name === flow.machine);
       if (m) { setSelectedMachineId(m.id); setSelectedLine(flow.line || m.line); }
@@ -71,8 +74,8 @@ export function NovoSetupPage({ navigate }) {
         const fmt = formatos.find(f => f.id === flow.formatId);
         if (fmt) setSelectedFormato(fmt);
       }
-      const primaries = flow.parts?.primary || [];
-      const alternatives = flow.parts?.alternative || [];
+      const primaries = flow.parts?.primary || (flow.tooling || []).filter(t => t.isPrimary) || [];
+      const alternatives = flow.parts?.alternative || (flow.tooling || []).filter(t => t.isAlternative) || [];
       const selections = {};
       [...primaries, ...alternatives].forEach(p => {
         const group = p.group || p.pieceCategory || '';
@@ -86,8 +89,11 @@ export function NovoSetupPage({ navigate }) {
         setPartsWithAlternatives(allParts);
       }
       setStep(5);
-    } catch (e) { /* ignore */ }
-    sessionStorage.removeItem('cs-edit-flow');
+      sessionStorage.removeItem('cs-edit-flow');
+    } catch (e) {
+      toast('Erro ao carregar dados do fluxo para edição.', 'warning');
+      sessionStorage.removeItem('cs-edit-flow');
+    }
   }, []);
 
   const activeProduct = useMemo(() =>
