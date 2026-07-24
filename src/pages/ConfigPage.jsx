@@ -5,7 +5,6 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
-import { Select } from '../components/Select';
 
 const UO_KEYS = [
   { key: 'toolingCategories', label: 'Ferramentais', placeholder: 'Ex: Bico de Envase' },
@@ -92,14 +91,25 @@ export function ConfigPage() {
         <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Configure ferramentais e tipos de formato específicos para cada Unidade Organizacional.</p>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <div className="flex-1">
-          <Select value={newUoName} onChange={e => setNewUoName(e.target.value)}>
-            <option value="">Adicionar UO...</option>
-            {allUos.filter(u => !uoConfigs.some(c => c.uo === u)).map(u => <option key={u}>{u}</option>)}
-          </Select>
+      <div className="mb-6">
+        <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-secondary)] mb-2 block">Adicionar UO</label>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input placeholder="Digite o nome da nova UO..." value={newUoName} onChange={e => setNewUoName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addUo(); }} />
+          </div>
+          <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()}>Adicionar</Button>
         </div>
-        <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()}>Adicionar</Button>
+        {allUos.filter(u => !uoConfigs.some(c => c.uo === u)).length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="text-[11px] text-[var(--fg-muted)] leading-[24px] mr-1">UOs existentes:</span>
+            {allUos.filter(u => !uoConfigs.some(c => c.uo === u)).map(u => (
+              <button key={u} type="button" onClick={() => { setNewUoName(u); }}
+                className="px-2 py-1 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+                {u}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {uoConfigs.length === 0 ? (
