@@ -80,7 +80,6 @@ export function PecasPage() {
     if (!form.name) { toast('Informe o nome da peça.', 'warning'); return; }
     if (!form.specification) { toast('Informe a especificação da peça.', 'warning'); return; }
     if (form.compatibleMachineIds.length === 0) { toast('Selecione pelo menos uma máquina compatível.', 'warning'); return; }
-    if (!form.image) { toast('Adicione uma foto da peça.', 'warning'); return; }
     const category = guessCategory(form.name);
     if (editingId) { updatePiece(editingId, { ...form, category }); }
     else { addPiece({ ...form, category }); }
@@ -101,7 +100,7 @@ export function PecasPage() {
     setTab('create');
   };
 
-  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
+  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -170,8 +169,8 @@ export function PecasPage() {
                 <thead>
                   <tr className="bg-[var(--bg)]">
                     <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['', 'Código', 'Nome', 'Especificação', 'Compatível com', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Especificação:'specification', 'Compatível com': null };
+                    {['', 'Nome', 'Especificação', 'Compatível com', 'Ações'].map(h => {
+                      const ks = { Nome:'name', Especificação:'specification', 'Compatível com': null };
                       const k = ks[h];
                       return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
                     })}
@@ -191,9 +190,6 @@ export function PecasPage() {
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)]"><Icon name="box" size={18} /></div>
                         )}
-                      </td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-[var(--accent)]">
-                        <button type="button" onClick={() => setDrawerItem(p)} className="hover:text-[var(--fg)] transition-colors">{p.code}</button>
                       </td>
                       <td className="px-4 py-2.5 font-medium">{p.name}</td>
                       <td className="px-4 py-2.5 text-xs font-mono text-[var(--fg-secondary)]">{p.specification || '—'}</td>
@@ -284,7 +280,7 @@ export function PecasPage() {
             </div>
 
             <div className="p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
-              <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça *</label>
+              <label className="text-xs font-medium text-[var(--fg)] mb-2 block">Foto da peça</label>
               {form.image ? (
                 <div className="flex items-center gap-3">
                   <img src={form.image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-[var(--border)]" />
@@ -342,7 +338,7 @@ export function PecasPage() {
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
                 <div className="space-y-3 text-sm">
-                  {[['Código', drawerItem.code], ['Especificação', drawerItem.specification], ['Criado por', drawerItem.createdBy], ['Criado em', drawerItem.createdAt],
+                  {[['Especificação', drawerItem.specification], ['Criado por', drawerItem.createdBy], ['Criado em', drawerItem.createdAt],
                   ].map(([label, value]) => (
                     <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium">{value || '—'}</div></div>
                   ))}

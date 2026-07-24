@@ -138,20 +138,15 @@ export function AppDataProvider({ children }) {
 
     // Pieces
     addPiece: (p) => {
-      const code = p.code || (() => {
-        const existing = d().pieces.length + 1;
-        return `PC-${String(existing).padStart(3, '0')}`;
-      })();
-      const machinesList = d().machines;
       const compatFromIds = (p.compatibleMachineIds || []).map(id => {
-        const m = machinesList.find(mch => mch.id === id);
+        const m = d().machines.find(mch => mch.id === id);
         return m?.name || '';
       }).filter(Boolean).join(', ');
       const user = p.createdBy || getCurrentUser();
       save({ ...d(), pieces: [...d().pieces, {
         ...p,
         id: p.id || uid('pcs'),
-        code,
+        code: '',
         specification: p.specification || '',
         compatibleMachineIds: p.compatibleMachineIds || [],
         compat: p.compat || compatFromIds || '',
