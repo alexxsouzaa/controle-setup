@@ -9,7 +9,7 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
 import { ImagePreview } from '../components/ImagePreview';
-import { ALL_TOOLING_CATEGORIES } from '../utils/compatibility';
+import { ALL_TOOLING_CATEGORIES, getToolingOptions } from '../utils/compatibility';
 
 const MAX_IMAGE_SIZE = 500 * 1024;
 
@@ -24,6 +24,7 @@ function readFileAsDataURL(file) {
 
 export function MaquinasPage({ navigate }) {
   const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction, getCurrentUser } = useContext(AppDataContext);
+  const { config } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
@@ -57,7 +58,8 @@ export function MaquinasPage({ navigate }) {
   const allUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
 
   const filteredLines = lineSearch ? allLines.filter(l => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
-  const filteredTooling = toolingSearch ? ALL_TOOLING_CATEGORIES.filter(c => c.toLowerCase().includes(toolingSearch.toLowerCase())) : ALL_TOOLING_CATEGORIES;
+  const toolingOptions = getToolingOptions(form.uo, config);
+  const filteredTooling = toolingSearch ? toolingOptions.filter(c => c.toLowerCase().includes(toolingSearch.toLowerCase())) : toolingOptions;
 
   const resetForm = () => {
     setForm({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });

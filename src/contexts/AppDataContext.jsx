@@ -84,6 +84,7 @@ const DEFAULT_CONFIG = {
   ],
   formatTypes: ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'],
   productCategories: ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'],
+  uoConfigs: {},
 };
 
 function loadData() {

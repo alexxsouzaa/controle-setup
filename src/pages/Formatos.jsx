@@ -8,9 +8,8 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { EmptyState } from '../components/EmptyState';
-import { suggestFormatos, getMachineTooling } from '../utils/compatibility';
+import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
 
-const FORMAT_TYPES = ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
 const STEP_KEYS = ['product', 'config', 'machine', 'parts', 'review', 'done'];
 const VOL_UNITS = ['ml', 'g'];
@@ -18,7 +17,7 @@ const COMPAT_COLORS = { Alta: 'success', Média: 'warning', Baixa: 'info', Ideal
 
 export function FormatosPage({ navigate }) {
   const ctx = useContext(AppDataContext);
-  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormato, logAction, getCurrentUser } = ctx;
+  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormato, logAction, getCurrentUser, config } = ctx;
   const { toast } = useContext(ToastContext);
   const [tab, setTab] = useState('list');
   const [previewImage, setPreviewImage] = useState(null);
@@ -79,12 +78,13 @@ export function FormatosPage({ navigate }) {
 
   const volumeNum = Number(volume) || 0;
   const volForCompat = volumeNum || productVol || 0;
+  const availableFormatTypes = getFormatTypeOptions(selectedMachine?.uo, config);
 
   const handleSelectProduct = (p) => {
     setSelectedProduct(p);
     setProductSearch('');
     const suggested = p.formato || '';
-    if (suggested && FORMAT_TYPES.includes(suggested)) setFormatType(suggested);
+    if (suggested && availableFormatTypes.includes(suggested)) setFormatType(suggested);
     if (p.vol) setVolume(String(p.vol));
     if (p.unit) setVolumeUnit(p.unit);
   };
@@ -322,7 +322,7 @@ export function FormatosPage({ navigate }) {
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato *</label>
                   <Select value={formatType} onChange={e => setFormatType(e.target.value)}>
                     <option value="">Selecione o formato</option>
-                    {FORMAT_TYPES.map(f => <option key={f}>{f}</option>)}
+                    {availableFormatTypes.map(f => <option key={f}>{f}</option>)}
                   </Select>
                 </div>
                 <div className="grid grid-cols-3 gap-2">

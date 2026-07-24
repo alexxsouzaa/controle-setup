@@ -12,11 +12,28 @@ export const ALL_TOOLING_CATEGORIES = [
   'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço',
 ];
 
-export function getMachineTooling(machine) {
+export function getToolingOptions(uo, config) {
+  if (!config) return [...ALL_TOOLING_CATEGORIES];
+  if (uo && config.uoConfigs && config.uoConfigs[uo] && config.uoConfigs[uo].toolingCategories) {
+    return config.uoConfigs[uo].toolingCategories;
+  }
+  return config.toolingCategories || [...ALL_TOOLING_CATEGORIES];
+}
+
+export function getFormatTypeOptions(uo, config) {
+  if (!config) return ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
+  if (uo && config.uoConfigs && config.uoConfigs[uo] && config.uoConfigs[uo].formatTypes) {
+    return config.uoConfigs[uo].formatTypes;
+  }
+  return config.formatTypes || ['Frasco cilíndrico', 'Frasco oval', 'Pote', 'Bisnaga', 'Refil'];
+}
+
+export function getMachineTooling(machine, config) {
   if (!machine) return [];
   if (machine.toolingCategories && machine.toolingCategories.length > 0) return machine.toolingCategories;
-  if (machine.id && machine.id.startsWith('tgm')) return ALL_TOOLING_CATEGORIES.filter(c => ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Bico de Envase', 'Faca', 'Mordente', 'Régua do Mordente', 'Berço'].includes(c));
-  return [...ALL_TOOLING_CATEGORIES];
+  if (machine.id && machine.id.startsWith('tgm')) return ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Bico de Envase', 'Faca', 'Mordente', 'Régua do Mordente', 'Berço'];
+  const uoFallback = getToolingOptions(machine.uo, config);
+  return [...uoFallback];
 }
 
 function compatLevel(points) {
