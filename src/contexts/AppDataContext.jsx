@@ -163,11 +163,7 @@ export function AppDataProvider({ children }) {
         updatedAt: nowISO(),
       }] });
     },
-    updateFlow: (id, updates) => {
-      const found = d().flows.find(f => f.id === id);
-      if (!found) { console.warn('updateFlow: flow not found', id); return; }
-      save({ ...d(), flows: d().flows.map(f => f.id === id ? { ...f, ...updates, updatedBy: updates.updatedBy || getCurrentUser(), updatedAt: nowISO() } : f) });
-    },
+    updateFlow: (id, updates) => save({ ...d(), flows: d().flows.map(f => f.id === id ? { ...f, ...updates, updatedBy: updates.updatedBy || getCurrentUser(), updatedAt: nowISO() } : f) }),
     duplicateFlow: (id) => {
       const flow = d().flows.find(f => f.id === id);
       if (!flow) return;

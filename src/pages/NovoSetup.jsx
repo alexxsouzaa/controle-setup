@@ -202,8 +202,9 @@ export function NovoSetupPage({ navigate }) {
   const piecesForCategory = (category) => pieces.filter(p => p.category === category);
 
   const handleSave = () => {
-    const existingVersions = flows.filter(f => f.code === (activeProduct?.code || '') && (!isEditing || f.id !== editingFlowId)).length;
-    const newVersion = isEditing ? existingVersions + 1 : existingVersions + 1;
+    const sameCodeFlows = flows.filter(f => f.code === (activeProduct?.code || ''));
+    const maxVersion = Math.max(0, ...sameCodeFlows.map(f => parseInt((f.ver || 'V0').replace('V', '')) || 0));
+    const newVersion = maxVersion + 1;
     const flowName = `${activeProduct?.code || '—'} - ${(activeProduct?.name || '').toUpperCase()} - V${newVersion}`;
 
     const primaryList = [];
@@ -241,6 +242,10 @@ export function NovoSetupPage({ navigate }) {
     };
 
     if (isEditing) {
+      if (!flows.some(f => f.id === editingFlowId)) {
+        toast('Erro: fluxo não encontrado para edição.', 'warning');
+        return;
+      }
       const { status: _s, createdBy: _cb, createdAt: _ca, ...updateData } = flowData;
       updateFlow(editingFlowId, updateData);
       logAction('update', 'Fluxo', `${flowName} atualizado`);
