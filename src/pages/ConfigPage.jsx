@@ -90,11 +90,6 @@ export function ConfigPage() {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <div className="mb-5">
-        <h1 className="text-[20px] font-semibold text-[var(--fg)]">Opções</h1>
-        <p className="text-[13px] text-[var(--fg-secondary)] mt-0.5">Gerencie as Unidades Organizacionais e suas configurações.</p>
-      </div>
-
       <div className="flex-1 flex gap-0 min-h-0 rounded-[8px] border border-[var(--border)] overflow-hidden">
         <div className="w-[200px] flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border)] overflow-y-auto p-4">
           <button onClick={() => setActiveTab(-1)}
