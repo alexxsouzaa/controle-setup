@@ -25,32 +25,54 @@ const groups = [
 export function Sidebar({ active, navigate }) {
   const { theme, toggle } = useContext(ThemeContext);
   return (
-    <aside className="w-60 border-r border-[var(--border)] bg-[var(--surface)] flex flex-col fixed top-0 left-0 bottom-0 z-20">
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-[var(--border)]">
-        <Icon name="box" size={24} />
-        <span className="text-sm font-semibold tracking-tight">Controle de Setup</span>
-      </div>
-      {groups.map(group => (
-        <div key={group.label}>
-          <div className="px-6 pt-4 pb-1 text-[11px] font-semibold text-[var(--fg-secondary)] uppercase tracking-widest">{group.label}</div>
-          {group.items.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => navigate(item.id)}
-              aria-current={active === item.id ? 'page' : undefined}
-              className={`flex items-center gap-3 w-full px-6 py-2.5 text-sm transition-colors ${active === item.id ? 'bg-[var(--accent-light)] text-[var(--accent)] font-medium' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)] hover:text-[var(--fg)]'}`}
-            >
-              <Icon name={item.icon} size={18} />
-              {item.label}
-            </button>
-          ))}
+    <aside className="w-60 border-r border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col fixed top-0 left-0 bottom-0 z-20">
+      <div className="flex items-center gap-2.5 px-[18px] py-4 border-b border-[var(--border)] h-[52px]">
+        <div className="w-7 h-7 rounded-[6px] bg-[var(--fg)] flex items-center justify-center">
+          <Icon name="box" size={16} />
         </div>
-      ))}
-      <div className="mt-auto px-6 py-4 border-t border-[var(--border)] flex items-center justify-end">
-        <button type="button" onClick={toggle} className="p-1.5 rounded-md hover:bg-[var(--bg)] text-[var(--fg-secondary)]" aria-label="Alternar tema">
-          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={16} />
-        </button>
+        <span className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--fg)]">CS Setup</span>
+        <span className="text-[10px] font-mono text-[var(--fg-muted)] bg-[var(--surface)] px-1 py-0.5 rounded-sm ml-auto">v2.4</span>
+      </div>
+
+      <nav className="flex-1 px-2.5 py-3">
+        {groups.map(group => (
+          <div key={group.label}>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] px-2 pt-4 pb-1.5">{group.label}</div>
+            {group.items.map(item => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => navigate(item.id)}
+                aria-current={active === item.id ? 'page' : undefined}
+                className={`flex items-center gap-2.5 w-full px-2.5 py-2 rounded-[6px] text-[13px] font-medium transition-all duration-100 ${
+                  active === item.id
+                    ? 'bg-[var(--surface-hover)] text-[var(--fg)] font-semibold'
+                    : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                }`}
+              >
+                <Icon name={item.icon} size={18} />
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className="px-2.5 py-3 border-t border-[var(--border)]">
+        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer">
+          <div className="w-8 h-8 rounded-[6px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-xs font-semibold text-[var(--fg-secondary)]">OP</div>
+          <div className="overflow-hidden">
+            <div className="text-[13px] font-medium text-[var(--fg)]">Operador</div>
+            <div className="text-[11px] text-[var(--fg-muted)]">Usuário do sistema</div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between px-2.5 pt-2">
+          <button type="button" onClick={toggle} className="flex items-center gap-2 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={14} />
+            {theme === 'dark' ? 'Claro' : 'Escuro'}
+          </button>
+          <span className="text-[10px] text-[var(--fg-muted)]">v2.4</span>
+        </div>
       </div>
     </aside>
   );

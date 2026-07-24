@@ -21,6 +21,7 @@
   --bg: #09090b;
   --bg-secondary: #18181b;
   --surface: #18181b;
+  --surface-hover: #27272a;
   --fg: #fafafa;
   --fg-secondary: #a1a1aa;
   --fg-muted: #71717a;
@@ -40,8 +41,9 @@
   --overlay: rgba(0, 0, 0, 0.5);
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
-  --radius: 4px;
-  --radius-sm: 2px;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
@@ -51,6 +53,7 @@
   --bg: #ffffff;
   --bg-secondary: #f4f4f5;
   --surface: #ffffff;
+  --surface-hover: #f4f4f5;
   --fg: #09090b;
   --fg-secondary: #71717a;
   --fg-muted: #a1a1aa;
@@ -92,7 +95,7 @@ body {
 .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
 
 @layer components {
-  .shad-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 15px; border-radius: var(--radius); font-size: 13px; font-weight: 500; line-height: 1; border: 1px solid transparent; cursor: pointer; transition: all 0.1s; text-decoration: none; letter-spacing: 0.01em; }
+  .shad-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; line-height: 1; border: 1px solid transparent; cursor: pointer; transition: all 0.1s; text-decoration: none; letter-spacing: 0.01em; }
   .shad-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .shad-btn:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 1px; }
   .shad-btn svg { width: 15px; height: 15px; }
@@ -102,13 +105,13 @@ body {
   .shad-btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); }
   .shad-btn-ghost { background: transparent; color: var(--fg-secondary); border-color: transparent; }
   .shad-btn-ghost:hover:not(:disabled) { background: var(--bg-secondary); color: var(--fg); }
-  .shad-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-  .shad-input { padding: 7px 11px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--fg); width: 100%; transition: border-color 0.1s; font-family: inherit; }
-  .shad-input:focus { border-color: var(--accent); outline: none; }
+  .shad-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .shad-input { padding: 6px 11px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--fg); width: 100%; transition: border-color 0.1s; font-family: inherit; }
+  .shad-input:focus { border-color: var(--fg-muted); outline: none; }
   .shad-input::placeholder { color: var(--fg-muted); }
   textarea.shad-input { resize: vertical; min-height: 80px; }
-  .shad-select { padding: 7px 11px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--fg); font-family: inherit; cursor: pointer; transition: border-color 0.1s; }
-  .shad-select:focus { border-color: var(--accent); outline: none; }
+  .shad-select { padding: 6px 11px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); font-size: 13px; color: var(--fg); font-family: inherit; cursor: pointer; transition: border-color 0.1s; }
+  .shad-select:focus { border-color: var(--fg-muted); outline: none; }
   .shad-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
   .badge-success { background: var(--success-muted); color: var(--success); }
   .badge-warning { background: var(--warning-muted); color: var(--warning); }
