@@ -139,20 +139,49 @@ export function MaquinasPage({ navigate }) {
     <div className="p-6">
       {tab === 'list' ? (
         <>
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
+            {[
+              { label: 'Total', value: machines.length, icon: 'box', variant: 'total' },
+              { label: 'Com Foto', value: machines.filter(m => m.image).length, icon: 'upload', variant: 'updated' },
+              { label: 'Com Ferramentais', value: machines.filter(m => m.toolingCategories?.length > 0).length, icon: 'wrench', variant: 'outdated' },
+              { label: 'UOs', value: allUos.length, icon: 'grid-3x3', variant: 'failed' },
+            ].map(s => (
+              <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-[6px] flex items-center justify-center shrink-0 ${
+                  s.variant === 'total' ? 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]' :
+                  s.variant === 'updated' ? 'bg-[var(--success-muted)] text-[var(--success)]' :
+                  s.variant === 'outdated' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' :
+                  'bg-[var(--danger-muted)] text-[var(--danger)]'
+                }`}>
+                  <Icon name={s.icon} size={20} />
+                </div>
+                <div>
+                  <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
+                  <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-xs">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
               <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
             </div>
-            <div className="flex gap-1">
+
+            <div className="flex items-center gap-1.5 flex-1 flex-wrap">
               {UO_FILTERS.map(f => (
                 <button key={f.id} onClick={() => { setUoFilter(f.id); setPage(1); clearSelection(); }}
-                  className={`px-2.5 py-1.5 rounded-[4px] text-[11px] font-medium transition-all ${uoFilter === f.id ? 'bg-[var(--fg)] text-[var(--bg)]' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'}`}>
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                    uoFilter === f.id ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+                  }`}>
+                  {f.id && <span className="w-1.5 h-1.5 rounded-full bg-[var(--fg-muted)]" />}
                   {f.label}
                 </button>
               ))}
             </div>
-            <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Máquina</Button>
+
+            <Button variant="primary" size="sm" onClick={() => setTab('create')} className="shrink-0"><Icon name="plus" size={14} />Nova Máquina</Button>
           </div>
 
           {selectedCount > 0 && (
@@ -171,40 +200,39 @@ export function MaquinasPage({ navigate }) {
               {machines.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Máquina</Button>}
             </div>
           ) : (
-            <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-muted)]">
-                    <th className="w-8 px-4 py-2.5 font-medium">
-                      <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" />
-                    </th>
-                    <th className="text-left px-4 py-2.5 font-medium">Nome</th>
-                    <th className="text-left px-4 py-2.5 font-medium hidden md:table-cell">Linhas</th>
-                    <th className="text-left px-4 py-2.5 font-medium w-20">UO</th>
-                    <th className="text-right px-4 py-2.5 font-medium w-24 hidden sm:table-cell">Criado em</th>
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+              <table className="w-full text-[13px] border-collapse">
+                <thead className="bg-[var(--bg-secondary)]">
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                    <th className="w-10 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="text-left px-3.5 py-2.5 font-medium">Nome</th>
+                    <th className="text-left px-3.5 py-2.5 font-medium hidden md:table-cell">Linhas</th>
+                    <th className="text-left px-3.5 py-2.5 font-medium w-16">UO</th>
+                    <th className="text-right px-3.5 py-2.5 font-medium w-24 hidden sm:table-cell">Criado em</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paged.map(m => (
                     <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`}>
-                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--fg)] cursor-pointer" /></td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]"><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--fg)] cursor-pointer" /></td>
+                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
                         <button type="button" onClick={() => setDrawerItem(m)} className="flex items-center gap-2.5 text-left w-full">
                           {m.image ? (
                             <img src={m.image} alt={m.name} className="w-7 h-7 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
                           ) : (
                             <div className="w-7 h-7 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={14} /></div>
                           )}
-                          <span className="font-medium text-[var(--fg)] truncate hover:text-[var(--fg)]">{m.name}</span>
+                          <span className="font-medium text-[var(--fg)] truncate">{m.name}</span>
                         </button>
                       </td>
-                      <td className="px-4 py-2.5 hidden md:table-cell">
+                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] hidden md:table-cell">
                         <div className="flex flex-wrap gap-1">
-                          {getLines(m).map(l => <Badge key={l}>{l}</Badge>)}
+                          {getLines(m).slice(0, 3).map(l => <span key={l} className="inline-flex items-center px-2 py-0.5 rounded-[3px] text-[10px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{l}</span>)}
+                          {getLines(m).length > 3 && <span className="text-[10px] text-[var(--fg-muted)] font-mono">+{getLines(m).length - 3}</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 text-[11px] font-mono text-[var(--fg-secondary)]">{m.uo}</td>
-                      <td className="px-4 py-2.5 text-[11px] text-[var(--fg-muted)] font-mono text-right hidden sm:table-cell">{m.createdAt}</td>
+                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[11px] font-mono text-[var(--fg-secondary)]">{m.uo}</td>
+                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[11px] text-[var(--fg-muted)] font-mono text-right hidden sm:table-cell">{m.createdAt}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -212,13 +240,29 @@ export function MaquinasPage({ navigate }) {
             </div>
           )}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 mt-4">
-              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-7 h-7 rounded text-[11px] font-mono ${page === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)]'}`} aria-label="Anterior">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button key={p} type="button" onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
-                  className={`w-7 h-7 rounded text-[11px] font-mono ${p === page ? 'bg-[var(--fg)] text-[var(--bg)]' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)]'}`}>{p}</button>
-              ))}
-              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-7 h-7 rounded text-[11px] font-mono ${page === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)]'}`} aria-label="Próxima">›</button>
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-[12px] text-[var(--fg-muted)]">Página {page} de {totalPages}</span>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                    page === 1 ? 'border-[var(--border)] text-[var(--fg-muted)] opacity-40 cursor-not-allowed' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                  }`}><Icon name="arrow-right" size={14} className="rotate-180" /></button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                  const p = start + i;
+                  if (p > totalPages) return null;
+                  return (
+                    <button key={p} type="button" onClick={() => setPage(p)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                        p === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                      }`}>{p}</button>
+                  );
+                })}
+                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                    page === totalPages ? 'border-[var(--border)] text-[var(--fg-muted)] opacity-40 cursor-not-allowed' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                  }`}><Icon name="arrow-right" size={14} /></button>
+              </div>
             </div>
           )}
         </>
