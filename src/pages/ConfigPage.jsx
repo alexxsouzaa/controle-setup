@@ -10,21 +10,21 @@ const TABS = [
   { id: 'uos', label: 'UOs', icon: 'grid-3x3' },
   { id: 'sistema', label: 'Sistema', icon: 'box' },
   { id: 'aparencia', label: 'Aparência', icon: 'sun' },
-  { id: 'notificacoes', label: 'Notificações', icon: 'clock' },
+  { id: 'notificacoes', label: 'Notificações', icon: 'bell' },
+];
+
+const FIELDS = [
+  { key: 'toolingCategories', label: 'Ferramentais', desc: 'Categorias de peças usadas como ferramentais.', placeholder: 'Ex: Bico de Envase' },
+  { key: 'formatTypes', label: 'Tipos de Formato', desc: 'Tipos de formato disponíveis.', placeholder: 'Ex: Frasco cilíndrico' },
+  { key: 'productCategories', label: 'Categorias', desc: 'Categorias de produto disponíveis.', placeholder: 'Ex: Shampoo' },
+  { key: 'lines', label: 'Linhas', desc: 'Linhas de produção disponíveis.', placeholder: 'Ex: Linha 01' },
 ];
 
 function TagInput({ values, onAdd, onRemove, placeholder }) {
   const [input, setInput] = useState('');
-  const handleAdd = () => {
-    const val = input.trim();
-    if (!val) return;
-    if (values.includes(val)) return;
-    onAdd(val);
-    setInput('');
-  };
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-1 min-h-[24px]">
+    <div>
+      <div className="flex flex-wrap gap-1 min-h-[24px] mb-2">
         {values.map(v => (
           <span key={v} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[12px] text-[var(--fg)]">
             {v}
@@ -33,9 +33,9 @@ function TagInput({ values, onAdd, onRemove, placeholder }) {
         ))}
         {values.length === 0 && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum item.</span>}
       </div>
-      <div className="flex gap-1.5">
-        <Input placeholder={placeholder} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} className="min-h-[32px] text-[12px]" />
-        <Button variant="secondary" size="sm" onClick={handleAdd} disabled={!input.trim()} className="h-[32px]">Adicionar</Button>
+      <div className="flex gap-2">
+        <Input placeholder={placeholder} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { const v = input.trim(); if (v && !values.includes(v)) { onAdd(v); setInput(''); } } }} className="min-h-[36px] text-[13px]" />
+        <Button variant="secondary" size="sm" onClick={() => { const v = input.trim(); if (v && !values.includes(v)) { onAdd(v); setInput(''); } }} disabled={!input.trim()} className="h-[36px] shrink-0">Adicionar</Button>
       </div>
     </div>
   );
@@ -50,17 +50,14 @@ export function ConfigPage() {
   const [uoConfigs, setUoConfigs] = useState(() => {
     const saved = config.uoConfigs || {};
     return Object.entries(saved).map(([uo, cfg]) => ({
-      uo, toolingCategories: [...(cfg.toolingCategories || [])],
-      formatTypes: [...(cfg.formatTypes || [])],
-      productCategories: [...(cfg.productCategories || [])],
-      lines: [...(cfg.lines || [])],
+      uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])],
+      productCategories: [...(cfg.productCategories || [])], lines: [...(cfg.lines || [])],
     }));
   });
   const [uoEdit, setUoEdit] = useState(null);
   const [newUoName, setNewUoName] = useState('');
 
   const allMachineUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
-
   const activeUo = uoEdit !== null ? uoConfigs[uoEdit] : null;
   const setUoValue = (key, values) => setUoConfigs(prev => prev.map((u, i) => i === uoEdit ? { ...u, [key]: values } : u));
 
@@ -75,33 +72,26 @@ export function ConfigPage() {
   };
 
   const removeUo = (idx) => {
-    const uo = uoConfigs[idx];
-    if (!uo) return;
-    if (!confirm(`Remover UO "${uo.uo}"?`)) return;
-    setUoList(prev => prev.filter(u => u !== uo.uo));
+    if (!confirm(`Remover UO "${uoConfigs[idx].uo}"?`)) return;
+    setUoList(prev => prev.filter(u => u !== uoConfigs[idx].uo));
     setUoConfigs(prev => prev.filter((_, i) => i !== idx));
-    if (uoEdit === idx) setUoEdit(null);
-    else if (uoEdit > idx) setUoEdit(prev => prev - 1);
+    if (uoEdit >= idx) setUoEdit(uoEdit === idx ? null : uoEdit - 1);
   };
 
   const handleSave = () => {
     const uoCfg = {};
-    uoConfigs.forEach(u => {
-      uoCfg[u.uo] = {};
-      if (u.toolingCategories.length > 0) uoCfg[u.uo].toolingCategories = u.toolingCategories;
-      if (u.formatTypes.length > 0) uoCfg[u.uo].formatTypes = u.formatTypes;
-      if (u.productCategories.length > 0) uoCfg[u.uo].productCategories = u.productCategories;
-      if (u.lines.length > 0) uoCfg[u.uo].lines = u.lines;
-    });
+    uoConfigs.forEach(u => { uoCfg[u.uo] = { toolingCategories: u.toolingCategories, formatTypes: u.formatTypes, productCategories: u.productCategories, lines: u.lines }; });
     updateConfig({ uoConfigs: uoCfg });
     logAction('update', 'Configuração', 'Configurações salvas');
+    const saved = document.getElementById('saved-toast');
+    if (saved) { saved.classList.add('visible'); setTimeout(() => saved.classList.remove('visible'), 2000); }
     toast('Configurações salvas com sucesso!');
   };
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      <div className="flex-1 flex gap-0 min-h-0 rounded-[8px] border border-[var(--border)] overflow-hidden">
-        <div className="w-[180px] flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border)] p-3 overflow-y-auto">
+    <div className="p-0 h-full flex flex-col">
+      <div className="flex-1 flex min-h-0">
+        <nav className="w-[200px] flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border)] p-4 overflow-y-auto">
           {TABS.map(t => (
             <button key={t.id} onClick={() => { setTab(t.id); setUoEdit(null); }}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-medium transition-all text-left mb-0.5 ${
@@ -111,21 +101,23 @@ export function ConfigPage() {
               <span>{t.label}</span>
             </button>
           ))}
-        </div>
+        </nav>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto py-6 px-8" id="settings-content">
           {tab === 'geral' && (
-            <div className="max-w-lg">
-              <div className="text-[16px] font-semibold text-[var(--fg)] mb-1">Geral</div>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-5">Configurações gerais do sistema.</p>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4 py-1">
+            <div className="max-w-[620px] flex flex-col gap-8">
+              <div>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Geral</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Preferências básicas da plataforma.</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="text-[13px] font-medium text-[var(--fg)]">Tema escuro</div>
                     <div className="text-[12px] text-[var(--fg-muted)]">Alternar entre tema claro e escuro</div>
                   </div>
                   <label className="relative w-[40px] h-[22px] cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
                     <div className="absolute inset-0 rounded-[11px] bg-[var(--border)] peer-checked:bg-[var(--fg)] transition-colors" />
                     <div className="absolute top-[3px] left-[3px] w-[16px] h-[16px] rounded-full bg-[var(--bg)] peer-checked:translate-x-[18px] peer-checked:bg-[var(--surface)] transition-all" />
                   </label>
@@ -135,65 +127,59 @@ export function ConfigPage() {
           )}
 
           {tab === 'uos' && (
-            <div className="max-w-2xl">
-              <div className="text-[16px] font-semibold text-[var(--fg)] mb-1">Unidades Organizacionais</div>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-5">Gerencie UOs e suas variáveis.</p>
+            <div className="max-w-[720px] flex flex-col gap-8">
+              <div>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Unidades Organizacionais</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Gerencie UOs e configure suas variáveis.</p>
+              </div>
 
-              <div className="flex gap-2 mb-4">
-                <div className="flex-1">
-                  <Input placeholder="Nova UO..." value={newUoName} onChange={e => setNewUoName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addUo(); }} className="min-h-[34px] text-[13px]" />
-                </div>
-                <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()}>Adicionar</Button>
+              <div className="flex gap-2">
+                <Input placeholder="Nova UO..." value={newUoName} onChange={e => setNewUoName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addUo(); }} className="min-h-[36px] text-[13px] flex-1" />
+                <Button variant="primary" size="sm" onClick={addUo} disabled={!newUoName.trim()} className="h-[36px]">Adicionar</Button>
               </div>
               {allMachineUos.filter(u => !uoList.includes(u)).length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-4">
+                <div className="flex flex-wrap gap-1">
                   {allMachineUos.filter(u => !uoList.includes(u)).map(u => (
-                    <button key={u} type="button" onClick={() => setNewUoName(u)}
-                      className="px-2 py-0.5 rounded-[3px] border border-[var(--border)] text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">{u}</button>
+                    <button key={u} type="button" onClick={() => setNewUoName(u)} className="px-2 py-0.5 rounded-[3px] border border-[var(--border)] text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">{u}</button>
                   ))}
                 </div>
               )}
 
-              <div className="flex gap-4 items-start">
-                <div className="w-[220px] flex-shrink-0 space-y-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-muted)] mb-2 px-1">UOs</div>
+              <div className="flex gap-6 items-start">
+                <div className="w-[220px] flex-shrink-0 space-y-0.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] px-1 pb-2">UOs</div>
                   {uoConfigs.map((uo, i) => (
                     <button key={uo.uo} onClick={() => setUoEdit(i)}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-[6px] text-[13px] text-left transition-all ${
                         uoEdit === i ? 'bg-[var(--surface-hover)] text-[var(--fg)] font-semibold' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
                       }`}>
-                      <div className="w-5 h-5 rounded-[4px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[10px] font-semibold text-[var(--fg-secondary)] flex-shrink-0">{uo.uo.charAt(0).toUpperCase()}</div>
+                      <span className="w-5 h-5 rounded-[4px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[10px] font-semibold text-[var(--fg-secondary)] flex-shrink-0">{uo.uo.charAt(0).toUpperCase()}</span>
                       <span className="truncate">{uo.uo}</span>
                     </button>
                   ))}
                 </div>
-
                 <div className="flex-1 min-w-0">
                   {!activeUo ? (
-                    <div className="text-center py-10 text-[13px] text-[var(--fg-muted)]">Selecione uma UO ao lado para configurar.</div>
+                    <div className="text-center py-12 text-[13px] text-[var(--fg-muted)]">Selecione uma UO ao lado para configurar suas variáveis.</div>
                   ) : (
-                    <div className="space-y-5">
+                    <div className="flex flex-col gap-8">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-[14px] font-semibold text-[var(--fg)]">{activeUo.uo}</div>
-                          <div className="text-[12px] text-[var(--fg-secondary)]">Variáveis desta Unidade Organizacional.</div>
+                          <h3 className="text-[16px] font-semibold text-[var(--fg)]">{activeUo.uo}</h3>
+                          <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Variáveis desta Unidade Organizacional.</p>
                         </div>
                         <button type="button" onClick={() => removeUo(uoEdit)} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--danger)] transition-colors">Remover</button>
                       </div>
-                      <div className="h-px bg-[var(--border)]" />
-                      {[
-                        { key: 'toolingCategories', label: 'Ferramentais', desc: 'Categorias de peças usadas como ferramentais.', placeholder: 'Ex: Bico de Envase' },
-                        { key: 'formatTypes', label: 'Tipos de Formato', desc: 'Tipos de formato disponíveis.', placeholder: 'Ex: Frasco cilíndrico' },
-                        { key: 'productCategories', label: 'Categorias', desc: 'Categorias de produto disponíveis.', placeholder: 'Ex: Shampoo' },
-                        { key: 'lines', label: 'Linhas', desc: 'Linhas de produção disponíveis.', placeholder: 'Ex: Linha 01' },
-                      ].map((field, fi) => (
+                      {FIELDS.map((field, fi) => (
                         <div key={field.key}>
-                          {fi > 0 && <div className="h-px bg-[var(--border)] my-5" />}
-                          <div>
-                            <label className="text-[13px] font-medium text-[var(--fg)] mb-1 block">{field.label}</label>
-                            <p className="text-[12px] text-[var(--fg-secondary)] mb-3">{field.desc}</p>
+                          {fi > 0 && <hr className="border-[var(--border)] mb-6" />}
+                          <div className="flex flex-col gap-2">
+                            <div>
+                              <label className="text-[13px] font-medium text-[var(--fg)] block">{field.label}</label>
+                              <p className="text-[12px] text-[var(--fg-muted)] mt-1">{field.desc}</p>
+                            </div>
+                            <TagInput values={activeUo[field.key] || []} onAdd={v => setUoValue(field.key, [...(activeUo[field.key] || []), v])} onRemove={v => setUoValue(field.key, (activeUo[field.key] || []).filter(x => x !== v))} placeholder={field.placeholder} />
                           </div>
-                          <TagInput values={activeUo[field.key] || []} onAdd={v => setUoValue(field.key, [...(activeUo[field.key] || []), v])} onRemove={v => setUoValue(field.key, (activeUo[field.key] || []).filter(x => x !== v))} placeholder={field.placeholder} />
                         </div>
                       ))}
                     </div>
@@ -204,40 +190,30 @@ export function ConfigPage() {
           )}
 
           {tab === 'sistema' && (
-            <div className="max-w-lg">
-              <div className="text-[16px] font-semibold text-[var(--fg)] mb-1">Sistema</div>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-5">Informações e ações do sistema.</p>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4 py-1">
-                  <div className="flex-1">
-                    <div className="text-[13px] font-medium text-[var(--fg)]">Versão do sistema</div>
-                    <div className="text-[12px] text-[var(--fg-muted)]">Controle de Setup v2.0</div>
-                  </div>
+            <div className="max-w-[620px] flex flex-col gap-8">
+              <div>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Sistema</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Informações e ações do sistema.</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <div className="text-[13px] font-medium text-[var(--fg)]">Versão do sistema</div>
+                  <div className="text-[12px] text-[var(--fg-muted)]">Controle de Setup v2.0</div>
                 </div>
-                <div className="h-px bg-[var(--border)]" />
-                <div>
-                  <div className="text-[13px] font-medium text-[var(--fg)] mb-2">Gerenciar dados</div>
+                <hr className="border-[var(--border)]" />
+                <div className="flex flex-col gap-3">
+                  <div className="text-[13px] font-medium text-[var(--fg)]">Gerenciar dados</div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => {
-                      const blob = new Blob([JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }, null, 2)], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `backup-${new Date().toISOString().slice(0, 10)}.json`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                      toast('Backup exportado com sucesso!');
-                    }}>Exportar backup</Button>
+                    <button type="button" onClick={() => window.location.href = '/exportar'} className="px-3 py-1.5 rounded-[6px] border border-[var(--border)] text-[13px] font-medium text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] hover:border-[var(--fg-muted)] transition-all">Exportar dados</button>
                     <button type="button" onClick={() => {
-                      if (confirm('Resetar todos os dados?')) {
-                        if (confirm('Confirma a exclusão total?')) {
-                          updateConfig({ uoConfigs: {} });
+                      if (confirm('Resetar todos os dados? Esta ação não pode ser desfeita.')) {
+                        if (confirm('Confirma a exclusão total dos dados do sistema?')) {
                           localStorage.setItem('controle-setup-data', JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }));
                           localStorage.removeItem('cs-theme');
                           window.location.href = window.location.pathname + '?reset=' + Date.now();
                         }
                       }
-                    }} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[12px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Resetar dados</button>
+                    }} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[13px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-all">Resetar dados</button>
                   </div>
                 </div>
               </div>
@@ -245,11 +221,13 @@ export function ConfigPage() {
           )}
 
           {tab === 'aparencia' && (
-            <div className="max-w-lg">
-              <div className="text-[16px] font-semibold text-[var(--fg)] mb-1">Aparência</div>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-5">Personalize a aparência do sistema.</p>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4 py-1">
+            <div className="max-w-[620px] flex flex-col gap-8">
+              <div>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Aparência</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Personalize a aparência do sistema.</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="text-[13px] font-medium text-[var(--fg)]">Tema escuro</div>
                     <div className="text-[12px] text-[var(--fg-muted)]">Alternar entre tema claro e escuro</div>
@@ -265,32 +243,36 @@ export function ConfigPage() {
           )}
 
           {tab === 'notificacoes' && (
-            <div className="max-w-lg">
-              <div className="text-[16px] font-semibold text-[var(--fg)] mb-1">Notificações</div>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-5">Preferências de notificações do sistema.</p>
-              {[
-                { label: 'Notificações por email', desc: 'Receber notificações por email' },
-                { label: 'Notificações no sistema', desc: 'Exibir notificações na interface' },
-                { label: 'Alertas sonoros', desc: 'Reproduzir som ao receber notificações' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between gap-4 py-1">
-                  <div className="flex-1">
-                    <div className="text-[13px] font-medium text-[var(--fg)]">{item.label}</div>
-                    <div className="text-[12px] text-[var(--fg-muted)]">{item.desc}</div>
+            <div className="max-w-[620px] flex flex-col gap-8">
+              <div>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Notificações</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Preferências de notificações do sistema.</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: 'Notificações por email', desc: 'Receber notificações por email' },
+                  { label: 'Notificações no sistema', desc: 'Exibir notificações na interface' },
+                  { label: 'Alertas sonoros', desc: 'Reproduzir som ao receber notificações' },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="text-[13px] font-medium text-[var(--fg)]">{item.label}</div>
+                      <div className="text-[12px] text-[var(--fg-muted)]">{item.desc}</div>
+                    </div>
+                    <label className="relative w-[40px] h-[22px] cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" defaultChecked />
+                      <div className="absolute inset-0 rounded-[11px] bg-[var(--border)] peer-checked:bg-[var(--fg)] transition-colors" />
+                      <div className="absolute top-[3px] left-[3px] w-[16px] h-[16px] rounded-full bg-[var(--bg)] peer-checked:translate-x-[18px] peer-checked:bg-[var(--surface)] transition-all" />
+                    </label>
                   </div>
-                  <label className="relative w-[40px] h-[22px] cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="absolute inset-0 rounded-[11px] bg-[var(--border)] peer-checked:bg-[var(--fg)] transition-colors" />
-                    <div className="absolute top-[3px] left-[3px] w-[16px] h-[16px] rounded-full bg-[var(--bg)] peer-checked:translate-x-[18px] peer-checked:bg-[var(--surface)] transition-all" />
-                  </label>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-[var(--border)]">
+      <div className="flex items-center justify-end gap-3 px-8 py-4 border-t border-[var(--border)] shrink-0">
         <span className="text-[12px] text-[var(--fg-muted)] mr-auto">
           {uoConfigs.reduce((acc, u) => acc + u.toolingCategories.length + u.formatTypes.length + u.productCategories.length + u.lines.length, 0)} itens configurados
         </span>
