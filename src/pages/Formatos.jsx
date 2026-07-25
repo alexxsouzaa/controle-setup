@@ -21,6 +21,7 @@ export function FormatosPage({ navigate }) {
   const { toast } = useContext(ToastContext);
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
+  const [previewImage, setPreviewImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [step, setStep] = useState(1);
   const [selected, setSelected] = useState(new Set());
