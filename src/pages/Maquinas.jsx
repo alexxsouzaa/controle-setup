@@ -215,32 +215,32 @@ export function MaquinasPage({ navigate }) {
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                    <th className="w-8 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} /></th>
-                    <th className="text-left px-4 py-2.5 font-medium">Máquina</th>
-                    <th className="text-left px-3.5 py-2.5 font-medium w-20">UO</th>
-                    <th className="text-right px-3.5 py-2.5 font-medium w-24 hidden sm:table-cell">Criado em</th>
-                    <th className="w-20 px-3.5 py-2.5 font-medium text-right">Ações</th>
+                    <th className="w-8 px-3.5 py-2.5 border-b border-[var(--border)]"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} /></th>
+                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Máquina</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">UO</th>
+                    <th className="text-right px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map(m => (
+                  {paged.map((m, idx) => (
                     <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(m.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
-                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
                         <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} />
                       </td>
-                      <td className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
+                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
                         <button type="button" onClick={() => setDrawerItem(m)} className="text-left w-full">
                           <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
-                          <div className="text-[11px] font-mono text-[var(--fg-muted)] leading-tight mt-0.5">
+                          <div className="text-[12px] font-mono text-[var(--fg-muted)] leading-snug mt-0.5">
                             {getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}
                           </div>
                         </button>
                       </td>
-                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--accent)]">{m.uo}</span>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
                       </td>
-                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell">{m.createdAt}</td>
-                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-right">
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>{m.createdAt}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-right ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
                         <div className="flex items-center justify-end gap-0.5">
                           <button type="button" onClick={() => setDrawerItem(m)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
