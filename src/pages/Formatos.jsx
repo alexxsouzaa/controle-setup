@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
+import { Select } from '../components/Select';
 import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
 
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
