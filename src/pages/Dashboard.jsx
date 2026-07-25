@@ -46,70 +46,41 @@ export function DashboardPage({ navigate }) {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 md:grid-cols-1 gap-4">
-        <div className="lg:col-span-2 border border-[var(--border)] rounded-[8px] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-            <div className="flex items-center gap-2">
-              <Icon name="file" size={15} />
-              <span className="text-[13px] font-semibold text-[var(--fg)]">Fluxos Recentes</span>
-            </div>
-            <button type="button" onClick={() => navigate('/fluxos')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
-              Ver todos →
-            </button>
+      <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <div className="flex items-center gap-2">
+            <Icon name="file" size={15} />
+            <span className="text-[13px] font-semibold text-[var(--fg)]">Fluxos Recentes</span>
           </div>
-          {recent.length === 0 ? (
-            <div className="px-4 py-10 text-center">
-              <div className="w-9 h-9 rounded-[8px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--fg-muted)]">
-                <Icon name="file" size={18} />
-              </div>
-              <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
-            </div>
-          ) : (
-            <div>
-              {recent.map(r => (
-                <button key={r.id} type="button" onClick={() => navigate('/fluxos')}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--success-muted)' }}>
-                    <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[12px] font-medium text-[var(--fg)] truncate">{r.name}</div>
-                    <div className="text-[11px] text-[var(--fg-muted)]">{r.machine} · {r.product}</div>
-                  </div>
-                  <div className="text-[10px] text-[var(--fg-muted)] font-mono whitespace-nowrap">{r.date}</div>
-                </button>
-              ))}
-            </div>
-          )}
+          <button type="button" onClick={() => navigate('/fluxos')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+            Ver todos →
+          </button>
         </div>
-
-        <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-            <Icon name="arrow-right" size={15} />
-            <span className="text-[13px] font-semibold text-[var(--fg)]">Acesso Rápido</span>
+        {recent.length === 0 ? (
+          <div className="px-4 py-10 text-center">
+            <div className="w-9 h-9 rounded-[8px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--fg-muted)]">
+              <Icon name="file" size={18} />
+            </div>
+            <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
           </div>
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {[
-              { id: '/novo-setup', icon: 'wrench', label: 'Novo Fluxo', desc: 'Criar fluxo de setup' },
-              { id: '/maquinas', icon: 'box', label: 'Máquinas', desc: `${stats.totalMachines} cadastrada${stats.totalMachines !== 1 ? 's' : ''}` },
-              { id: '/produtos', icon: 'grid-3x3', label: 'Produtos', desc: `${stats.totalProducts} no catálogo` },
-              { id: '/formatos', icon: 'grid-3x3', label: 'Formatos', desc: `${stats.totalFormatos} cadastrado${stats.totalFormatos !== 1 ? 's' : ''}` },
-            ].map(a => (
-              <button key={a.id} type="button" onClick={() => navigate(a.id)}
-                className="w-full flex items-center gap-3 px-5 py-3 text-left hover:bg-[var(--surface-hover)] transition-colors">
-                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0">
-                  <Icon name={a.icon} size={14} />
+        ) : (
+          <div>
+            {recent.map(r => (
+              <button key={r.id} type="button" onClick={() => navigate('/fluxos')}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--success-muted)' }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-medium text-[var(--fg)]">{a.label}</div>
-                  <div className="text-[11px] text-[var(--fg-muted)]">{a.desc}</div>
+                  <div className="text-[12px] font-medium text-[var(--fg)] truncate">{r.name}</div>
+                  <div className="text-[11px] text-[var(--fg-muted)]">{r.machine} · {r.product}</div>
                 </div>
-                <Icon name="arrow-right" size={14} className="text-[var(--fg-muted)]" />
+                <div className="text-[10px] text-[var(--fg-muted)] font-mono whitespace-nowrap">{r.date}</div>
               </button>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
