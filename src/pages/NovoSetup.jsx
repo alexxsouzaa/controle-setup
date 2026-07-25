@@ -360,7 +360,7 @@ export function NovoSetupPage({ navigate }) {
 
           <div className="grid md:grid-cols-2 gap-4 mb-6">
             <button type="button" onClick={() => { setSelectedProduct(null); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setCodeExists(false); }}
-              className={`p-4 rounded-lg border-2 text-left transition-all ${!selectedProduct && !newProduct.name ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+              className={`p-4 rounded-[6px] border-2 text-left transition-all ${!selectedProduct && !newProduct.name ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <Icon name="grid-3x3" size={18} />
                 <span className="text-sm font-semibold">Produto pré-cadastrado</span>
@@ -368,7 +368,7 @@ export function NovoSetupPage({ navigate }) {
               <p className="text-xs text-[var(--fg-secondary)]">Selecione um produto existente no sistema</p>
             </button>
             <button type="button" onClick={() => { setSelectedProduct(null); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setCodeExists(false); setProductSearch(''); }}
-              className={`p-4 rounded-lg border-2 text-left transition-all ${newProduct.name || newProduct.code ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+              className={`p-4 rounded-[6px] border-2 text-left transition-all ${newProduct.name || newProduct.code ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
               <div className="flex items-center gap-2 mb-1">
                 <Icon name="plus" size={18} />
                 <span className="text-sm font-semibold">Novo produto</span>
@@ -383,11 +383,11 @@ export function NovoSetupPage({ navigate }) {
               <input className="shad-input pl-9" placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={e => { setProductSearch(e.target.value.toLowerCase()); setSelectedProduct(null); }} aria-label="Buscar produtos" />
             </div>
             {productSearch && productFiltered.length > 0 && (
-              <div className="border border-[var(--border)] rounded-lg mt-2 overflow-hidden max-h-60 overflow-y-auto">
+              <div className="border border-[var(--border)] rounded-[6px] mt-2 overflow-hidden max-h-60 overflow-y-auto">
                 {productFiltered.map(p => (
                   <button key={p.id} type="button" onClick={() => { setSelectedProduct(p); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setProductSearch(''); setCodeExists(false); }}
-                    className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${selectedProduct?.id === p.id ? 'bg-[var(--accent-light)] text-[var(--accent)]' : 'hover:bg-[var(--bg)]'}`}>
-                    <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
+                    className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${selectedProduct?.id === p.id ? 'bg-[var(--accent-muted)] text-[var(--accent)]' : 'hover:bg-[var(--bg)]'}`}>
+                    <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{p.name}</div>
                       <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.vol} {p.unit}{p.formato ? ` · ${p.formato}` : ''}</div>
@@ -400,7 +400,7 @@ export function NovoSetupPage({ navigate }) {
           </div>
 
           {selectedProduct && (
-            <div className="mb-4 p-4 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
+            <div className="mb-4 p-4 bg-[var(--accent-muted)] border border-[var(--accent)] rounded-[6px]">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold text-[var(--accent)]">{selectedProduct.name}</div>
@@ -432,7 +432,7 @@ export function NovoSetupPage({ navigate }) {
                   </Select></div>
               </div>
               {codeExists && (
-                <div className="p-3 bg-[var(--warning-muted)] border border-[var(--warning)] rounded-lg">
+                <div className="p-3 bg-[var(--warning-muted)] border border-[var(--warning)] rounded-[6px]">
                   <div className="flex items-center gap-2">
                     <Icon name="alert" size={16} />
                     <span className="text-sm text-[var(--warning)]">Já existe um produto cadastrado com este código.</span>
@@ -463,7 +463,7 @@ export function NovoSetupPage({ navigate }) {
           <p className="text-sm text-[var(--fg-secondary)] mb-4">Com base nas características do produto e na máquina selecionada, encontramos os formatos compatíveis.</p>
 
           {activeProduct && (
-            <div className="mb-4 p-3 bg-[var(--bg)] rounded-lg border border-[var(--border)] text-sm">
+            <div className="mb-4 p-3 bg-[var(--bg)] rounded-[6px] border border-[var(--border)] text-sm">
               <span className="font-medium">{activeProduct.name}</span>
               <span className="text-[var(--fg-secondary)]"> · {activeProduct.code} · {activeProduct.vol} {activeProduct.unit || 'ml'}</span>
               <span className="text-[var(--fg-secondary)]"> · Máquina {selectedMachine?.name}</span>
@@ -484,7 +484,7 @@ export function NovoSetupPage({ navigate }) {
             </div>
           ) : !showFormatList && suggestedFormats[0] ? (
             <div className="space-y-4">
-              <div className="p-5 rounded-lg border-2 border-[var(--accent)] bg-[var(--accent-light)]">
+              <div className="p-5 rounded-[6px] border-2 border-[var(--accent)] bg-[var(--accent-muted)]">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant={COMPAT_COLORS[suggestedFormats[0].level] || 'success'}>Recomendado</Badge>
                   <Badge variant={COMPAT_COLORS[suggestedFormats[0].level] || 'success'}>{suggestedFormats[0].level}</Badge>
@@ -506,7 +506,7 @@ export function NovoSetupPage({ navigate }) {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Outros formatos compatíveis</p>
                   {suggestedFormats.slice(1).map(({ formato, level }) => (
-                    <div key={formato.id} className="p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                    <div key={formato.id} className="p-3 rounded-[6px] border border-[var(--border)] bg-[var(--surface)]">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-sm font-medium">{formato.name}</div>
@@ -531,7 +531,7 @@ export function NovoSetupPage({ navigate }) {
             <div className="space-y-3">
               {suggestedFormats.map(({ formato, level }) => (
                 <button key={formato.id} type="button" onClick={() => handleConfirmFormat(formato)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedFormato?.id === formato.id ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                  className={`w-full text-left p-4 rounded-[6px] border-2 transition-all ${selectedFormato?.id === formato.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -587,7 +587,7 @@ export function NovoSetupPage({ navigate }) {
               const primaryPiece = sel.primary ? pieces.find(p => p.id === sel.primaryId || p.name === sel.primary) || part : part;
               const alt = part.alternatives || [];
               return (
-                <div key={group} className="border border-[var(--border)] rounded-lg overflow-hidden">
+                <div key={group} className="border border-[var(--border)] rounded-[6px] overflow-hidden">
                   <div className="p-4 bg-[var(--bg)]">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -598,11 +598,11 @@ export function NovoSetupPage({ navigate }) {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-lg border border-[var(--border)]">
+                    <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-[var(--border)]">
                       {primaryPiece.image ? (
-                        <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-10 h-10 rounded-lg object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image)} />
+                        <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-10 h-10 rounded-[6px] object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image)} />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={18} /></div>
+                        <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={18} /></div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -622,8 +622,8 @@ export function NovoSetupPage({ navigate }) {
                       <div className="mt-3">
                         <p className="text-xs text-[var(--fg-secondary)] mb-1.5 font-medium">Peça alternativa</p>
                         {sel.alternative ? (
-                          <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-lg border border-dashed border-[var(--border)]">
-                            <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={18} /></div>
+                          <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)]">
+                            <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={18} /></div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{sel.alternative}</span>
@@ -634,7 +634,7 @@ export function NovoSetupPage({ navigate }) {
                           </div>
                         ) : (
                           <button type="button" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}
-                            className="w-full p-3 bg-[var(--surface)] rounded-lg border border-dashed border-[var(--border)] text-sm text-[var(--fg-secondary)] hover:border-[var(--accent)] transition-colors text-left">
+                            className="w-full p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)] text-sm text-[var(--fg-secondary)] hover:border-[var(--accent)] transition-colors text-left">
                             + Adicionar peça alternativa ({alt.length} disponíve{alt.length !== 1 ? 'is' : 'l'})
                           </button>
                         )}
@@ -642,7 +642,7 @@ export function NovoSetupPage({ navigate }) {
                     )}
 
                     {alt.length === 0 && primaryPiece.available === false && (
-                      <div className="mt-3 p-3 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-lg">
+                      <div className="mt-3 p-3 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-[6px]">
                         <div className="flex items-center gap-2 mb-1">
                           <Icon name="alert" size={16} />
                           <span className="text-sm font-medium text-[var(--danger)]">Peça principal indisponível</span>
@@ -681,8 +681,8 @@ export function NovoSetupPage({ navigate }) {
                       <div className="space-y-2">
                         {modalGroup.alternatives.filter(a => !pieceSearch || a.piece.name.toLowerCase().includes(pieceSearch) || (a.piece.code || '').toLowerCase().includes(pieceSearch)).map((a, i) => (
                           <button key={i} type="button" onClick={() => handleSelectAlternative(modalGroup.group, a)}
-                            className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.alternativeId === a.piece.id ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                            <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
+                            className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.alternativeId === a.piece.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                            <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium truncate">{a.piece.name}</div>
                               <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
@@ -711,13 +711,13 @@ export function NovoSetupPage({ navigate }) {
                           <div className="space-y-2">
                             {paged.map(p => (
                               <button key={p.id} type="button" onClick={() => handleSelectPrimary(modalGroup.group, p)}
-                                className={`w-full text-left px-3 py-2.5 rounded-lg border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.primaryId === p.id ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                                className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.primaryId === p.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
                                 {p.image ? (
                                   <button type="button" onClick={e => { e.stopPropagation(); setPreviewImage(p.image); }}>
-                                    <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
+                                    <img src={p.image} alt={p.name} className="w-9 h-9 rounded-[6px] object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
                                   </button>
                                 ) : (
-                                  <div className="w-9 h-9 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
+                                  <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium truncate">{p.name}</div>
@@ -763,7 +763,7 @@ export function NovoSetupPage({ navigate }) {
           <p className="text-sm text-[var(--fg-secondary)] mb-4">Confira as informações antes de salvar o fluxo.</p>
 
           <div className="space-y-4">
-            <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+            <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Informações de produção</span>
                 <button type="button" onClick={() => goToStep(1)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
@@ -774,7 +774,7 @@ export function NovoSetupPage({ navigate }) {
               </div>
             </div>
 
-            <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+            <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Produto</span>
                 <button type="button" onClick={() => goToStep(2)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
@@ -786,7 +786,7 @@ export function NovoSetupPage({ navigate }) {
               </div>
             </div>
 
-            <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+            <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Formato</span>
                 <button type="button" onClick={() => goToStep(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
@@ -795,7 +795,7 @@ export function NovoSetupPage({ navigate }) {
               {selectedFormato?.tipo && <div className="text-xs text-[var(--fg-secondary)] mt-0.5">Tipo: {selectedFormato.tipo}</div>}
             </div>
 
-            <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+            <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças principais</span>
                 <button type="button" onClick={() => goToStep(4)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
@@ -816,7 +816,7 @@ export function NovoSetupPage({ navigate }) {
             </div>
 
             {Object.entries(partSelections).some(([, s]) => s.alternative) && (
-              <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+              <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças alternativas</span>
                   <button type="button" onClick={() => goToStep(4)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
@@ -833,7 +833,7 @@ export function NovoSetupPage({ navigate }) {
               </div>
             )}
 
-            <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
+            <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2 block">Metadados</span>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><div className="text-xs text-[var(--fg-secondary)]">Criado por</div><div className="font-medium">{getCurrentUser()}</div></div>

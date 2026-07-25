@@ -9,7 +9,7 @@ export function DashboardPage({ navigate }) {
   const recent = [...flows].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5);
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       <div className="flex items-center justify-between mb-6 py-0.5">
         <div>
           <h1 className="text-[16px] font-semibold text-[var(--fg)]">Visão Geral</h1>

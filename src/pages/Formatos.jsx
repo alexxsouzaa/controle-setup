@@ -201,7 +201,7 @@ export function FormatosPage({ navigate }) {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
           <div className="grid lg:grid-cols-4 gap-3 mb-5">
@@ -354,7 +354,7 @@ export function FormatosPage({ navigate }) {
           {step === 1 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
                 <div>
                   <h3 className="text-sm font-semibold">1. Selecionar Produto</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Escolha o produto que será associado a este formato.</p>
@@ -381,7 +381,7 @@ export function FormatosPage({ navigate }) {
                       {productFiltered.map(p => (
                         <button key={p.id} type="button" onClick={() => handleSelectProduct(p)}
                           className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors">
-                          <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+                          <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
                           <div>
                             <div className="text-sm font-medium">{p.name}</div>
                             <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.category} · {p.vol} {p.unit}</div>
@@ -405,7 +405,7 @@ export function FormatosPage({ navigate }) {
           {step === 2 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={16} /></div>
                 <div>
                   <h3 className="text-sm font-semibold">2. Configuração do Formato</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Defina o formato e a volumetria para o produto selecionado.</p>
@@ -446,7 +446,7 @@ export function FormatosPage({ navigate }) {
           {step === 3 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={16} /></div>
                 <div>
                   <h3 className="text-sm font-semibold">3. Selecionar Máquina</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Escolha a máquina compatível com este formato.</p>
@@ -510,7 +510,7 @@ export function FormatosPage({ navigate }) {
           {step === 4 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="wrench" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="wrench" size={16} /></div>
                 <div>
                   <h3 className="text-sm font-semibold">4. Selecionar Peças</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Selecione as peças necessárias para este formato.</p>
@@ -581,7 +581,7 @@ export function FormatosPage({ navigate }) {
           {step === 5 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
                 <div>
                   <h3 className="text-sm font-semibold">5. Revisar Formato</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Confira as informações e defina o nome antes de criar.</p>

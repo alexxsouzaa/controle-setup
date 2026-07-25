@@ -110,7 +110,7 @@ export function ImportPage({ navigate }) {
   const reset = () => { setResult(null); setConflicts([]); setPendingData(null); setRenamedMap({}); setFileInfo(null); };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       <div className="max-w-xl">
         <div
           role="button"

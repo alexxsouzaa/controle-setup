@@ -34,7 +34,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
         className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="file" size={18} /></div>
+            <div className="w-9 h-9 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="file" size={18} /></div>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold truncate">{flow.name}</h3>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -71,7 +71,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
                     {t.image ? (
                       <img src={t.image} alt={t.pieceName} className="w-7 h-7 rounded object-cover border border-[var(--border)] shrink-0" />
                     ) : (
-                      <div className="w-7 h-7 rounded bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={12} /></div>
+                      <div className="w-7 h-7 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="box" size={12} /></div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium truncate">{t.pieceName}</div>
@@ -217,7 +217,7 @@ export function FluxosPage({ navigate }) {
   const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF]);
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       <div className="grid lg:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Fluxos', value: flows.length, icon: 'file' },
