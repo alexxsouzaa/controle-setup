@@ -202,17 +202,6 @@ export function FormatosPage({ navigate }) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Formatos</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{formatos.length} formato{formatos.length !== 1 ? 's' : ''} cadastrado{formatos.length !== 1 ? 's' : ''}.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="grid-3x3" size={16} />{tab === 'list' ? 'Lista' : 'Ver Lista'}</Button>
-          <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Novo Formato'}</Button>
-        </div>
-      </div>
-
       {tab === 'list' ? (
         <>
           <div className="grid lg:grid-cols-4 gap-3 mb-5">
