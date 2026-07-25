@@ -40,7 +40,7 @@ export function ConfigPage() {
   const [uoList, setUoList] = useState(() => Object.keys(config.uoConfigs || {}));
   const [uoConfigs, setUoConfigs] = useState(() => {
     const saved = config.uoConfigs || {};
-    return Object.entries(saved).map(([uo, cfg]) => ({ uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])], productCategories: [...(cfg.productCategories || [])] }));
+    return Object.entries(saved).map(([uo, cfg]) => ({ uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])], productCategories: [...(cfg.productCategories || [])], lines: [...(cfg.lines || [])] }));
   });
   const [activeTab, setActiveTab] = useState(-1);
   const [newUoName, setNewUoName] = useState('');
@@ -58,7 +58,7 @@ export function ConfigPage() {
     if (!name) return;
     if (uoList.includes(name)) { toast(`UO "${name}" já existe.`, 'warning'); return; }
     setUoList(prev => [...prev, name]);
-    setUoConfigs(prev => [...prev, { uo: name, toolingCategories: [], formatTypes: [], productCategories: [] }]);
+    setUoConfigs(prev => [...prev, { uo: name, toolingCategories: [], formatTypes: [], productCategories: [], lines: [] }]);
     setActiveTab(uoConfigs.length);
     setNewUoName('');
   };
@@ -81,6 +81,7 @@ export function ConfigPage() {
       if (u.toolingCategories.length > 0) uoCfg[u.uo].toolingCategories = u.toolingCategories;
       if (u.formatTypes.length > 0) uoCfg[u.uo].formatTypes = u.formatTypes;
       if (u.productCategories.length > 0) uoCfg[u.uo].productCategories = u.productCategories;
+      if (u.lines.length > 0) uoCfg[u.uo].lines = u.lines;
     });
     updateConfig({ uoConfigs: uoCfg });
     logAction('update', 'Configuração', 'Configurações por UO atualizadas');
@@ -151,7 +152,7 @@ export function ConfigPage() {
                 ) : (
                   uoList.map((uo, i) => {
                     const cfg = uoConfigs.find(c => c.uo === uo);
-                    const totalItems = (cfg?.toolingCategories.length || 0) + (cfg?.formatTypes.length || 0) + (cfg?.productCategories.length || 0);
+                    const totalItems = (cfg?.toolingCategories.length || 0) + (cfg?.formatTypes.length || 0) + (cfg?.productCategories.length || 0) + (cfg?.lines.length || 0);
                     return (
                       <div key={uo} className="flex items-center justify-between px-4 py-3 rounded-[6px] border border-[var(--border)] bg-[var(--surface)]">
                         <div className="flex items-center gap-3">
@@ -204,6 +205,14 @@ export function ConfigPage() {
                 <p className="text-[12px] text-[var(--fg-secondary)] mb-3">Categorias de produto disponíveis.</p>
                 <TagInput values={active.productCategories || []} onAdd={v => setUoValue('productCategories', [...(active.productCategories || []), v])} onRemove={v => setUoValue('productCategories', (active.productCategories || []).filter(x => x !== v))} placeholder="Ex: Shampoo" />
               </div>
+
+              <div className="h-px bg-[var(--border)]" />
+
+              <div>
+                <label className="text-[13px] font-medium text-[var(--fg)] mb-1 block">Linhas</label>
+                <p className="text-[12px] text-[var(--fg-secondary)] mb-3">Linhas de produção disponíveis.</p>
+                <TagInput values={active.lines || []} onAdd={v => setUoValue('lines', [...(active.lines || []), v])} onRemove={v => setUoValue('lines', (active.lines || []).filter(x => x !== v))} placeholder="Ex: Linha 01" />
+              </div>
             </div>
           ) : null}
         </div>
@@ -211,12 +220,12 @@ export function ConfigPage() {
 
       <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-[var(--border)]">
         <span className="text-[12px] text-[var(--fg-muted)] mr-auto">
-          {uoConfigs.reduce((acc, u) => acc + u.toolingCategories.length + u.formatTypes.length + u.productCategories.length, 0)} itens · {uoList.length} UO{uoList.length !== 1 ? 's' : ''}
+          {uoConfigs.reduce((acc, u) => acc + u.toolingCategories.length + u.formatTypes.length + u.productCategories.length + u.lines.length, 0)} itens · {uoList.length} UO{uoList.length !== 1 ? 's' : ''}
         </span>
         <Button variant="ghost" size="sm" onClick={() => {
           const saved = config.uoConfigs || {};
           setUoList(Object.keys(saved));
-          setUoConfigs(Object.entries(saved).map(([uo, cfg]) => ({ uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])], productCategories: [...(cfg.productCategories || [])] })));
+          setUoConfigs(Object.entries(saved).map(([uo, cfg]) => ({ uo, toolingCategories: [...(cfg.toolingCategories || [])], formatTypes: [...(cfg.formatTypes || [])], productCategories: [...(cfg.productCategories || [])], lines: [...(cfg.lines || [])] })));
           setActiveTab(-1);
           toast('Alterações descartadas.');
         }}>Descartar</Button>
