@@ -272,7 +272,7 @@ export function NovoSetupPage({ navigate }) {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       {isEditing && (
         <div className="flex justify-end mb-3">
           <Button variant="ghost" size="sm" onClick={() => { resetAll(); navigate('/fluxos'); }}>Cancelar edição</Button>
