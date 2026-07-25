@@ -10,7 +10,7 @@ const TABS = [
   { id: 'uos', label: 'UOs', icon: 'grid-3x3' },
   { id: 'sistema', label: 'Sistema', icon: 'box' },
   { id: 'aparencia', label: 'Aparência', icon: 'sun' },
-  { id: 'notificacoes', label: 'Notificações', icon: 'bell' },
+  { id: 'notificacoes', label: 'Notificações', icon: 'clock' },
 ];
 
 const FIELDS = [
@@ -58,7 +58,6 @@ export function ConfigPage() {
   const [newUoName, setNewUoName] = useState('');
 
   const allMachineUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
-  const activeUo = uoEdit !== null ? uoConfigs[uoEdit] : null;
   const setUoValue = (key, values) => setUoConfigs(prev => prev.map((u, i) => i === uoEdit ? { ...u, [key]: values } : u));
 
   const addUo = () => {
@@ -127,10 +126,10 @@ export function ConfigPage() {
           )}
 
           {tab === 'uos' && (
-            <div className="max-w-[720px] flex flex-col gap-8">
+            <div className="max-w-[620px] flex flex-col gap-8">
               <div>
-                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">Unidades Organizacionais</h2>
-                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Gerencie UOs e configure suas variáveis.</p>
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] pb-2 border-b border-[var(--border)]">UOs</h2>
+                <p className="text-[13px] text-[var(--fg-secondary)] mt-3">Gerencie Unidades Organizacionais e suas variáveis.</p>
               </div>
 
               <div className="flex gap-2">
@@ -145,46 +144,44 @@ export function ConfigPage() {
                 </div>
               )}
 
-              <div className="flex gap-6 items-start">
-                <div className="w-[220px] flex-shrink-0 space-y-0.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] px-1 pb-2">UOs</div>
-                  {uoConfigs.map((uo, i) => (
-                    <button key={uo.uo} onClick={() => setUoEdit(i)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-[6px] text-[13px] text-left transition-all ${
-                        uoEdit === i ? 'bg-[var(--surface-hover)] text-[var(--fg)] font-semibold' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                      }`}>
-                      <span className="w-5 h-5 rounded-[4px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[10px] font-semibold text-[var(--fg-secondary)] flex-shrink-0">{uo.uo.charAt(0).toUpperCase()}</span>
-                      <span className="truncate">{uo.uo}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex-1 min-w-0">
-                  {!activeUo ? (
-                    <div className="text-center py-12 text-[13px] text-[var(--fg-muted)]">Selecione uma UO ao lado para configurar suas variáveis.</div>
-                  ) : (
-                    <div className="flex flex-col gap-8">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-[16px] font-semibold text-[var(--fg)]">{activeUo.uo}</h3>
-                          <p className="text-[13px] text-[var(--fg-secondary)] mt-1">Variáveis desta Unidade Organizacional.</p>
-                        </div>
-                        <button type="button" onClick={() => removeUo(uoEdit)} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--danger)] transition-colors">Remover</button>
-                      </div>
-                      {FIELDS.map((field, fi) => (
-                        <div key={field.key}>
-                          {fi > 0 && <hr className="border-[var(--border)] mb-6" />}
-                          <div className="flex flex-col gap-2">
-                            <div>
-                              <label className="text-[13px] font-medium text-[var(--fg)] block">{field.label}</label>
-                              <p className="text-[12px] text-[var(--fg-muted)] mt-1">{field.desc}</p>
-                            </div>
-                            <TagInput values={activeUo[field.key] || []} onAdd={v => setUoValue(field.key, [...(activeUo[field.key] || []), v])} onRemove={v => setUoValue(field.key, (activeUo[field.key] || []).filter(x => x !== v))} placeholder={field.placeholder} />
+              <div className="space-y-2">
+                {uoConfigs.length === 0 ? (
+                  <p className="text-center py-8 text-[13px] text-[var(--fg-muted)]">Nenhuma UO cadastrada. Adicione uma UO acima.</p>
+                ) : (
+                  uoConfigs.map((uo, i) => {
+                    const open = uoEdit === i;
+                    const total = (uo.toolingCategories.length || 0) + (uo.formatTypes.length || 0) + (uo.productCategories.length || 0) + (uo.lines.length || 0);
+                    return (
+                      <div key={uo.uo} className="border border-[var(--border)] rounded-[8px] bg-[var(--surface)]">
+                        <button type="button" onClick={() => setUoEdit(open ? null : i)}
+                          className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-[var(--surface-hover)] transition-colors rounded-[8px]">
+                          <span className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[12px] font-semibold text-[var(--fg-secondary)] shrink-0">{uo.uo.charAt(0).toUpperCase()}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[14px] font-semibold text-[var(--fg)]">{uo.uo}</div>
+                            <div className="text-[11px] text-[var(--fg-muted)]">{total} variáve{total !== 1 ? 'is' : 'l'} configurada{total !== 1 ? 's' : ''}</div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button type="button" onClick={(e) => { e.stopPropagation(); removeUo(i); }} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--danger)] transition-colors">Excluir</button>
+                            <Icon name="arrow-right" size={14} className={`transition-transform ${open ? '-rotate-90' : 'rotate-90'}`} />
+                          </div>
+                        </button>
+                        {open && (
+                          <div className="px-5 pb-5 space-y-6 border-t border-[var(--border)] pt-5">
+                            {FIELDS.map(field => (
+                              <div key={field.key} className="flex flex-col gap-2">
+                                <div>
+                                  <label className="text-[13px] font-medium text-[var(--fg)] block">{field.label}</label>
+                                  <p className="text-[12px] text-[var(--fg-muted)] mt-1">{field.desc}</p>
+                                </div>
+                                <TagInput values={uo[field.key] || []} onAdd={v => setUoValue(field.key, [...(uo[field.key] || []), v])} onRemove={v => setUoValue(field.key, (uo[field.key] || []).filter(x => x !== v))} placeholder={field.placeholder} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
