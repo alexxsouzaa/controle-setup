@@ -111,14 +111,15 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
 }
 
 export function FluxosPage({ navigate }) {
-  const { flows, deleteFlow, deleteFlows, duplicateFlow, updateFlow, exportAll, logAction } = useContext(AppDataContext);
+  const { flows, deleteFlow, deleteFlows, duplicateFlow, updateFlow, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-  const { sorted, toggle, indicator, sortKey } = useSortable(flows, 'date');
+  const { sorted } = useSortable(flows, 'date');
   const [search, setSearch] = useState('');
   const [importedNotify, setImportedNotify] = useState(null);
   const [machineFilter, setMachineFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
   const [drawerFlow, setDrawerFlow] = useState(null);
   const perPage = 10;
 
@@ -145,16 +146,18 @@ export function FluxosPage({ navigate }) {
   const selectedCount = selected.size;
 
   const toggleSelect = (id) => {
+    if (!selectionMode) setSelectionMode(true);
     setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
   const toggleSelectAll = () => {
+    if (!selectionMode && !allSelected) setSelectionMode(true);
     if (paged.every(s => selected.has(s.id))) {
       setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id))));
     } else {
       setSelected(new Set([...selected, ...paged.map(s => s.id)]));
     }
   };
-  const clearSelection = () => setSelected(new Set());
+  const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
 
   const handleExport = (selectedOnly = false) => {
     const selectedFlows = flows.filter(f => selected.has(f.id));
@@ -216,104 +219,156 @@ export function FluxosPage({ navigate }) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Fluxos de Setup</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{filtered.length} fluxo{filtered.length !== 1 ? 's' : ''}{search || machineFilter ? ' encontrado' + (filtered.length !== 1 ? 's' : '') : ' cadastrado' + (filtered.length !== 1 ? 's' : '')}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => handleExport(false)}><Icon name="download" size={16} />Exportar</Button>
-          <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={16} />Novo Fluxo</Button>
-        </div>
-      </div>
-      <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
-        <div className="relative max-w-sm flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-          <input className="shad-input pl-9" placeholder="Buscar..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); clearSelection(); }} aria-label="Buscar fluxos" />
-        </div>
-        <select className="shad-select" value={machineFilter} onChange={e => { setMachineFilter(e.target.value); setPage(1); clearSelection(); }} aria-label="Filtrar por máquina">
-          <option value="">Todas as máquinas</option>
-          {machineNames.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
+      <div className="grid lg:grid-cols-4 gap-3 mb-5">
+        {[
+          { label: 'Fluxos', value: flows.length, icon: 'file' },
+          { label: 'Máquinas', value: [...new Set(flows.map(f => f.machine).filter(Boolean))].length, icon: 'box' },
+          { label: 'Setups Hoje', value: flows.filter(f => f.date === new Date().toISOString().slice(0, 10)).length, icon: 'clock' },
+          { label: 'Versões', value: [...new Set(flows.map(f => f.ver).filter(Boolean))].length, icon: 'grid-3x3' },
+        ].map((s, i) => (
+          <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
+              <Icon name={s.icon} size={20} />
+            </div>
+            <div>
+              <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
+              <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {importedNotify && (
-        <div className="flex items-start gap-3 mb-4 px-4 py-3 bg-[var(--success-muted)] border border-[var(--success)] rounded-lg">
-          <Icon name="check-circle" size={20} className="text-[var(--success)] shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-[var(--success)]">{importedNotify.length} fluxo{importedNotify.length !== 1 ? 's' : ''} importado{importedNotify.length !== 1 ? 's' : ''}:</p>
-            <ul className="text-xs text-[var(--fg)] mt-1 space-y-0.5">
-              {importedNotify.map((name, i) => (<li key={i} className="truncate">{name}</li>))}
-            </ul>
-          </div>
-          <button type="button" onClick={() => setImportedNotify(null)} aria-label="Fechar" className="text-[var(--fg-muted)] hover:text-[var(--fg)] shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-xs">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+          <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar fluxo..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); clearSelection(); }} aria-label="Buscar fluxos" />
+        </div>
+        <div className="flex items-center gap-1.5 flex-1 flex-wrap">
+          {machineNames.map(m => (
+            <button key={m} onClick={() => { setMachineFilter(machineFilter === m ? '' : m); setPage(1); clearSelection(); }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                machineFilter === m ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+              }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--fg-muted)]" />
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+              selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+            }`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            {selectionMode ? 'Sair' : 'Selecionar'}
+          </button>
+          <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={14} />Novo Fluxo</Button>
+        </div>
+      </div>
+
+      {selectionMode && selectedCount > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
+          <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
+          <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionados</button>
+          <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
         </div>
       )}
 
-      {selectedCount > 0 && (
-        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
-          <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
-          <div className="flex gap-2 ml-auto">
-            <button type="button" onClick={() => handleExport(true)} className="text-xs px-3 py-1.5 rounded bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] transition-colors"><Icon name="download" size={14} /> Exportar selecionados</button>
-            <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionados</button>
-            <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
+      {importedNotify && (
+        <div className="flex items-start gap-3 mb-4 px-4 py-3 bg-[var(--success-muted)] border border-[var(--success)] rounded-lg">
+          <Icon name="check-circle" size={18} className="text-[var(--success)] shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-medium text-[var(--success)]">{importedNotify.length} fluxo{importedNotify.length !== 1 ? 's' : ''} importado{importedNotify.length !== 1 ? 's' : ''}:</p>
+            <ul className="text-[12px] text-[var(--fg)] mt-1 space-y-0.5">
+              {importedNotify.map((name, i) => (<li key={i} className="truncate">{name}</li>))}
+            </ul>
           </div>
+          <button type="button" onClick={() => setImportedNotify(null)} aria-label="Fechar" className="text-[var(--fg-muted)] hover:text-[var(--fg)] shrink-0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
         </div>
       )}
 
       {filtered.length === 0 ? (
-        <EmptyState icon={<Icon name="file" size={24} />} title="Nenhum fluxo encontrado" desc="Tente ajustar sua busca ou crie um novo fluxo."
-          action={<Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={16} />Novo Fluxo</Button>} />
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="file" size={24} /></div>
+          <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{flows.length === 0 ? 'Nenhum fluxo cadastrado' : 'Nenhum fluxo encontrado'}</p>
+          <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{flows.length === 0 ? 'Crie o primeiro fluxo de setup.' : 'Tente ajustar a busca.'}</p>
+          {flows.length === 0 && <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={14} />Novo Fluxo</Button>}
+        </div>
       ) : (
-        <div className="border border-[var(--border)] rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-[var(--bg)]">
-                <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                {['Nome', 'Máquina', 'Produto', 'Código', 'Volumetria', 'Data', 'Versão', 'Ações'].map(h => {
-                  const keys = { Nome: 'name', Máquina: 'machine', Produto: 'product', Código: 'code', Volumetria: 'vol', Data: 'date', Versão: 'ver' };
-                  const k = keys[h];
-                  return (
-                    <th key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>
-                      {h}{k ? indicator(k) : ''}
-                    </th>
-                  );
-                })}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+          <table className="w-full text-[13px] border-collapse">
+            <thead className="bg-[var(--bg-secondary)]">
+              <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Fluxo</th>
+                <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Máquina</th>
+                <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden lg:table-cell">Status</th>
+                <th className="text-right px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Data</th>
+                <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {paged.map(s => {
-                const isSelected = selected.has(s.id);
+              {paged.map((s, idx) => {
+                const last = idx === paged.length - 1;
                 return (
-                  <tr key={s.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${isSelected ? 'bg-[var(--accent-light)]' : ''}`}>
-                    <td className="px-4 py-2.5"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
-                    <td className="px-4 py-2.5">
-                      <button type="button" onClick={() => setDrawerFlow(s)} className="font-medium text-left hover:text-[var(--accent)] transition-colors">{s.name}</button>
-                    </td>
-                    <td className="px-4 py-2.5">{s.machine}</td>
-                    <td className="px-4 py-2.5">{s.product}</td>
-                    <td className="px-4 py-2.5 text-xs font-mono text-[var(--fg-secondary)]">{s.code}</td>
-                    <td className="px-4 py-2.5">{s.vol}</td>
-                    <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{s.date}</td>
-                    <td className="px-4 py-2.5"><Badge>{s.ver}</Badge></td>
-                    <td className="px-4 py-2.5">
-                      <button type="button" onClick={() => setDrawerFlow(s)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
-                    </td>
-                  </tr>
+                <tr key={s.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(s.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(s.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                    <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="accent-[var(--fg)] cursor-pointer" />
+                  </td>
+                  <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
+                    <button type="button" onClick={() => setDrawerFlow(s)} className="text-left w-full">
+                      <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{s.name}</div>
+                      <div className="text-[12px] font-mono text-[var(--fg-muted)]">{s.product} · {s.code}</div>
+                    </button>
+                  </td>
+                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell text-[var(--fg-secondary)]`}>{s.machine}</td>
+                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden lg:table-cell`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono ${
+                      s.status === 'Concluído' ? 'bg-[var(--success-muted)] text-[var(--success)]' : s.status === 'Em andamento' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' : s.status === 'Cancelado' ? 'bg-[var(--danger-muted)] text-[var(--danger)]' : 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]'
+                    }`}>{s.status || '—'}</span>
+                  </td>
+                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell`}>{s.date}</td>
+                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button type="button" onClick={() => setDrawerFlow(s)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </button>
+                      <button type="button" onClick={() => { sessionStorage.setItem('cs-edit-flow', JSON.stringify(s)); navigate('/novo-setup'); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
-      )}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-4" role="navigation" aria-label="Navegação de páginas">
-          <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-8 h-8 rounded text-xs ${page === 1 ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Anterior">‹</button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-            <button type="button" key={p} onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
-              className={`w-8 h-8 rounded text-xs ${p === page ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
-          ))}
-          <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-8 h-8 rounded text-xs ${page === totalPages ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Próxima">›</button>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+              <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                  const pg = start + i;
+                  if (pg > totalPages) return null;
+                  return (
+                    <button key={pg} type="button" onClick={() => setPage(pg)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                        pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                      }`}>{pg}</button>
+                  );
+                })}
+                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
