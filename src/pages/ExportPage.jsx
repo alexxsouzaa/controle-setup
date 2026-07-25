@@ -36,7 +36,7 @@ export function ExportPage() {
   const [format, setFormat] = useState('json');
 
   const totalSelected = selected.size;
-  const totalItems = selected.reduce((sum, key) => sum + (counts[key] || 0), 0);
+  const totalItems = [...selected].reduce((sum, key) => sum + (counts[key] || 0), 0);
 
   const toggleEntity = (key) => setSelected(prev => {
     const next = new Set(prev);
