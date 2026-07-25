@@ -5,7 +5,6 @@ import { useSortable } from '../hooks/useSortable';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
-import { EmptyState } from '../components/EmptyState';
 import { printPDF } from '../utils/pdf';
 
 const statusVariant = {

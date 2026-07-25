@@ -3,21 +3,16 @@ import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
-import { Select } from '../components/Select';
-import { EmptyState } from '../components/EmptyState';
 import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
 
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
-const STEP_KEYS = ['product', 'config', 'machine', 'parts', 'review', 'done'];
 const VOL_UNITS = ['ml', 'g'];
-const COMPAT_COLORS = { Alta: 'success', Média: 'warning', Baixa: 'info', Ideal: 'success', Condicional: 'warning' };
 
 export function FormatosPage({ navigate }) {
   const ctx = useContext(AppDataContext);
-  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormato, deleteFormatos, logAction, getCurrentUser, config } = ctx;
+  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormatos, logAction, getCurrentUser, config } = ctx;
   const { toast } = useContext(ToastContext);
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');

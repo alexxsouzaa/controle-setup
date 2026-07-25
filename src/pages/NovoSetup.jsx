@@ -8,7 +8,7 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { ImagePreview } from '../components/ImagePreview';
-import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts, collectLines } from '../utils/compatibility';
+import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../utils/compatibility';
 
 const STEPS = [
   { key: 'context', label: 'Contexto', num: 1 },
@@ -50,9 +50,6 @@ export function NovoSetupPage({ navigate }) {
   const [pieceSearch, setPieceSearch] = useState('');
   const [piecePage, setPiecePage] = useState(1);
   const [previewImage, setPreviewImage] = useState(null);
-
-  const lines = useMemo(() => collectLines(machines), [machines]);
-  const machineLines = useMemo(() => lines.filter(l => selectedMachine && l === selectedMachine.line), [selectedMachine, lines]);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('cs-edit-flow');
@@ -112,12 +109,6 @@ export function NovoSetupPage({ navigate }) {
   ).slice(0, 10);
 
   const goToStep = (s) => { if (s >= 1 && s <= 6) setStep(s); };
-
-  const handleSelectMachine = (id) => {
-    setSelectedMachineId(id);
-    const m = machines.find(mch => mch.id === id);
-    if (m) setSelectedLine(m.line);
-  };
 
   const handleSelectLine = (line) => { setSelectedLine(line); };
 
