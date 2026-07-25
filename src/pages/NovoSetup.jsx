@@ -271,23 +271,22 @@ export function NovoSetupPage({ navigate }) {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold tracking-tight">{isEditing ? 'Editar Fluxo' : 'Novo Fluxo'}</h2>
-        {isEditing && (
+    <div className="p-6">
+      {isEditing && (
+        <div className="flex justify-end mb-3">
           <Button variant="ghost" size="sm" onClick={() => { resetAll(); navigate('/fluxos'); }}>Cancelar edição</Button>
-        )}
-      </div>
-      <div className="mb-6 p-4 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
+        </div>
+      )}
+      <div className="mb-6 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-[8px]">
         <div className="flex items-center justify-center gap-0">
           {STEPS.map((s, i) => (
             <div key={s.key} className="flex items-center">
-              {i > 0 && <div className={`w-8 md:w-12 h-0.5 mx-1 ${i < step ? 'bg-[var(--success)]' : 'bg-[var(--border)]'} transition-colors`} />}
-              <div className={`flex items-center gap-1.5 ${i >= step ? 'opacity-50' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step === s.num ? 'bg-[var(--accent)] text-white shadow-[0_0_0_3px_var(--accent-light)] scale-110' : step > s.num ? 'bg-[var(--success-muted)] text-[var(--success)] border-2 border-[var(--success)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-2 border-[var(--border)]'}`}>
+              {i > 0 && <div className={`w-6 md:w-10 h-0.5 mx-0.5 ${i < step ? 'bg-[var(--success)]' : 'bg-[var(--border)]'} transition-colors`} />}
+              <div className={`flex items-center gap-1 ${i >= step ? 'opacity-50' : ''}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${step === s.num ? 'bg-[var(--fg)] text-[var(--bg)]' : step > s.num ? 'bg-[var(--success-muted)] text-[var(--success)] border-2 border-[var(--success)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-2 border-[var(--border)]'}`}>
                   {step > s.num ? '✓' : s.num}
                 </div>
-                <span className={`text-xs font-medium hidden sm:inline whitespace-nowrap ${step === s.num ? 'text-[var(--fg)]' : 'text-[var(--fg-secondary)]'}`}>{s.label}</span>
+                <span className={`text-[11px] font-medium hidden sm:inline whitespace-nowrap ${step === s.num ? 'text-[var(--fg)]' : 'text-[var(--fg-secondary)]'}`}>{s.label}</span>
               </div>
             </div>
           ))}
@@ -843,24 +842,26 @@ export function NovoSetupPage({ navigate }) {
 
       {/* STEP 6: CONCLUÍDO */}
       {step === 6 && (
-        <Card>
-          <div className="text-center py-8">
-            <div className="w-16 h-16 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
-              <Icon name="check-circle" size={32} />
+        <div className="max-w-lg mx-auto">
+          <Card>
+            <div className="text-center py-8">
+              <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
+                <Icon name="check-circle" size={28} />
+              </div>
+              <h3 className="text-[16px] font-semibold mb-1">{isEditing ? 'Fluxo atualizado!' : 'Fluxo criado!'}</h3>
+              <div className="text-[14px] font-medium text-[var(--fg)] mt-1 mb-1">{createdFlowName}</div>
+              <p className="text-[12px] text-[var(--fg-secondary)] mb-6">{isEditing ? 'Disponível para utilização.' : 'O fluxo foi salvo e está disponível.'}</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="primary" size="sm" onClick={() => navigate('/fluxos')}>
+                  <Icon name="grid-3x3" size={14} />Ver fluxos
+                </Button>
+                <Button variant="secondary" size="sm" onClick={resetAll}>
+                  <Icon name="plus" size={14} />Criar novo fluxo
+                </Button>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-1">{isEditing ? 'Fluxo atualizado com sucesso!' : 'Fluxo criado com sucesso!'}</h3>
-            <div className="text-base font-medium text-[var(--accent)] mt-2 mb-1">{createdFlowName}</div>
-            <p className="text-sm text-[var(--fg-secondary)] mb-8 max-w-sm mx-auto">{isEditing ? 'O fluxo foi atualizado e está disponível para utilização.' : 'O fluxo foi salvo e está disponível para utilização.'}</p>
-            <div className="flex gap-3 justify-center">
-              <Button variant="primary" onClick={() => navigate('/fluxos')}>
-                <Icon name="grid-3x3" size={16} />Ir para lista de fluxos
-              </Button>
-              <Button variant="secondary" onClick={resetAll}>
-                <Icon name="plus" size={16} />Criar novo fluxo
-              </Button>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       )}
 
       {previewImage && <ImagePreview src={previewImage} alt="Foto da peça" onClose={() => setPreviewImage(null)} />}
