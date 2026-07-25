@@ -460,32 +460,40 @@ export function FormatosPage({ navigate }) {
               <div className="mb-4">
                 <div className="relative">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-                  <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={e => setMachineSearch(e.target.value.toLowerCase())} />
+                  <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={e => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
                 </div>
-              </div>
-              <div className="grid lg:grid-cols-2 grid-cols-1 gap-3">
-                {machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch))).map(m => {
-                  const isSelected = selectedMachineId === m.id;
+                {machineSearch && (() => {
+                  const filtered = machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch)));
+                  if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
                   return (
-                    <button key={m.id} type="button" onClick={() => setSelectedMachineId(m.id)}
-                      className={`text-left p-4 rounded-lg border-2 transition-all ${isSelected ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold">{m.name}</span>
-                        {isSelected && <Badge variant="success">Selecionada</Badge>}
-                      </div>
-                      <div className="text-xs text-[var(--fg-secondary)]">UO: {m.uo}</div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {(m.lines || (m.line ? [m.line] : [])).map(l => <Badge key={l}>{l}</Badge>)}
-                      </div>
-                    </button>
+                    <div className="border border-[var(--border)] rounded-[6px] mt-2 max-h-60 overflow-y-auto">
+                      {filtered.map(m => (
+                        <button key={m.id} type="button" onClick={() => { setSelectedMachineId(m.id); setMachineSearch(''); }}
+                          className={`w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--surface-hover)] transition-colors ${selectedMachineId === m.id ? 'bg-[var(--accent-muted)]' : ''}`}>
+                          <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[13px] font-medium text-[var(--fg)] truncate">{m.name}</div>
+                            <div className="text-[11px] text-[var(--fg-muted)]">{m.uo} · {(m.lines || [m.line]).length} linha{(m.lines || [m.line]).length !== 1 ? 's' : ''}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   );
-                })}
+                })()}
               </div>
-              {machines.length === 0 ? (
-                <p className="text-sm text-[var(--fg-muted)] text-center py-4">Nenhuma máquina cadastrada.</p>
-              ) : machineSearch && machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch))).length === 0 ? (
-                <p className="text-sm text-[var(--fg-muted)] text-center py-4 col-span-full">Nenhuma máquina encontrada para "{machineSearch}".</p>
-              ) : null}
+              {selectedMachine ? (
+                <div className="p-4 bg-[var(--accent-muted)] border border-[var(--fg-muted)] rounded-[6px] mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[13px] font-semibold text-[var(--fg)]">{selectedMachine.name}</div>
+                      <div className="text-[11px] text-[var(--fg-secondary)]">UO: {selectedMachine.uo} · {(selectedMachine.lines || [selectedMachine.line]).length} linha{(selectedMachine.lines || [selectedMachine.line]).length !== 1 ? 's' : ''}</div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => { setSelectedMachineId(''); setSelectedLine(''); }}>Trocar</Button>
+                  </div>
+                </div>
+              ) : !machineSearch && (
+                <p className="text-[12px] text-[var(--fg-secondary)]">Busque e selecione uma máquina acima.</p>
+              )}
               {selectedMachine && (
                 <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
                   <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
