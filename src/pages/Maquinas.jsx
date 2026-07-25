@@ -215,7 +215,7 @@ export function MaquinasPage({ navigate }) {
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                    <th className="w-8 px-3.5 py-2.5 border-b border-[var(--border)]"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} /></th>
+                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
                     <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Máquina</th>
                     <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">UO</th>
                     <th className="text-right px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
@@ -225,8 +225,8 @@ export function MaquinasPage({ navigate }) {
                 <tbody>
                   {paged.map((m, idx) => (
                     <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(m.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
-                        <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} />
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                        <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--fg)] cursor-pointer" />
                       </td>
                       <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
                         <button type="button" onClick={() => setDrawerItem(m)} className="text-left w-full">
