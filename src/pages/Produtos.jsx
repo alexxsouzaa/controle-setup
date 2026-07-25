@@ -1,4 +1,4 @@
-﻿import { useState, useContext } from 'react';
+﻿import { useState, useContext, useRef } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
@@ -20,9 +20,32 @@ export function ProdutosPage() {
   const [page, setPage] = useState(1);
   const [selectionMode, setSelectionMode] = useState(false);
   const perPage = 10;
-  const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' });
+  const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' });
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef(null);
+  const MAX_IMAGE_SIZE = 500 * 1024;
 
-  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' }); setEditingId(null); };
+  const readFileAsDataURL = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' }); setEditingId(null); setImageError(''); };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
+    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
+    setImageError('');
+    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
+    catch { setImageError('Erro ao processar a imagem.'); }
+  };
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatÃ³rios: CÃ³digo, Nome e Volume.', 'warning'); return; }
@@ -35,7 +58,7 @@ export function ProdutosPage() {
   };
 
   const startEdit = (p) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '' });
+    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '', image: p.image || '' });
     setEditingId(p.id);
     setTab('create');
   };
@@ -248,6 +271,32 @@ export function ProdutosPage() {
                 {CATEGORIES.map(c => <option key={c}>{c}</option>)}
               </Select>
             </div>
+          </Card>
+          <Card>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="upload" size={15} /></div>
+              <div>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Foto</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Opcional.</p>
+              </div>
+            </div>
+            {form.image ? (
+              <div className="flex items-center gap-3">
+                <img src={form.image} alt="Preview" className="w-14 h-14 rounded-[6px] object-cover border border-[var(--border)]" />
+                <div className="space-y-1">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] block">Trocar</button>
+                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-[11px] text-[var(--danger)] hover:underline block">Remover</button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center gap-2 px-4 py-6 rounded-[6px] border-2 border-dashed border-[var(--border)] hover:border-[var(--fg-muted)] hover:bg-[var(--surface)] transition-all w-full">
+                <Icon name="upload" size={18} />
+                <span className="text-[12px] text-[var(--fg-muted)]">Adicionar foto</span>
+              </button>
+            )}
+            {imageError && <p className="text-[11px] text-[var(--danger)] mt-1">{imageError}</p>}
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
           </Card>
           <div className="flex items-center justify-end gap-3 pb-4">
             <Button variant="ghost" size="sm" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
