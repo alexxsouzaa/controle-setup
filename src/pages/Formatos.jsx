@@ -39,6 +39,7 @@ export function FormatosPage({ navigate }) {
 
   const [selectedMachineId, setSelectedMachineId] = useState('');
   const [selectedLine, setSelectedLine] = useState('');
+  const [machineSearch, setMachineSearch] = useState('');
   const selectedMachine = machines.find(m => m.id === selectedMachineId);
 
   const [selectedPartIds, setSelectedPartIds] = useState([]);
@@ -75,6 +76,7 @@ export function FormatosPage({ navigate }) {
     setFormatType(''); setVolume(''); setVolumeUnit('ml');
     setSelectedMachineId('');
     setSelectedLine('');
+    setMachineSearch('');
     setSelectedPartIds([]); setSelectedAltPartIds([]);
     setPartsWithAlternatives([]);
     setFormatName(''); setCreatedBy(getCurrentUser());
@@ -455,8 +457,14 @@ export function FormatosPage({ navigate }) {
                   <p className="text-xs text-[var(--fg-secondary)]">Escolha a máquina compatível com este formato.</p>
                 </div>
               </div>
+              <div className="mb-4">
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+                  <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={e => setMachineSearch(e.target.value.toLowerCase())} />
+                </div>
+              </div>
               <div className="grid lg:grid-cols-2 grid-cols-1 gap-3">
-                {machines.map(m => {
+                {machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch))).map(m => {
                   const isSelected = selectedMachineId === m.id;
                   return (
                     <button key={m.id} type="button" onClick={() => setSelectedMachineId(m.id)}
@@ -473,9 +481,11 @@ export function FormatosPage({ navigate }) {
                   );
                 })}
               </div>
-              {machines.length === 0 && (
+              {machines.length === 0 ? (
                 <p className="text-sm text-[var(--fg-muted)] text-center py-4">Nenhuma máquina cadastrada.</p>
-              )}
+              ) : machineSearch && machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch))).length === 0 ? (
+                <p className="text-sm text-[var(--fg-muted)] text-center py-4 col-span-full">Nenhuma máquina encontrada para "{machineSearch}".</p>
+              ) : null}
               {selectedMachine && (
                 <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
                   <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
