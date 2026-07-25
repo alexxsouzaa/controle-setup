@@ -216,7 +216,7 @@ export function MaquinasPage({ navigate }) {
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
                     <th className="w-8 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} /></th>
-                    <th className="text-left px-3.5 py-2.5 font-medium">Máquina</th>
+                    <th className="text-left px-4 py-2.5 font-medium">Máquina</th>
                     <th className="text-left px-3.5 py-2.5 font-medium w-20">UO</th>
                     <th className="text-right px-3.5 py-2.5 font-medium w-24 hidden sm:table-cell">Criado em</th>
                     <th className="w-20 px-3.5 py-2.5 font-medium text-right">Ações</th>
@@ -228,10 +228,10 @@ export function MaquinasPage({ navigate }) {
                       <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
                         <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} />
                       </td>
-                      <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
+                      <td className="px-4 py-2.5 border-b border-[var(--border-subtle)]">
                         <button type="button" onClick={() => setDrawerItem(m)} className="text-left w-full">
-                          <div className="font-medium text-[var(--fg)] truncate max-w-[280px]">{m.name}</div>
-                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">
+                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
+                          <div className="text-[11px] font-mono text-[var(--fg-muted)] leading-tight mt-0.5">
                             {getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}
                           </div>
                         </button>
