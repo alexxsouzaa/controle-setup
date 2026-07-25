@@ -211,7 +211,7 @@ export function MaquinasPage({ navigate }) {
               {machines.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Máquina</Button>}
             </div>
           ) : (
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
