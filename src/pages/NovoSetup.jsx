@@ -33,6 +33,7 @@ export function NovoSetupPage({ navigate }) {
 
   const [selectedMachineId, setSelectedMachineId] = useState('');
   const [selectedLine, setSelectedLine] = useState('');
+  const [machineSearch, setMachineSearch] = useState('');
   const selectedMachine = machines.find(m => m.id === selectedMachineId);
 
   const [productSearch, setProductSearch] = useState('');
@@ -266,7 +267,7 @@ export function NovoSetupPage({ navigate }) {
     setSelectedFormato(null); setShowFormatList(false);
     setPartsWithAlternatives([]);
     setPartSelections({}); setCreatedFlowName('');
-    setEditingFlowId(null);
+    setEditingFlowId(null); setMachineSearch('');
     goToStep(1);
   };
 
@@ -303,21 +304,43 @@ export function NovoSetupPage({ navigate }) {
               <p className="text-[11px] text-[var(--fg-secondary)]">Escolha a máquina e linha para este setup.</p>
             </div>
           </div>
-          <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-2 mb-6">
-            {machines.map(m => (
-              <button type="button" key={m.id} onClick={() => handleSelectMachine(m.id)}
-                className={`text-left p-3.5 rounded-[6px] border transition-all ${selectedMachineId === m.id ? 'border-[var(--fg)] bg-[var(--surface)]' : 'border-[var(--border)] hover:border-[var(--fg-muted)] bg-[var(--surface)]'}`}>
-                <div className="flex items-center gap-2.5 mb-2">
-                  <div className="w-7 h-7 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={15} /></div>
-                  <span className="text-[13px] font-semibold">{m.name}</span>
+          <div className="mb-4">
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={e => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
+            </div>
+            {machineSearch && (() => {
+              const filtered = machines.filter(m => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || [m.line]).some(l => l.toLowerCase().includes(machineSearch)));
+              if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
+              return (
+                <div className="border border-[var(--border)] rounded-[6px] mt-2 max-h-60 overflow-y-auto">
+                  {filtered.map(m => (
+                    <button key={m.id} type="button" onClick={() => { setSelectedMachineId(m.id); setMachineSearch(''); }}
+                      className={`w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--surface-hover)] transition-colors ${selectedMachineId === m.id ? 'bg-[var(--accent-muted)]' : ''}`}>
+                      <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-medium text-[var(--fg)] truncate">{m.name}</div>
+                        <div className="text-[11px] text-[var(--fg-muted)]">{m.uo} · {(m.lines || [m.line]).length} linha{(m.lines || [m.line]).length !== 1 ? 's' : ''}</div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div className="text-[11px] text-[var(--fg-secondary)]">Linha {m.line} · {m.uo}</div>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {(m.lines || [m.line]).slice(0, 3).map(l => <span key={l} className="text-[10px] font-mono text-[var(--fg-muted)] px-1.5 py-0.5 rounded-[3px] bg-[var(--bg-secondary)]">{l}</span>)}
-                </div>
-              </button>
-            ))}
+              );
+            })()}
           </div>
+          {selectedMachine ? (
+            <div className="p-4 bg-[var(--accent-muted)] border border-[var(--fg-muted)] rounded-[6px] mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[13px] font-semibold text-[var(--fg)]">{selectedMachine.name}</div>
+                  <div className="text-[11px] text-[var(--fg-secondary)]">UO: {selectedMachine.uo} · {(selectedMachine.lines || [selectedMachine.line]).length} linha{(selectedMachine.lines || [selectedMachine.line]).length !== 1 ? 's' : ''}</div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => { setSelectedMachineId(''); setSelectedLine(''); }}>Trocar</Button>
+              </div>
+            </div>
+          ) : !machineSearch && (
+            <p className="text-[12px] text-[var(--fg-secondary)] mb-4">Busque e selecione uma máquina acima.</p>
+          )}
           {selectedMachine && (
             <div className="border-t border-[var(--border-subtle)] pt-4">
               <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
