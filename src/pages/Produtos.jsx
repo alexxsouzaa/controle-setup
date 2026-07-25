@@ -247,7 +247,7 @@ export function ProdutosPage() {
                 <p className="text-[11px] text-[var(--fg-secondary)]">Especificações técnicas do produto.</p>
               </div>
             </div>
-            <div className="grid md:grid-cols-3 grid-cols-1 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_120px_1fr] gap-4 mb-4">
               <div>
                 <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Volume *</label>
                 <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
