@@ -51,7 +51,7 @@ export default function App() {
           <Sidebar active={hash} navigate={navigate} className={menuOpen ? 'mobile-open' : ''} />
           <div className="flex-1 ml-60 flex flex-col">
             <Topbar title={route.title} onNew={route.allowNew ? () => navigate('/novo-setup') : null} onMenuToggle={toggleMenu} />
-            <main className="flex-1 flex flex-col overflow-y-auto" aria-label="Conteúdo principal">{route.page}</main>
+            <main className="flex-1 flex flex-col overflow-y-auto min-h-0" aria-label="Conteúdo principal">{route.page}</main>
           </div>
         </div>
         </ToastProvider>
