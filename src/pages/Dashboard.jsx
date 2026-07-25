@@ -4,9 +4,10 @@ import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
 
 export function DashboardPage({ navigate }) {
-  const { stats, flows } = useContext(AppDataContext);
+  const { stats, flows, machines } = useContext(AppDataContext);
 
   const recent = [...flows].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 5);
+  const recentMachines = [...machines].slice(0, 4);
 
   return (
     <div className="p-6 pb-16">
@@ -32,7 +33,7 @@ export function DashboardPage({ navigate }) {
           { label: 'Fluxos de Setup', value: stats.totalFlows, icon: 'file', color: 'var(--fg)' },
           { label: 'Máquinas', value: stats.totalMachines, icon: 'box', color: 'var(--success)' },
           { label: 'Setups Hoje', value: stats.flowsToday, icon: 'clock', color: 'var(--warning)' },
-          { label: 'Peças Cadastradas', value: stats.totalPieces, icon: 'box', color: 'var(--fg-secondary)' },
+          { label: 'Produtos', value: stats.totalProducts, icon: 'grid-3x3', color: 'var(--fg-secondary)' },
         ].map(s => (
           <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex flex-col gap-2 transition-colors hover:border-[var(--fg-muted)]">
             <div className="flex items-center justify-between">
@@ -46,41 +47,92 @@ export function DashboardPage({ navigate }) {
         ))}
       </div>
 
-      <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-          <div className="flex items-center gap-2">
-            <Icon name="file" size={15} />
-            <span className="text-[13px] font-semibold text-[var(--fg)]">Fluxos Recentes</span>
-          </div>
-          <button type="button" onClick={() => navigate('/fluxos')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
-            Ver todos →
-          </button>
-        </div>
-        {recent.length === 0 ? (
-          <div className="px-4 py-10 text-center">
-            <div className="w-9 h-9 rounded-[8px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--fg-muted)]">
-              <Icon name="file" size={18} />
+      <div className="grid lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 border border-[var(--border)] rounded-[8px] overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+            <div className="flex items-center gap-2">
+              <Icon name="file" size={15} />
+              <span className="text-[13px] font-semibold text-[var(--fg)]">Fluxos Recentes</span>
             </div>
-            <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
+            <button type="button" onClick={() => navigate('/fluxos')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+              Ver todos →
+            </button>
           </div>
-        ) : (
-          <div>
-            {recent.map(r => (
-              <button key={r.id} type="button" onClick={() => navigate('/fluxos')}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--success-muted)' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[12px] font-medium text-[var(--fg)] truncate">{r.name}</div>
-                  <div className="text-[11px] text-[var(--fg-muted)]">{r.machine} · {r.product}</div>
-                </div>
-                <div className="text-[10px] text-[var(--fg-muted)] font-mono whitespace-nowrap">{r.date}</div>
-              </button>
-            ))}
+          {recent.length === 0 ? (
+            <div className="px-4 py-10 text-center">
+              <div className="w-9 h-9 rounded-[8px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--fg-muted)]">
+                <Icon name="file" size={18} />
+              </div>
+              <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
+              <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
+            </div>
+          ) : (
+            <div>
+              {recent.map(r => (
+                <button key={r.id} type="button" onClick={() => navigate('/fluxos')}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--success-muted)' }}>
+                    <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[12px] font-medium text-[var(--fg)] truncate">{r.name}</div>
+                    <div className="text-[11px] text-[var(--fg-muted)]">{r.machine} · {r.product}</div>
+                  </div>
+                  <div className="text-[10px] text-[var(--fg-muted)] font-mono whitespace-nowrap">{r.date}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+              <Icon name="box" size={15} />
+              <span className="text-[13px] font-semibold text-[var(--fg)]">Máquinas</span>
+            </div>
+            <div>
+              {recentMachines.length === 0 ? (
+                <div className="px-4 py-6 text-center text-[12px] text-[var(--fg-muted)]">Nenhuma máquina cadastrada.</div>
+              ) : (
+                recentMachines.map(m => (
+                  <button key={m.id} type="button" onClick={() => navigate('/maquinas')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0">
+                    {m.image ? (
+                      <img src={m.image} alt="" className="w-7 h-7 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={14} /></div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12px] font-medium text-[var(--fg)] truncate">{m.name}</div>
+                      <div className="text-[11px] text-[var(--fg-muted)]">{m.uo} · {(m.lines || [m.line]).length} linha{(m.lines || [m.line]).length !== 1 ? 's' : ''}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        )}
+
+          <div className="border border-[var(--border)] rounded-[8px] overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+              <Icon name="grid-3x3" size={15} />
+              <span className="text-[13px] font-semibold text-[var(--fg)]">Resumo</span>
+            </div>
+            <div className="p-4 space-y-2">
+              {[
+                { label: 'Produtos', value: stats.totalProducts, href: '/produtos' },
+                { label: 'Peças', value: stats.totalPieces, href: '/pecas' },
+                { label: 'Formatos', value: stats.totalFormatos, href: '/formatos' },
+              ].map(item => (
+                <button key={item.label} type="button" onClick={() => navigate(item.href)}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] hover:bg-[var(--surface-hover)] transition-colors text-left">
+                  <span className="text-[12px] font-medium text-[var(--fg)]">{item.label}</span>
+                  <span className="text-[11px] font-mono text-[var(--fg-muted)]">{item.value}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
