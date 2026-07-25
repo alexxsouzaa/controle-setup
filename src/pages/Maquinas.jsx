@@ -201,8 +201,9 @@ export function MaquinasPage({ navigate }) {
             </div>
           ) : (
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+              <div className="overflow-y-auto max-h-[calc(100vh-320px)]">
               <table className="w-full text-[13px] border-collapse">
-                <thead className="bg-[var(--bg-secondary)]">
+                <thead className="bg-[var(--bg-secondary)] sticky top-0 z-10">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
                     <th className="w-8 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
                     <th className="text-left px-3.5 py-2.5 font-medium">Máquina</th>
@@ -243,6 +244,7 @@ export function MaquinasPage({ navigate }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
           {totalPages > 1 && (
