@@ -246,13 +246,13 @@ export function MaquinasPage({ navigate }) {
             </div>
           )}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-[12px] text-[var(--fg-muted)]">Página {page} de {totalPages}</span>
+            <div className="flex items-center justify-between px-4 py-3">
+              <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
               <div className="flex gap-1">
                 <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                    page === 1 ? 'border-[var(--border)] text-[var(--fg-muted)] opacity-40 cursor-not-allowed' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                  }`}><Icon name="arrow-right" size={14} className="rotate-180" /></button>
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   const start = Math.max(1, Math.min(page - 2, totalPages - 4));
                   const p = start + i;
@@ -265,9 +265,9 @@ export function MaquinasPage({ navigate }) {
                   );
                 })}
                 <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                    page === totalPages ? 'border-[var(--border)] text-[var(--fg-muted)] opacity-40 cursor-not-allowed' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                  }`}><Icon name="arrow-right" size={14} /></button>
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
               </div>
             </div>
           )}
