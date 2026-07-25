@@ -16,7 +16,7 @@ const groups = [
     { id: '/importar', icon: 'upload', label: 'Importar' },
     { id: '/exportar', icon: 'download', label: 'Exportar' },
     { id: '/historico', icon: 'clock', label: 'Histórico' },
-    { id: '/opcoes', icon: 'settings', label: 'Opções' },
+    { id: '/opcoes', icon: 'settings', label: 'Configurações' },
   ]},
 ];
 

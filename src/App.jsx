@@ -28,7 +28,7 @@ function renderRoutes(navigate) {
     '/formatos': { title: 'Formatos', page: <FormatosPage navigate={navigate} /> },
     '/exportar': { title: 'Exportar', page: <ExportPage /> },
     '/historico': { title: 'Histórico', page: <HistoricoPage /> },
-    '/opcoes': { title: 'Opções', page: <ConfigPage /> },
+    '/opcoes': { title: 'Configurações', page: <ConfigPage /> },
   };
 }
 
