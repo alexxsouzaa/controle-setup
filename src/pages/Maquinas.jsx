@@ -294,7 +294,7 @@ export function MaquinasPage({ navigate }) {
               <div className="text-[14px] font-medium text-[var(--accent)] mt-1 mb-1">{savedName}</div>
               <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="primary" size="sm" onClick={() => { navigate('/maquinas'); }}><Icon name="box" size={14} />Ver máquinas</Button>
+                <Button variant="primary" size="sm" onClick={() => { resetForm(); setTab('list'); }}><Icon name="box" size={14} />Ver máquinas</Button>
                 <Button variant="secondary" size="sm" onClick={() => { resetForm(); setTab('create'); }}><Icon name="plus" size={14} />Criar nova máquina</Button>
               </div>
             </div>
