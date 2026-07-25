@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AppDataProvider } from './contexts/AppDataContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -36,15 +37,20 @@ export default function App() {
   const [hash, navigate] = useHashRoute();
   const routes = renderRoutes(navigate);
   const route = routes[hash] || routes['/dashboard'];
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const closeMenu = () => setMenuOpen(false);
+  const toggleMenu = () => setMenuOpen(prev => !prev);
 
   return (
     <ThemeProvider>
       <AppDataProvider>
         <ToastProvider>
         <div className="flex min-h-screen">
-          <Sidebar active={hash} navigate={navigate} />
+          <div className={`sidebar-overlay ${menuOpen ? 'open' : ''}`} onClick={closeMenu} />
+          <Sidebar active={hash} navigate={navigate} className={menuOpen ? 'mobile-open' : ''} />
           <div className="flex-1 ml-60 flex flex-col">
-            <Topbar title={route.title} onNew={route.allowNew ? () => navigate('/novo-setup') : null} />
+            <Topbar title={route.title} onNew={route.allowNew ? () => navigate('/novo-setup') : null} onMenuToggle={toggleMenu} />
             <main className="flex-1 flex flex-col overflow-y-auto" aria-label="Conteúdo principal">{route.page}</main>
           </div>
         </div>

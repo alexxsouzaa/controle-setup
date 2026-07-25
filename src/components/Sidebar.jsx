@@ -20,9 +20,9 @@ const groups = [
   ]},
 ];
 
-export function Sidebar({ active, navigate }) {
+export function Sidebar({ active, navigate, className = '' }) {
   return (
-    <aside className="w-60 border-r border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col fixed top-0 left-0 bottom-0 z-20">
+    <aside className={`w-60 border-r border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col fixed top-0 left-0 bottom-0 z-20 ${className}`}>
       <div className="flex items-center gap-2.5 px-[18px] py-4 border-b border-[var(--border)] h-[52px]">
         <div className="w-7 h-7 rounded-[6px] bg-[var(--fg)] flex items-center justify-center">
           <Icon name="box" size={16} />
