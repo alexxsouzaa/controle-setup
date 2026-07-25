@@ -42,6 +42,7 @@ export function MaquinasPage({ navigate }) {
   const [lineInput, setLineInput] = useState('');
   const [toolingDropdownOpen, setToolingDropdownOpen] = useState(false);
   const [toolingSearch, setToolingSearch] = useState('');
+  const [selectionMode, setSelectionMode] = useState(false);
   const fileInputRef = useRef(null);
   const [savedName, setSavedName] = useState('');
 
@@ -113,12 +114,13 @@ export function MaquinasPage({ navigate }) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelect = (id) => { if (!selectionMode) setSelectionMode(true); setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
+    if (!selectionMode && !allSelected) setSelectionMode(true);
     if (paged.every(s => selected.has(s.id))) setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id))));
     else setSelected(new Set([...selected, ...paged.map(s => s.id)]));
   };
-  const clearSelection = () => setSelected(new Set());
+  const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
   const selectedCount = selected.size;
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
@@ -163,7 +165,7 @@ export function MaquinasPage({ navigate }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-xs">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
               <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
@@ -181,14 +183,23 @@ export function MaquinasPage({ navigate }) {
               ))}
             </div>
 
-            <Button variant="primary" size="sm" onClick={() => setTab('create')} className="shrink-0"><Icon name="plus" size={14} />Nova Máquina</Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                  selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+                }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {selectionMode ? 'Sair' : 'Selecionar'}
+              </button>
+              <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Máquina</Button>
+            </div>
           </div>
 
-          {selectedCount > 0 && (
+          {selectionMode && selectedCount > 0 && (
             <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
               <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
               <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionadas</button>
-              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Limpar</button>
+              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
             </div>
           )}
 
@@ -204,7 +215,7 @@ export function MaquinasPage({ navigate }) {
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                    <th className="w-8 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="w-8 px-3.5 py-2.5 font-medium"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} /></th>
                     <th className="text-left px-3.5 py-2.5 font-medium">Máquina</th>
                     <th className="text-left px-3.5 py-2.5 font-medium w-20">UO</th>
                     <th className="text-right px-3.5 py-2.5 font-medium w-24 hidden sm:table-cell">Criado em</th>
@@ -213,9 +224,9 @@ export function MaquinasPage({ navigate }) {
                 </thead>
                 <tbody>
                   {paged.map(m => (
-                    <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`}>
+                    <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(m.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
                       <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
-                        <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--fg)] cursor-pointer" />
+                        <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className={`accent-[var(--fg)] cursor-pointer ${selectionMode ? '' : 'invisible'}`} />
                       </td>
                       <td className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
                         <button type="button" onClick={() => setDrawerItem(m)} className="text-left w-full">
