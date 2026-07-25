@@ -138,7 +138,7 @@ export function MaquinasPage({ navigate }) {
   const UO_FILTERS = [{ id: '', label: 'Todas' }, ...allUos.map(u => ({ id: u, label: u }))];
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
           <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
