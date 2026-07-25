@@ -6,31 +6,20 @@ import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
-import { EmptyState } from '../components/EmptyState';
+
+const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
 
 export function ProdutosPage() {
   const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-  const [sortKey, setSortKey] = useState('name');
-  const [sortDir, setSortDir] = useState('asc');
-  const toggle = (key) => {
-    if (key === sortKey) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }
-    else { setSortKey(key); setSortDir('asc'); }
-  };
-  const indicator = (key) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
-  const sorted = products.slice().sort((a, b) => {
-    const aVal = (a[sortKey] ?? '').toString().toLowerCase();
-    const bVal = (b[sortKey] ?? '').toString().toLowerCase();
-    const cmp = aVal.localeCompare(bVal, 'pt-BR', { numeric: true });
-    return sortDir === 'asc' ? cmp : -cmp;
-  });
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [drawerItem, setDrawerItem] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
-  const perPage = 15;
+  const [selectionMode, setSelectionMode] = useState(false);
+  const perPage = 10;
   const [form, setForm] = useState({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' });
 
   const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' }); setEditingId(null); };
@@ -51,16 +40,17 @@ export function ProdutosPage() {
     setTab('create');
   };
 
-  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
+  const filtered = products.filter(p => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelect = (id) => { if (!selectionMode) setSelectionMode(true); setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
-    if (paged.every(s => selected.has(s.id))) { setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id)))); }
-    else { setSelected(new Set([...selected, ...paged.map(s => s.id)])); }
+    if (!selectionMode && !allSelected) setSelectionMode(true);
+    if (paged.every(s => selected.has(s.id))) setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id))));
+    else setSelected(new Set([...selected, ...paged.map(s => s.id)]));
   };
-  const clearSelection = () => setSelected(new Set());
+  const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
   const selectedCount = selected.size;
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
@@ -85,80 +75,133 @@ export function ProdutosPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Produtos</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{products.length} produto{products.length !== 1 ? 's' : ''} cadastrado{products.length !== 1 ? 's' : ''}.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={handleExportList}><Icon name="download" size={16} />Exportar</Button>
-          <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="grid-3x3" size={16} />{tab === 'list' ? 'Lista' : 'Ver Lista'}</Button>
-          <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Novo Produto'}</Button>
-        </div>
-      </div>
+    <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
-          <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
-            <div className="relative max-w-sm flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
+          <div className="grid lg:grid-cols-4 gap-3 mb-5">
+            {[
+              { label: 'Produtos', value: products.length, icon: 'grid-3x3' },
+              { label: 'Categorias', value: CATEGORIES.length, icon: 'box' },
+              { label: 'Com Código', value: products.filter(p => p.code).length, icon: 'file' },
+              { label: 'Com Formato', value: products.filter(p => p.formato).length, icon: 'settings' },
+            ].map((s, i) => (
+              <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
+                  <Icon name={s.icon} size={20} />
+                </div>
+                <div>
+                  <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
+                  <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button type="button" onClick={handleExportList} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)] transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar
+              </button>
+              <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                  selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+                }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {selectionMode ? 'Sair' : 'Selecionar'}
+              </button>
+              <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Produto</Button>
             </div>
           </div>
-          {selectedCount > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
-              <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
-              <div className="flex gap-2 ml-auto">
-                <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionados</button>
-                <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
-              </div>
+
+          {selectionMode && selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
+              <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
+              <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionados</button>
+              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
             </div>
           )}
+
           {filtered.length === 0 ? (
-            <EmptyState icon={<Icon name="grid-3x3" size={24} />} title="Nenhum produto encontrado" desc="Tente ajustar sua busca ou crie um novo produto."
-              action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Novo Produto</Button>}
-            />
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="grid-3x3" size={24} /></div>
+              <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{products.length === 0 ? 'Nenhum produto cadastrado' : 'Nenhum produto encontrado'}</p>
+              <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{products.length === 0 ? 'Cadastre o primeiro produto.' : 'Tente ajustar a busca.'}</p>
+              {products.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Produto</Button>}
+            </div>
           ) : (
-            <div className="border border-[var(--border)] rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[var(--bg)]">
-                    <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['Código', 'Nome', 'Volumetria', 'Formato', 'Criado em', 'Ações'].map(h => {
-                      const ks = { Código:'code', Nome:'name', Volumetria:'vol', Formato:'formato', 'Criado em':'created' };
-                      const k = ks[h];
-                      return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
-                    })}
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+              <table className="w-full text-[13px] border-collapse">
+                <thead className="bg-[var(--bg-secondary)]">
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Produto</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">Volume</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map(p => (
-                    <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
-                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-[var(--accent)]">
-                        <button type="button" onClick={() => setDrawerItem(p)} className="hover:text-[var(--fg)] transition-colors">{p.code}</button>
+                  {paged.map((p, idx) => {
+                    const last = idx === paged.length - 1;
+                    return (
+                    <tr key={p.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(p.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                        <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--fg)] cursor-pointer" />
                       </td>
-                      <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                      <td className="px-4 py-2.5 font-nums">{p.vol} {p.unit}</td>
-                      <td className="px-4 py-2.5 text-[var(--fg-secondary)]">{p.formato}</td>
-                      <td className="px-4 py-2.5 text-xs text-[var(--fg-secondary)]">{p.created}</td>
-                      <td className="px-4 py-2.5">
-                        <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
+                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
+                        <button type="button" onClick={() => setDrawerItem(p)} className="text-left w-full">
+                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{p.name}</div>
+                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{p.code}</div>
+                        </button>
+                      </td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] font-mono text-[var(--fg-secondary)]`}>{p.vol} {p.unit}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] text-[var(--fg-muted)] font-mono hidden sm:table-cell`}>{p.created}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={() => setDrawerItem(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button type="button" onClick={() => startEdit(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-          )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 mt-4" role="navigation" aria-label="Navegação de páginas">
-              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-8 h-8 rounded text-xs ${page === 1 ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Anterior">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button type="button" key={p} onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
-                  className={`w-8 h-8 rounded text-xs ${p === page ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
-              ))}
-              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-8 h-8 rounded text-xs ${page === totalPages ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Próxima">›</button>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                      const pg = start + i;
+                      if (pg > totalPages) return null;
+                      return (
+                        <button key={pg} type="button" onClick={() => setPage(pg)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                          }`}>{pg}</button>
+                      );
+                    })}
+                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -173,19 +216,19 @@ export function ProdutosPage() {
 
           <Card>
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={16} /></div>
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Identificação</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Informações básicas para identificar o produto.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Identificação</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Informações básicas para identificar o produto.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Código *</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Código *</label>
                 <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
                 <Input placeholder="Ex: Shampoo Nutritivo" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
             </div>
@@ -193,32 +236,30 @@ export function ProdutosPage() {
 
           <Card>
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Características</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Especificações técnicas do produto.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Características</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Especificações técnicas do produto.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Volume *</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Volume *</label>
                 <Input type="number" placeholder="400" value={form.vol} onChange={e => setForm({ ...form, vol: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Unidade</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Unidade</label>
                 <Select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}><option>ml</option><option>g</option></Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Categoria</label>
                 <Select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                   <option value="">Selecione</option>
-                  <option>Shampoo</option><option>Condicionador</option><option>Creme</option>
-                  <option>Sérum</option><option>Loção</option><option>Gel</option>
-                  <option>Pomada</option><option>Óleo</option>
+                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Formato</label>
                 <Select value={form.formato} onChange={e => setForm({ ...form, formato: e.target.value })}>
                   <option value="">Selecione</option>
                   <option>Reto</option><option>Boomerang</option><option>Transforms</option><option>Angular</option>
@@ -236,33 +277,47 @@ export function ProdutosPage() {
       {drawerItem && (
         <>
           <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} onKeyDown={e => e.key === 'Escape' && setDrawerItem(null)} />
-          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(480px, 90vw)' }}
-            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(420px, 90vw)' }}
+            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="grid-3x3" size={18} /></div>
-                <h3 className="text-sm font-semibold truncate">{drawerItem.name}</h3>
+                <div className="w-8 h-8 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
+                <h3 className="text-[14px] font-semibold truncate">{drawerItem.name}</h3>
               </div>
-              <button type="button" onClick={() => setDrawerItem(null)} aria-label="Fechar" className="p-1.5 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <button type="button" onClick={() => setDrawerItem(null)} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--fg-secondary)] shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-                  {[['Código', drawerItem.code],
-                    ['Volumetria', `${drawerItem.vol} ${drawerItem.unit}`], ['Formato', drawerItem.formato], ['Criado em', drawerItem.created],
-                  ].map(([label, value]) => (
-                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium truncate">{value || '—'}</div></div>
-                  ))}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Código</div>
+                    <div className="text-[13px] font-mono text-[var(--fg)] mt-0.5">{drawerItem.code}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Volume</div>
+                    <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.vol} {drawerItem.unit}</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Categoria</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.category || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Formato</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.formato || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Criado em</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.created || '—'}</div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
               <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction('delete', 'Produto', `${drawerItem.name} excluído`); toast('Produto excluído com sucesso!'); setDrawerItem(null); } }}
-                className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
+                className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>
         </>
