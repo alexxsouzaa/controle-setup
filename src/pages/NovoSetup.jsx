@@ -296,47 +296,44 @@ export function NovoSetupPage({ navigate }) {
       {/* STEP 1: CONTEXTO */}
       {step === 1 && (
         <Card>
-          <h3 className="text-lg font-semibold mb-1">Selecione a máquina</h3>
-          <p className="text-sm text-[var(--fg-secondary)] mb-2">Escolha a máquina onde este setup será utilizado.</p>
-          <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-3 mb-6">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={15} /></div>
+            <div>
+              <h3 className="text-[14px] font-semibold text-[var(--fg)]">1. Selecione a máquina</h3>
+              <p className="text-[11px] text-[var(--fg-secondary)]">Escolha a máquina e linha para este setup.</p>
+            </div>
+          </div>
+          <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-2 mb-6">
             {machines.map(m => (
               <button type="button" key={m.id} onClick={() => handleSelectMachine(m.id)}
-                className={`text-left p-4 rounded-lg border-2 transition-all duration-150 ${selectedMachineId === m.id ? 'border-[var(--accent)] bg-[var(--accent-light)] shadow-sm' : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'}`}>
-                <div className="w-8 h-8 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] mb-2"><Icon name="box" size={18} /></div>
-                <div className="text-sm font-semibold">{m.name}</div>
-                <div className="text-xs text-[var(--fg-secondary)] mt-0.5">Linha {m.line} · {m.type}</div>
-                <div className="mt-2"><Badge>{m.outils} ferramentais</Badge></div>
+                className={`text-left p-3.5 rounded-[6px] border transition-all ${selectedMachineId === m.id ? 'border-[var(--fg)] bg-[var(--surface)]' : 'border-[var(--border)] hover:border-[var(--fg-muted)] bg-[var(--surface)]'}`}>
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="w-7 h-7 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={15} /></div>
+                  <span className="text-[13px] font-semibold">{m.name}</span>
+                </div>
+                <div className="text-[11px] text-[var(--fg-secondary)]">Linha {m.line} · {m.uo}</div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(m.lines || [m.line]).slice(0, 3).map(l => <span key={l} className="text-[10px] font-mono text-[var(--fg-muted)] px-1.5 py-0.5 rounded-[3px] bg-[var(--bg-secondary)]">{l}</span>)}
+                </div>
               </button>
             ))}
           </div>
           {selectedMachine && (
-            <div className="border-t border-[var(--border)] pt-4">
-              <h3 className="text-lg font-semibold mb-1">Selecione a linha</h3>
-              <p className="text-sm text-[var(--fg-secondary)] mb-3">Escolha a linha de produção onde o setup será utilizado.</p>
-              {machineLines.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {machineLines.map(l => (
-                    <button key={l} type="button" onClick={() => handleSelectLine(l)}
-                      className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${selectedLine === l ? 'border-[var(--accent)] bg-[var(--accent-light)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[var(--success-muted)] flex items-center justify-center text-[var(--success)] text-sm font-bold">{l}</div>
-                        <div>
-                          <div className="text-sm font-semibold">Linha {l}</div>
-                          <div className="text-xs text-[var(--fg-secondary)]">Máquina {selectedMachine.name}</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-[var(--fg-muted)]">Nenhuma linha disponível para esta máquina.</p>
-              )}
-              <p className="text-xs text-[var(--fg-secondary)]">A linha padrão da máquina "{selectedMachine.line}" foi sugerida.</p>
+            <div className="border-t border-[var(--border-subtle)] pt-4">
+              <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
+              <div className="flex flex-wrap gap-2">
+                {(selectedMachine.lines || [selectedMachine.line]).map(l => (
+                  <button key={l} type="button" onClick={() => handleSelectLine(l)}
+                    className={`px-4 py-2.5 rounded-[6px] border text-[13px] font-medium transition-all ${selectedLine === l ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
+                    Linha {l}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <div className="flex justify-between mt-6">
             <Button variant="ghost" disabled>← Anterior</Button>
-            <Button variant="primary" onClick={() => { if (selectedLine) goToStep(2); }} disabled={!selectedMachineId || !selectedLine}>Avançar →</Button>
+            <Button variant="primary" size="sm" onClick={() => { if (selectedLine) goToStep(2); }} disabled={!selectedMachineId || !selectedLine}>Avançar →</Button>
           </div>
         </Card>
       )}
