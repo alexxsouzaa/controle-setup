@@ -14,27 +14,30 @@ export function ToastProvider({ children }) {
     delete timers.current[id];
   }, []);
 
-  const toast = useCallback((message, type = 'success', duration = 3500) => {
+  const toast = useCallback((message, type = 'success', duration = 3000) => {
     const id = ++toastId;
     setToasts(prev => [...prev, { id, message, type }]);
     timers.current[id] = setTimeout(() => removeToast(id), duration);
     return id;
   }, [removeToast]);
 
+  const iconMap = { success: '✓', error: '✕', warning: '!' };
+
   return (
     <ToastContext.Provider value={{ toast, removeToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[2000] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-6 right-6 z-[2000] flex flex-col-reverse gap-2 pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} role="alert"
-            className={`pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded border text-sm font-medium border-l-[3px] ${t.type === 'success' ? 'bg-[var(--surface)] border-[var(--success)] text-[var(--success)] border-l-[var(--success)]' : t.type === 'error' ? 'bg-[var(--surface)] border-[var(--danger)] text-[var(--danger)] border-l-[var(--danger)]' : t.type === 'warning' ? 'bg-[var(--surface)] border-[var(--warning)] text-[var(--warning)] border-l-[var(--warning)]' : 'bg-[var(--surface)] border-[var(--border)] text-[var(--fg)] border-l-[var(--accent)]'}`}
-            style={{ minWidth: 280, maxWidth: 420, animation: 'toastIn 0.25s ease-out' }}
+          <div key={t.id} role="alert" onClick={() => removeToast(t.id)}
+            className="pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-[6px] text-[13px] font-medium shadow-md cursor-pointer transition-all duration-200"
+            style={{
+              background: t.type === 'error' ? 'var(--danger)' : t.type === 'warning' ? 'var(--warning)' : 'var(--fg)',
+              color: t.type === 'error' || t.type === 'warning' ? 'var(--bg)' : 'var(--bg)',
+              animation: 'toastSlideIn 0.2s ease-out',
+            }}
           >
-            <span className="text-lg shrink-0">
-              {t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : t.type === 'warning' ? '!' : 'ℹ'}
-            </span>
+            <span className="text-[14px] shrink-0">{iconMap[t.type] || 'ℹ'}</span>
             <span className="flex-1">{t.message}</span>
-            <button type="button" onClick={() => removeToast(t.id)} className="text-current opacity-50 hover:opacity-100 shrink-0 text-lg leading-none">&times;</button>
           </div>
         ))}
       </div>
