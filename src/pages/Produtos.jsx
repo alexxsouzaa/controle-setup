@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+﻿import { useState, useContext } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
@@ -7,7 +7,7 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 
-const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
+const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'SÃ©rum', 'LoÃ§Ã£o', 'Gel', 'Pomada', 'Ã“leo'];
 
 export function ProdutosPage() {
   const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext);
@@ -25,7 +25,7 @@ export function ProdutosPage() {
   const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '' }); setEditingId(null); };
 
   const handleSave = () => {
-    if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatórios: Código, Nome e Volume.', 'warning'); return; }
+    if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatÃ³rios: CÃ³digo, Nome e Volume.', 'warning'); return; }
     if (editingId) { updateProduct(editingId, { ...form, vol: Number(form.vol) }); }
     else { addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) }); }
     logAction(editingId ? 'update' : 'create', 'Produto', editingId ? `${form.name} atualizado` : `${form.name} cadastrado`);
@@ -58,21 +58,11 @@ export function ProdutosPage() {
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} produto${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
     deleteProducts(Array.from(selected));
-    logAction('delete', 'Produto', `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
-    toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    logAction('delete', 'Produto', `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluÃ­do${selectedCount !== 1 ? 's' : ''} em massa`);
+    toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluÃ­do${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
   };
 
-  const handleExportList = () => {
-    const json = JSON.stringify({ products: filtered }, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `produtos-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="p-6 pb-16">
@@ -82,7 +72,7 @@ export function ProdutosPage() {
             {[
               { label: 'Produtos', value: products.length, icon: 'grid-3x3' },
               { label: 'Categorias', value: CATEGORIES.length, icon: 'box' },
-              { label: 'Com Código', value: products.filter(p => p.code).length, icon: 'file' },
+              { label: 'Com CÃ³digo', value: products.filter(p => p.code).length, icon: 'file' },
               { label: 'Com Formato', value: products.filter(p => p.formato).length, icon: 'settings' },
             ].map((s, i) => (
               <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
@@ -100,13 +90,9 @@ export function ProdutosPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-1 max-w-xs">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar por nome ou código..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
+              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar por nome ou cÃ³digo..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button type="button" onClick={handleExportList} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)] transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Exportar
-              </button>
               <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
                   selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
@@ -142,7 +128,7 @@ export function ProdutosPage() {
                     <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Produto</th>
                     <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">Volume</th>
                     <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
-                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">AÃ§Ãµes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -178,7 +164,7 @@ export function ProdutosPage() {
               </table>
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
-                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}â€“{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
                   <div className="flex gap-1">
                     <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                       className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
@@ -210,7 +196,7 @@ export function ProdutosPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold tracking-tight">{editingId ? 'Editar Produto' : 'Novo Produto'}</h2>
-              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{editingId ? 'Altere as informações do produto.' : 'Cadastre um novo produto no catálogo.'}</p>
+              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{editingId ? 'Altere as informaÃ§Ãµes do produto.' : 'Cadastre um novo produto no catÃ¡logo.'}</p>
             </div>
           </div>
 
@@ -218,13 +204,13 @@ export function ProdutosPage() {
             <div className="flex items-center gap-2 mb-5">
               <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={15} /></div>
               <div>
-                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Identificação</h3>
-                <p className="text-[11px] text-[var(--fg-secondary)]">Informações básicas para identificar o produto.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">IdentificaÃ§Ã£o</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">InformaÃ§Ãµes bÃ¡sicas para identificar o produto.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
               <div>
-                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Código *</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">CÃ³digo *</label>
                 <Input placeholder="Ex: SHP-400-001" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} />
               </div>
               <div className="md:col-span-2">
@@ -238,8 +224,8 @@ export function ProdutosPage() {
             <div className="flex items-center gap-2 mb-5">
               <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={15} /></div>
               <div>
-                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Características</h3>
-                <p className="text-[11px] text-[var(--fg-secondary)]">Especificações técnicas do produto.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">CaracterÃ­sticas</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">EspecificaÃ§Ãµes tÃ©cnicas do produto.</p>
               </div>
             </div>
             <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
@@ -270,7 +256,7 @@ export function ProdutosPage() {
 
           <div className="flex items-center justify-end gap-3">
             <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Produto'}</Button>
+            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar AlteraÃ§Ãµes' : 'Criar Produto'}</Button>
           </div>
         </div>
       )}
@@ -292,7 +278,7 @@ export function ProdutosPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Código</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">CÃ³digo</div>
                     <div className="text-[13px] font-mono text-[var(--fg)] mt-0.5">{drawerItem.code}</div>
                   </div>
                   <div>
@@ -302,21 +288,21 @@ export function ProdutosPage() {
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Categoria</div>
-                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.category || '—'}</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.category || 'â€”'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Formato</div>
-                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.formato || '—'}</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.formato || 'â€”'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Criado em</div>
-                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.created || '—'}</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.created || 'â€”'}</div>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction('delete', 'Produto', `${drawerItem.name} excluído`); toast('Produto excluído com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction('delete', 'Produto', `${drawerItem.name} excluÃ­do`); toast('Produto excluÃ­do com sucesso!'); setDrawerItem(null); } }}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>
@@ -325,3 +311,4 @@ export function ProdutosPage() {
     </div>
   );
 }
+
