@@ -1,17 +1,13 @@
 import { useState, useContext, useRef } from 'react';
 import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
-import { useSortable } from '../hooks/useSortable';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
-import { EmptyState } from '../components/EmptyState';
 import { ImagePreview } from '../components/ImagePreview';
 
-const categories = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
-
+const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
 const MAX_IMAGE_SIZE = 500 * 1024;
 
 function readFileAsDataURL(file) {
@@ -25,7 +21,7 @@ function readFileAsDataURL(file) {
 
 function guessCategory(name) {
   const lower = (name || '').toLowerCase();
-  for (const cat of categories) {
+  for (const cat of ALL_CATEGORIES) {
     if (lower.includes(cat.toLowerCase())) return cat;
   }
   return '';
@@ -34,7 +30,6 @@ function guessCategory(name) {
 export function PecasPage() {
   const { pieces, machines, addPiece, deletePiece, deletePieces, updatePiece, logAction, getCurrentUser } = useContext(AppDataContext);
   const { toast } = useContext(ToastContext);
-  const { sorted, toggle, indicator } = useSortable(pieces, 'name');
   const [tab, setTab] = useState('list');
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -42,38 +37,35 @@ export function PecasPage() {
   const [previewImage, setPreviewImage] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
-  const perPage = 15;
+  const [selectionMode, setSelectionMode] = useState(false);
+  const perPage = 10;
   const [form, setForm] = useState({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
   const [imageError, setImageError] = useState('');
   const [machineDropdownOpen, setMachineDropdownOpen] = useState(false);
+  const [machineSearch, setMachineSearch] = useState('');
   const fileInputRef = useRef(null);
+
+  const filteredMachines = machineSearch ? machines.filter(m => m.name.toLowerCase().includes(machineSearch.toLowerCase())) : machines;
 
   const resetForm = () => {
     setForm({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
-    setEditingId(null);
-    setImageError('');
+    setEditingId(null); setImageError(''); setMachineSearch('');
   };
 
-  const toggleMachine = (id) => {
-    setForm(prev => {
-      const ids = prev.compatibleMachineIds.includes(id)
-        ? prev.compatibleMachineIds.filter(mid => mid !== id)
-        : [...prev.compatibleMachineIds, id];
-      return { ...prev, compatibleMachineIds: ids };
-    });
-  };
+  const toggleMachine = (id) => setForm(prev => {
+    const ids = prev.compatibleMachineIds.includes(id) ? prev.compatibleMachineIds.filter(mid => mid !== id) : [...prev.compatibleMachineIds, id];
+    return { ...prev, compatibleMachineIds: ids };
+  });
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado. Use JPG, PNG ou WEBP.'); return; }
+    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
     if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
     setImageError('');
-    try {
-      const dataURL = await readFileAsDataURL(file);
-      setForm(prev => ({ ...prev, image: dataURL }));
-    } catch { setImageError('Erro ao processar a imagem.'); }
+    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
+    catch { setImageError('Erro ao processar a imagem.'); }
   };
 
   const handleSave = () => {
@@ -84,34 +76,32 @@ export function PecasPage() {
     if (editingId) { updatePiece(editingId, { ...form, category }); }
     else { addPiece({ ...form, category }); }
     logAction(editingId ? 'update' : 'create', 'Peça', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
-    toast(editingId ? 'Peça atualizada com sucesso!' : `Peça "${form.name} — ${form.specification}" cadastrada com sucesso!`);
+    toast(editingId ? 'Peça atualizada com sucesso!' : 'Peça cadastrada com sucesso!');
     resetForm();
     setTab('list');
   };
 
   const startEdit = (p) => {
     setForm({
-      name: p.name || '',
-      specification: p.specification || '',
-      compatibleMachineIds: p.compatibleMachineIds || [],
-      image: p.image || '',
-      createdBy: p.createdBy || getCurrentUser(),
-      createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
+      name: p.name || '', specification: p.specification || '',
+      compatibleMachineIds: p.compatibleMachineIds || [], image: p.image || '',
+      createdBy: p.createdBy || getCurrentUser(), createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     });
     setEditingId(p.id);
     setTab('create');
   };
 
-  const filtered = sorted.filter(p => !search || p.name.toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
+  const filtered = pieces.filter(p => !search || p.name.toLowerCase().includes(search) || (p.specification || '').toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const toggleSelect = (id) => { setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const toggleSelect = (id) => { if (!selectionMode) setSelectionMode(true); setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
-    if (paged.every(s => selected.has(s.id))) { setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id)))); }
-    else { setSelected(new Set([...selected, ...paged.map(s => s.id)])); }
+    if (!selectionMode && !allSelected) setSelectionMode(true);
+    if (paged.every(s => selected.has(s.id))) setSelected(new Set([...selected].filter(id => !paged.some(s => s.id === id))));
+    else setSelected(new Set([...selected, ...paged.map(s => s.id)]));
   };
-  const clearSelection = () => setSelected(new Set());
+  const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
   const selectedCount = selected.size;
   const allSelected = paged.length > 0 && paged.every(s => selected.has(s.id));
 
@@ -125,287 +115,319 @@ export function PecasPage() {
   };
 
   const compNames = (p) => {
-    if (p.compatibleMachineIds && p.compatibleMachineIds.length > 0) {
-      return p.compatibleMachineIds.map(id => machines.find(m => m.id === id)?.name).filter(Boolean);
-    }
+    if (p.compatibleMachineIds && p.compatibleMachineIds.length > 0) return p.compatibleMachineIds.map(id => machines.find(m => m.id === id)?.name).filter(Boolean);
     if (p.compat) return p.compat.split(',').map(s => s.trim()).filter(Boolean);
     return [];
   };
 
+  const getMachNames = (ids) => ids.map(id => machines.find(m => m.id === id)?.name).filter(Boolean);
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">Peças</h2>
-          <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{pieces.length} peça{pieces.length !== 1 ? 's' : ''} cadastrada{pieces.length !== 1 ? 's' : ''}.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant={tab === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => { setTab('list'); resetForm(); }}><Icon name="box" size={16} />{tab === 'list' ? 'Catálogo' : 'Ver Catálogo'}</Button>
-          <Button variant={tab === 'create' ? 'primary' : 'secondary'} size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />{editingId ? 'Editar' : 'Nova Peça'}</Button>
-        </div>
-      </div>
+    <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
-          <div className="flex items-center gap-3 mb-4 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg">
-            <div className="relative max-w-sm flex-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar peças" />
+          <div className="grid lg:grid-cols-4 gap-3 mb-5">
+            {[
+              { label: 'Peças', value: pieces.length, icon: 'box' },
+              { label: 'Categorias', value: ALL_CATEGORIES.length, icon: 'settings' },
+              { label: 'Com Foto', value: pieces.filter(p => p.image).length, icon: 'upload' },
+              { label: 'Máquinas compat.', value: machines.length, icon: 'grid-3x3' },
+            ].map((s, i) => (
+              <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
+                  <Icon name={s.icon} size={20} />
+                </div>
+                <div>
+                  <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
+                  <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar peça..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar peças" />
+            </div>
+            <div className="flex-1" />
+            <div className="flex items-center gap-2 shrink-0">
+              <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                  selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+                }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {selectionMode ? 'Sair' : 'Selecionar'}
+              </button>
+              <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Peça</Button>
             </div>
           </div>
-          {selectedCount > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
-              <span className="text-sm font-medium text-[var(--accent)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
-              <div className="flex gap-2 ml-auto">
-                <button type="button" onClick={handleBulkDelete} className="text-xs px-3 py-1.5 rounded bg-[var(--danger)] text-white hover:opacity-90 transition-colors"><Icon name="alert" size={14} /> Excluir selecionadas</button>
-                <button type="button" onClick={clearSelection} className="text-xs px-2 py-1.5 rounded text-[var(--fg-secondary)] hover:text-[var(--fg)] transition-colors">Limpar</button>
-              </div>
+
+          {selectionMode && selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
+              <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
+              <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionadas</button>
+              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
             </div>
           )}
+
           {filtered.length === 0 ? (
-            <EmptyState icon={<Icon name="box" size={24} />} title="Nenhuma peça encontrada" desc="Tente ajustar sua busca ou cadastre uma nova peça."
-              action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Nova Peça</Button>}
-            />
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="box" size={24} /></div>
+              <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{pieces.length === 0 ? 'Nenhuma peça cadastrada' : 'Nenhuma peça encontrada'}</p>
+              <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{pieces.length === 0 ? 'Cadastre a primeira peça.' : 'Tente ajustar a busca.'}</p>
+              {pieces.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Peça</Button>}
+            </div>
           ) : (
-            <div className="border border-[var(--border)] rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[var(--bg)]">
-                    <th className="w-10 px-4 py-2.5"><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--accent)] cursor-pointer" /></th>
-                    {['', 'Nome', 'Especificação', 'Compatível com', 'Ações'].map(h => {
-                      const ks = { Nome:'name', Especificação:'specification', 'Compatível com': null };
-                      const k = ks[h];
-                      return (<th scope="col" key={h} onClick={k ? () => toggle(k) : undefined} className={`text-left px-4 py-2.5 text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider ${k ? 'cursor-pointer hover:text-[var(--fg)] select-none' : ''}`}>{h}{k ? indicator(k) : ''}</th>);
-                    })}
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+              <table className="w-full text-[13px] border-collapse">
+                <thead className="bg-[var(--bg-secondary)]">
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Peça</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Máquinas</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.map(p => {
+                  {paged.map((p, idx) => {
+                    const last = idx === paged.length - 1;
                     const names = compNames(p);
                     return (
-                    <tr key={p.id} className={`border-t border-[var(--border)] hover:bg-[var(--bg)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-light)]' : ''}`}>
-                      <td className="px-4 py-2.5"><input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--accent)] cursor-pointer" /></td>
-                      <td className="px-4 py-2.5">
-                        {p.image ? (
-                          <button type="button" onClick={() => setPreviewImage(p.image)} className="cursor-pointer">
-                            <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-[var(--border)] hover:ring-2 hover:ring-[var(--accent)] transition-all" />
-                          </button>
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)]"><Icon name="box" size={18} /></div>
-                        )}
+                    <tr key={p.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(p.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                        <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--fg)] cursor-pointer" />
                       </td>
-                      <td className="px-4 py-2.5 font-medium">{p.name}</td>
-                      <td className="px-4 py-2.5 text-xs font-mono text-[var(--fg-secondary)]">{p.specification || '—'}</td>
-                      <td className="px-4 py-2.5">
+                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
+                        <button type="button" onClick={() => setDrawerItem(p)} className="text-left w-full">
+                          <div className="flex items-center gap-2">
+                            {p.image ? <img src={p.image} alt="" className="w-7 h-7 rounded-[4px] object-cover border border-[var(--border)] shrink-0" /> : null}
+                            <div className="min-w-0">
+                              <div className="font-medium text-[var(--fg)] truncate">{p.name}</div>
+                              <div className="text-[12px] font-mono text-[var(--fg-muted)]">{p.specification || '—'}</div>
+                            </div>
+                          </div>
+                        </button>
+                      </td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell`}>
                         <div className="flex flex-wrap gap-1">
-                          {names.length > 0 ? names.map(n => <Badge key={n}>{n}</Badge>) : <span className="text-xs text-[var(--fg-muted)]">—</span>}
+                          {names.slice(0, 3).map(n => <span key={n} className="inline-flex items-center px-2 py-0.5 rounded-[3px] text-[10px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{n}</span>)}
+                          {names.length > 3 && <span className="text-[10px] text-[var(--fg-muted)] font-mono">+{names.length - 3}</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-2.5">
-                        <button type="button" onClick={() => setDrawerItem(p)} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent-muted)] transition-colors">Detalhes</button>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={() => setDrawerItem(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button type="button" onClick={() => startEdit(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     );
                   })}
                 </tbody>
               </table>
-            </div>
-          )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 mt-4" role="navigation" aria-label="Navegação de páginas">
-              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className={`w-8 h-8 rounded text-xs ${page === 1 ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Anterior">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button type="button" key={p} onClick={() => setPage(p)} aria-current={p === page ? 'page' : undefined}
-                  className={`w-8 h-8 rounded text-xs ${p === page ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{p}</button>
-              ))}
-              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`w-8 h-8 rounded text-xs ${page === totalPages ? 'text-[var(--fg-muted)] opacity-40' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`} aria-label="Próxima">›</button>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                      const pg = start + i;
+                      if (pg > totalPages) return null;
+                      return (
+                        <button key={pg} type="button" onClick={() => setPage(pg)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                          }`}>{pg}</button>
+                      );
+                    })}
+                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
       ) : (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">{editingId ? 'Editar Peça' : 'Nova Peça'}</h2>
-              <p className="text-sm text-[var(--fg-secondary)] mt-0.5">{editingId ? 'Altere as informações da peça.' : 'Cadastre uma nova peça no catálogo.'}</p>
-            </div>
+        <div className="max-w-2xl mx-auto space-y-5">
+          <div className="flex items-center gap-3 mb-1">
+            <button type="button" onClick={() => { resetForm(); setTab('list'); }} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">← Voltar</button>
           </div>
-
           <Card>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="box" size={16} /></div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Identificação</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Informações básicas para identificar a peça.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">{editingId ? 'Editar Peça' : 'Nova Peça'}</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Informações da peça.</p>
               </div>
             </div>
-            <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
-              <div className="md:col-span-2">
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome da peça *</label>
+            <div className="grid md:grid-cols-[1fr_120px] gap-4">
+              <div>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Nome *</label>
                 <Input placeholder="Ex: Bico de Envase" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Especificação *</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Especificação *</label>
                 <Input placeholder="Ex: 250 mm" value={form.specification} onChange={e => setForm({ ...form, specification: e.target.value })} />
-                <p className="text-[11px] text-[var(--fg-muted)] mt-0.5">Dimensional (mm) ou ref. alfanumérica.</p>
               </div>
             </div>
           </Card>
-
           <Card>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="settings" size={16} /></div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="settings" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Compatibilidade</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Máquinas onde esta peça pode ser utilizada.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Compatibilidade</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Máquinas onde esta peça pode ser utilizada.</p>
               </div>
             </div>
-            <div>
-              <div className="relative">
-                {form.compatibleMachineIds.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {form.compatibleMachineIds.map(id => {
-                      const m = machines.find(mch => mch.id === id);
-                      return m ? (
-                        <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--accent-light)] border border-[var(--accent)] text-xs font-medium">
-                          {m.name}
-                          <button type="button" onClick={() => setForm(prev => ({ ...prev, compatibleMachineIds: prev.compatibleMachineIds.filter(mid => mid !== id) }))} className="text-[var(--fg-secondary)] hover:text-[var(--danger)] ml-0.5">&times;</button>
-                        </span>
-                      ) : null;
-                    })}
+            <div className="relative">
+              {form.compatibleMachineIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {getMachNames(form.compatibleMachineIds).map(n => (
+                    <span key={n} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px]">
+                      {n}
+                      <button type="button" onClick={() => {
+                        const m = machines.find(mch => mch.name === n);
+                        if (m) setForm(prev => ({ ...prev, compatibleMachineIds: prev.compatibleMachineIds.filter(mid => mid !== m.id) }));
+                      }} className="text-[var(--fg-muted)] hover:text-[var(--danger)] leading-none">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <button type="button" onClick={() => setMachineDropdownOpen(!machineDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] border border-[var(--border)] bg-[var(--bg)] text-[12px] hover:border-[var(--fg-muted)] transition-colors">
+                <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : ''}>Selecionar máquinas...</span>
+                <Icon name="arrow-right" size={12} className={`transition-transform ${machineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
+              </button>
+              {machineDropdownOpen && (
+                <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-[6px] shadow-md">
+                  <div className="p-2 border-b border-[var(--border)]">
+                    <input className="shad-input w-full py-1 text-[11px]" placeholder="Buscar máquina..." value={machineSearch} onChange={e => setMachineSearch(e.target.value)} />
                   </div>
-                )}
-                <button type="button" onClick={() => setMachineDropdownOpen(!machineDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm hover:border-[var(--accent)] transition-colors text-left">
-                  <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : 'font-medium'}>
-                    {form.compatibleMachineIds.length === 0 ? 'Selecione as máquinas compatíveis...' : `${form.compatibleMachineIds.length} máquina${form.compatibleMachineIds.length !== 1 ? 's' : ''} selecionada${form.compatibleMachineIds.length !== 1 ? 's' : ''}`}
-                  </span>
-                  <Icon name="arrow-right" size={14} className={`transition-transform ${machineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
-                {machineDropdownOpen && (
-                  <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg max-h-56 overflow-y-auto">
-                    {machines.map(m => {
-                      const checked = form.compatibleMachineIds.includes(m.id);
-                      return (
-                        <button key={m.id} type="button" onClick={() => toggleMachine(m.id)}
-                          className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm hover:bg-[var(--bg)] transition-colors ${checked ? 'bg-[var(--accent-light)]' : ''}`}>
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${checked ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-[var(--border)]'}`}>
-                            {checked && <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
-                          </div>
-                          <span>{m.name}</span>
-                          <span className="text-xs text-[var(--fg-secondary)] ml-auto">{m.line}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="max-h-40 overflow-y-auto">
+                    {filteredMachines.map(m => (
+                      <button key={m.id} type="button" onClick={() => { toggleMachine(m.id); }}
+                        className={`w-full text-left px-3 py-2 flex items-center gap-2 text-[12px] hover:bg-[var(--surface-hover)] transition-colors ${form.compatibleMachineIds.includes(m.id) ? 'bg-[var(--accent-muted)]' : ''}`}>
+                        <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center shrink-0 ${form.compatibleMachineIds.includes(m.id) ? 'bg-[var(--fg)] border-[var(--fg)]' : 'border-[var(--border)]'}`}>
+                          {form.compatibleMachineIds.includes(m.id) && <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                        </div>
+                        <span>{m.name}</span>
+                        <span className="text-[10px] text-[var(--fg-muted)] ml-auto">{m.line}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </Card>
-
           <Card>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={16} /></div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="upload" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Foto da peça</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Adicione uma imagem para facilitar a identificação visual.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Foto</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Opcional.</p>
               </div>
             </div>
             {form.image ? (
-              <div className="flex items-center gap-4">
-                <img src={form.image} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-[var(--border)]" />
-                <div className="space-y-2">
-                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-xs text-[var(--danger)] hover:underline block">Remover foto</button>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-[var(--accent)] hover:underline block">Trocar imagem</button>
+              <div className="flex items-center gap-3">
+                <img src={form.image} alt="Preview" className="w-14 h-14 rounded-[6px] object-cover border border-[var(--border)]" />
+                <div className="space-y-1">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] block">Trocar</button>
+                  <button type="button" onClick={() => { setForm(prev => ({ ...prev, image: '' })); setImageError(''); }} className="text-[11px] text-[var(--danger)] hover:underline block">Remover</button>
                 </div>
               </div>
             ) : (
               <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center gap-2 px-4 py-8 rounded-lg border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--surface)] transition-all w-full"
-              >
-                <div className="w-12 h-12 rounded-full bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="upload" size={24} /></div>
-                <div className="text-center">
-                  <div className="text-sm font-medium text-[var(--fg)]">Clique para adicionar foto</div>
-                  <div className="text-xs text-[var(--fg-secondary)] mt-0.5">PNG, JPG, WEBP • Máx. {MAX_IMAGE_SIZE / 1024} KB</div>
-                </div>
+                className="flex items-center justify-center gap-2 px-4 py-6 rounded-[6px] border-2 border-dashed border-[var(--border)] hover:border-[var(--fg-muted)] hover:bg-[var(--surface)] transition-all w-full">
+                <Icon name="upload" size={18} />
+                <span className="text-[12px] text-[var(--fg-muted)]">Adicionar foto</span>
               </button>
             )}
-            {imageError && <p className="text-xs text-[var(--danger)] mt-2">{imageError}</p>}
+            {imageError && <p className="text-[11px] text-[var(--danger)] mt-1">{imageError}</p>}
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleImageUpload} />
           </Card>
-
           <Card>
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-7 h-7 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="clock" size={16} /></div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="clock" size={15} /></div>
               <div>
-                <h3 className="text-sm font-semibold">Registro</h3>
-                <p className="text-xs text-[var(--fg-secondary)]">Informações de criação.</p>
+                <h3 className="text-[14px] font-semibold text-[var(--fg)]">Registro</h3>
+                <p className="text-[11px] text-[var(--fg-secondary)]">Informações de criação.</p>
               </div>
             </div>
-            <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Criado por</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Criado por</label>
                 <Input value={form.createdBy} onChange={e => setForm({ ...form, createdBy: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Data de criação</label>
                 <Input type="date" value={form.createdAt} onChange={e => setForm({ ...form, createdAt: e.target.value })} />
               </div>
             </div>
           </Card>
-
-          <div className="flex items-center justify-end gap-3">
-            <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
-            <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Cadastrar Peça'}</Button>
+          <div className="flex items-center justify-end gap-3 pb-4">
+            <Button variant="ghost" size="sm" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={handleSave}>{editingId ? 'Salvar' : 'Criar Peça'}</Button>
           </div>
         </div>
       )}
       {drawerItem && (
         <>
           <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} onKeyDown={e => e.key === 'Escape' && setDrawerItem(null)} />
-          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(480px, 90vw)' }}
-            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
+          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(420px, 90vw)' }}
+            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 {drawerItem.image ? (
-                  <img src={drawerItem.image} alt={drawerItem.name} className="w-9 h-9 rounded-lg object-cover border border-[var(--border)] shrink-0" />
+                  <img src={drawerItem.image} alt="" className="w-8 h-8 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
                 ) : (
-                  <div className="w-9 h-9 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)] shrink-0"><Icon name="box" size={18} /></div>
+                  <div className="w-8 h-8 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
                 )}
-                <h3 className="text-sm font-semibold truncate">{drawerItem.name}</h3>
+                <h3 className="text-[14px] font-semibold truncate">{drawerItem.name}</h3>
               </div>
-              <button type="button" onClick={() => setDrawerItem(null)} aria-label="Fechar" className="p-1.5 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <button type="button" onClick={() => setDrawerItem(null)} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--fg-secondary)] shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               {drawerItem.image && (
                 <div className="flex justify-center">
-                  <button type="button" onClick={() => setPreviewImage(drawerItem.image)} className="cursor-pointer">
-                    <img src={drawerItem.image} alt={drawerItem.name} className="w-32 h-32 rounded-xl object-cover border border-[var(--border)] hover:ring-2 hover:ring-[var(--accent)] transition-all" />
-                  </button>
+                  <img src={drawerItem.image} alt="" className="w-28 h-28 rounded-[8px] object-cover border border-[var(--border)]" />
                 </div>
               )}
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Informações</h4>
-                <div className="space-y-3 text-sm">
-                  {[['Especificação', drawerItem.specification], ['Criado por', drawerItem.createdBy], ['Criado em', drawerItem.createdAt],
-                  ].map(([label, value]) => (
-                    <div key={label}><div className="text-xs text-[var(--fg-secondary)]">{label}</div><div className="font-medium">{value || '—'}</div></div>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Especificação</div>
+                  <div className="text-[13px] font-mono text-[var(--fg)] mt-0.5">{drawerItem.specification || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Criado por</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.createdBy || '—'}</div>
                 </div>
               </div>
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2">Máquinas compatíveis</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {compNames(drawerItem).map(n => <Badge key={n}>{n}</Badge>)}
-                  {compNames(drawerItem).length === 0 && <span className="text-xs text-[var(--fg-muted)]">Nenhuma máquina compatível</span>}
+                <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-1.5">Máquinas compatíveis</div>
+                <div className="flex flex-wrap gap-1">
+                  {compNames(drawerItem).map(n => <span key={n} className="inline-flex items-center px-2 py-0.5 rounded-[3px] text-[10px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{n}</span>)}
+                  {compNames(drawerItem).length === 0 && <span className="text-[12px] text-[var(--fg-muted)]">Nenhuma</span>}
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
               <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deletePiece(drawerItem.id); logAction('delete', 'Peça', `${drawerItem.name} excluída`); toast('Peça excluída com sucesso!'); setDrawerItem(null); } }}
-                className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
+                className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>
         </>
