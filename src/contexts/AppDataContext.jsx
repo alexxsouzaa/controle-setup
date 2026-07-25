@@ -240,6 +240,7 @@ export function AppDataProvider({ children }) {
     },
     updateFormato: (id, updates) => save({ ...d(), formatos: d().formatos.map(f => f.id === id ? { ...f, ...updates, updatedBy: getCurrentUser(), updatedAt: nowISO() } : f) }),
     deleteFormato: (id) => save({ ...d(), formatos: d().formatos.filter(f => f.id !== id) }),
+    deleteFormatos: (ids) => { const set = new Set(ids); save({ ...d(), formatos: d().formatos.filter(f => !set.has(f.id)) }); },
 
     // History
     logAction: (type, entity, detail) => save({

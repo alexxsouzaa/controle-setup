@@ -17,12 +17,16 @@ const COMPAT_COLORS = { Alta: 'success', Média: 'warning', Baixa: 'info', Ideal
 
 export function FormatosPage({ navigate }) {
   const ctx = useContext(AppDataContext);
-  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormato, logAction, getCurrentUser, config } = ctx;
+  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormato, deleteFormatos, logAction, getCurrentUser, config } = ctx;
   const { toast } = useContext(ToastContext);
   const [tab, setTab] = useState('list');
-  const [previewImage, setPreviewImage] = useState(null);
+  const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [step, setStep] = useState(1);
+  const [selected, setSelected] = useState(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [page, setPage] = useState(1);
+  const perPage = 10;
   const [savedName, setSavedName] = useState('');
 
   const [productSearch, setProductSearch] = useState('');
@@ -178,6 +182,23 @@ export function FormatosPage({ navigate }) {
 
   const go = (s) => goToStep(s);
 
+  const filtered = search ? formatos.filter(f => f.name.toLowerCase().includes(search) || (f.productName || '').toLowerCase().includes(search)) : formatos;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
+
+  const toggleSelect = (id) => { if (!selectionMode) setSelectionMode(true); setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
+  const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
+  const selectedCount = selected.size;
+
+  const handleBulkDelete = () => {
+    if (selectedCount === 0) return;
+    if (!confirm(`Excluir ${selectedCount} formato${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
+    deleteFormatos(Array.from(selected));
+    logAction('delete', 'Formato', `${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
+    toast(`${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+    clearSelection();
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -192,42 +213,131 @@ export function FormatosPage({ navigate }) {
       </div>
 
       {tab === 'list' ? (
-        formatos.length === 0 ? (
-          <EmptyState icon={<Icon name="grid-3x3" size={24} />} title="Nenhum formato cadastrado"
-            desc="Crie um formato associando um produto às peças que ele utiliza."
-            action={<Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={16} />Novo Formato</Button>}
-          />
-        ) : (
-          <div className="grid lg:grid-cols-2 grid-cols-1 gap-4">
-            {formatos.map(fmt => (
-              <div key={fmt.id} className="shad-card">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent)]"><Icon name="grid-3x3" size={20} /></div>
-                    <div>
-                      <div className="text-sm font-semibold">{fmt.name}</div>
-                      <div className="text-xs text-[var(--fg-secondary)] mt-0.5">
-                        Produto: {fmt.productName} ({fmt.productCode}) · {fmt.formatType || fmt.tipo || '—'}
-                        {fmt.volume ? ` · ${fmt.volume} ${fmt.volumeUnit || 'ml'}` : fmt.volMin ? ` · ${fmt.volMin}–${fmt.volMax} ml` : ''}
-                        · {(fmt.pieces || []).length} peça{(fmt.pieces || []).length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => startEdit(fmt)} className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--accent)] transition-colors">Editar</button>
-                    <button type="button" onClick={() => { if (confirm(`Excluir formato "${fmt.name}"?`)) { deleteFormato(fmt.id); logAction('delete', 'Formato', `${fmt.name} excluído`); toast('Formato excluído com sucesso!'); } }}
-                      className="px-2 py-1 rounded text-xs hover:bg-[var(--bg)] text-[var(--fg-secondary)] hover:text-[var(--danger)] transition-colors">Excluir</button>
-                  </div>
+        <>
+          <div className="grid lg:grid-cols-4 gap-3 mb-5">
+            {[
+              { label: 'Formatos', value: formatos.length, icon: 'grid-3x3' },
+              { label: 'Produtos', value: products.length, icon: 'box' },
+              { label: 'Máquinas', value: machines.length, icon: 'settings' },
+              { label: 'Peças', value: pieces.length, icon: 'wrench' },
+            ].map((s, i) => (
+              <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
+                  <Icon name={s.icon} size={20} />
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(fmt.pieces || []).map(p => (
-                    <Badge key={p.pieceId}>{p.pieceName}{p.isAlternative ? ' (alternativa)' : ''}</Badge>
-                  ))}
+                <div>
+                  <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
+                  <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
                 </div>
               </div>
             ))}
           </div>
-        )
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar formato..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar formatos" />
+            </div>
+            <div className="flex-1" />
+            <div className="flex items-center gap-2 shrink-0">
+              <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
+                  selectionMode ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
+                }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {selectionMode ? 'Sair' : 'Selecionar'}
+              </button>
+              <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Formato</Button>
+            </div>
+          </div>
+
+          {selectionMode && selectedCount > 0 && (
+            <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
+              <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
+              <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionados</button>
+              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="grid-3x3" size={24} /></div>
+              <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{formatos.length === 0 ? 'Nenhum formato cadastrado' : 'Nenhum formato encontrado'}</p>
+              <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{formatos.length === 0 ? 'Cadastre o primeiro formato.' : 'Tente ajustar a busca.'}</p>
+              {formatos.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Formato</Button>}
+            </div>
+          ) : (
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+              <table className="w-full text-[13px] border-collapse">
+                <thead className="bg-[var(--bg-secondary)]">
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={false} onChange={() => {}} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Formato</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Produto</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20 hidden sm:table-cell">Peças</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.map((fmt, idx) => {
+                    const last = idx === paged.length - 1;
+                    return (
+                    <tr key={fmt.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(fmt.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(fmt.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                        <input type="checkbox" checked={selected.has(fmt.id)} onChange={() => toggleSelect(fmt.id)} aria-label={`Selecionar ${fmt.name}`} className="accent-[var(--fg)] cursor-pointer" />
+                      </td>
+                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
+                        <button type="button" onClick={() => startEdit(fmt)} className="text-left w-full">
+                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{fmt.name}</div>
+                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{fmt.formatType || fmt.tipo || '—'} · {(fmt.pieces || []).length} peça{(fmt.pieces || []).length !== 1 ? 's' : ''}</div>
+                        </button>
+                      </td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell text-[var(--fg-secondary)]`}>{fmt.productName} <span className="text-[var(--fg-muted)] font-mono text-[11px]">({fmt.productCode})</span></td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden sm:table-cell text-[12px] font-mono text-[var(--fg-muted)]`}>{(fmt.pieces || []).length}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={() => startEdit(fmt)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button type="button" onClick={() => startEdit(fmt)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                      const pg = start + i;
+                      if (pg > totalPages) return null;
+                      return (
+                        <button key={pg} type="button" onClick={() => setPage(pg)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                          }`}>{pg}</button>
+                      );
+                    })}
+                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       ) : step < 6 ? (
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
