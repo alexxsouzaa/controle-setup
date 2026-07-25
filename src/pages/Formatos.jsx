@@ -38,6 +38,7 @@ export function FormatosPage({ navigate }) {
   const [volumeUnit, setVolumeUnit] = useState('ml');
 
   const [selectedMachineId, setSelectedMachineId] = useState('');
+  const [selectedLine, setSelectedLine] = useState('');
   const selectedMachine = machines.find(m => m.id === selectedMachineId);
 
   const [selectedPartIds, setSelectedPartIds] = useState([]);
@@ -73,6 +74,7 @@ export function FormatosPage({ navigate }) {
     setSelectedProduct(null); setProductSearch('');
     setFormatType(''); setVolume(''); setVolumeUnit('ml');
     setSelectedMachineId('');
+    setSelectedLine('');
     setSelectedPartIds([]); setSelectedAltPartIds([]);
     setPartsWithAlternatives([]);
     setFormatName(''); setCreatedBy(getCurrentUser());
@@ -102,6 +104,7 @@ export function FormatosPage({ navigate }) {
 
   const handleMachineNext = () => {
     if (!selectedMachineId) { toast('Selecione uma máquina compatível.', 'warning'); return; }
+    if (!selectedLine) { toast('Selecione a linha de produção.', 'warning'); return; }
     const tooling = getMachineTooling(selectedMachine);
     const groupedPieces = tooling.map(cat => {
       const catPieces = pieces.filter(p => p.category === cat).sort((a, b) => a.name.localeCompare(b.name));
@@ -473,9 +476,20 @@ export function FormatosPage({ navigate }) {
               {machines.length === 0 && (
                 <p className="text-sm text-[var(--fg-muted)] text-center py-4">Nenhuma máquina cadastrada.</p>
               )}
+              {selectedMachine && (
+                <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+                  <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
+                  <Select value={selectedLine} onChange={e => setSelectedLine(e.target.value)}>
+                    <option value="">Selecione a linha...</option>
+                    {(selectedMachine.lines || (selectedMachine.line ? [selectedMachine.line] : [])).map(l => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </Select>
+                </div>
+              )}
               <div className="flex justify-between mt-6">
                 <Button variant="ghost" onClick={() => go(2)}>← Configuração</Button>
-                <Button variant="primary" disabled={!selectedMachineId} onClick={handleMachineNext}>Avançar →</Button>
+                <Button variant="primary" disabled={!selectedMachineId || !selectedLine} onClick={handleMachineNext}>Avançar →</Button>
               </div>
             </Card>
           )}
