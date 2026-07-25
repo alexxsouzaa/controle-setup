@@ -269,7 +269,7 @@ export function ConfigPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 px-8 py-4 border-t border-[var(--border)] shrink-0">
+      <div className="sticky bottom-0 bg-[var(--bg)] flex items-center justify-end gap-3 px-8 py-4 border-t border-[var(--border)] shrink-0">
         <span className="text-[12px] text-[var(--fg-muted)] mr-auto">
           {uoConfigs.reduce((acc, u) => acc + u.toolingCategories.length + u.formatTypes.length + u.productCategories.length + u.lines.length, 0)} itens configurados
         </span>
