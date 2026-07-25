@@ -121,24 +121,6 @@ export function ExportPage() {
         )}
       </div>
 
-      <div className="mt-10 pt-6 border-t border-[var(--border)]">
-        <div className="flex items-center gap-2 mb-1">
-          <Icon name="alert" size={14} />
-          <h3 className="text-[13px] font-semibold text-[var(--danger)]">Zona de Perigo</h3>
-        </div>
-        <p className="text-[12px] text-[var(--fg-secondary)] mb-3">Remove todos os dados e restaura o sistema ao estado inicial.</p>
-        <button type="button" onClick={() => {
-          if (confirm('Todos os dados serão perdidos permanentemente. Continuar?')) {
-            if (confirm('Confirma a exclusão total dos dados do sistema?')) {
-              const empty = { machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] };
-              localStorage.setItem('controle-setup-data', JSON.stringify(empty));
-              localStorage.removeItem('cs-theme');
-              window.location.href = window.location.pathname + '?reset=' + Date.now();
-            }
-          }
-        }} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[12px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">
-          Resetar todos os dados
-        </button>
       </div>
     </div>
   );
