@@ -34,7 +34,7 @@ export function MaquinasPage({ navigate }) {
   const [selected, setSelected] = useState(new Set());
   const [page, setPage] = useState(1);
   const [step, setStep] = useState(1);
-  const perPage = 15;
+  const perPage = 10;
   const [form, setForm] = useState({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });
   const [imageError, setImageError] = useState('');
   const [lineDropdownOpen, setLineDropdownOpen] = useState(false);
