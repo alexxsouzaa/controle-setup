@@ -88,10 +88,11 @@ export function ProdutosPage() {
           </div>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-xs">
+            <div className="relative max-w-xs">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
               <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar por nome ou cÃ³digo..." value={search} onChange={e => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
             </div>
+            <div className="flex-1" />
             <div className="flex items-center gap-2 shrink-0">
               <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
