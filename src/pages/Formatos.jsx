@@ -7,7 +7,6 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
-import { Stepper, StepperItem, StepperTrigger, StepperIndicator, StepperSeparator, StepperNav, StepperTitle, StepperPanel, StepperContent } from '../components/ui/stepper';
 
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
 const VOL_UNITS = ['ml', 'g'];
@@ -332,29 +331,19 @@ export function FormatosPage({ navigate }) {
         </>
       ) : step < 6 ? (
         <div className="max-w-3xl mx-auto space-y-6">
-          <Stepper
-            steps={STEPS.map((s, i) => ({ id: s.toLowerCase().replace(/ /g, '-'), title: s }))}
-            value={STEPS[step - 1].toLowerCase().replace(/ /g, '-')}
-            onValueChange={(v) => {
-              const idx = STEPS.findIndex(s => s.toLowerCase().replace(/ /g, '-') === v);
-              if (idx >= 0) goToStep(idx + 1);
-            }}
-            orientation='horizontal'
-            className='flex flex-col gap-6'>
-            <StepperNav className="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-[8px]">
-              {STEPS.map((s, i) => (
-                <StepperItem key={i} stepId={s.toLowerCase().replace(/ /g, '-')} completed={step > i + 1} className="relative flex-1">
-                  <StepperTrigger className="flex flex-col gap-1.5 items-center cursor-pointer">
-                    <StepperIndicator className="w-7 h-7 text-[10px] font-bold">
-                      {step > i + 1 ? '✓' : i + 1}
-                    </StepperIndicator>
-                    <StepperTitle className="text-[10px] font-medium hidden sm:block">{s}</StepperTitle>
-                  </StepperTrigger>
-                  {STEPS.length > i + 1 && <StepperSeparator className="absolute inset-x-0 top-3 right-[calc(-50%+16px)] left-[calc(50%+16px)]" />}
-                </StepperItem>
-              ))}
-            </StepperNav>
-          </Stepper>
+          <div className="flex items-center justify-center gap-0 mb-6 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-[8px]">
+            {STEPS.map((s, i) => (
+              <div key={s} className="flex items-center">
+                {i > 0 && <div className={`w-6 md:w-10 h-0.5 mx-0.5 ${i < step ? 'bg-[var(--success)]' : 'bg-[var(--border)]'}`} />}
+                <div className={`flex items-center gap-1 ${i >= step ? 'opacity-50' : ''}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${step === i + 1 ? 'bg-[var(--fg)] text-[var(--bg)]' : step > i + 1 ? 'bg-[var(--success-muted)] text-[var(--success)] border-2 border-[var(--success)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-2 border-[var(--border)]'}`}>
+                    {step > i + 1 ? '✓' : i + 1}
+                  </div>
+                  <span className={`text-[10px] font-medium hidden sm:inline whitespace-nowrap ${step === i + 1 ? 'text-[var(--fg)]' : 'text-[var(--fg-secondary)]'}`}>{s}</span>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {step === 1 && (
             <Card>
