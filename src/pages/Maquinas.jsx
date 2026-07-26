@@ -9,6 +9,14 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { ImagePreview } from '../components/ImagePreview';
 import { getToolingOptions } from '../utils/compatibility';
+import {
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  useReactTable
+} from '@tanstack/react-table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const MAX_IMAGE_SIZE = 500 * 1024;
 
@@ -137,6 +145,57 @@ export function MaquinasPage({ navigate }) {
 
   const UO_FILTERS = [{ id: '', label: 'Todas' }, ...allUos.map(u => ({ id: u, label: u }))];
 
+  const columns = useMemo(() => [
+    {
+      id: 'select',
+      header: () => selectionMode ? <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[var(--fg)] cursor-pointer" /> : null,
+      cell: ({ row }) => selectionMode ? <input type="checkbox" checked={selected.has(row.original.id)} onChange={() => toggleSelect(row.original.id)} className="accent-[var(--fg)] cursor-pointer" /> : null,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Máquina',
+      cell: ({ row }) => (
+        <button type="button" onClick={() => setDrawerItem(row.original)} className="text-left w-full">
+          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{row.original.name}</div>
+          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{getLines(row.original).slice(0, 3).join(' · ')}{getLines(row.original).length > 3 ? ` · +${getLines(row.original).length - 3}` : ''}</div>
+        </button>
+      ),
+    },
+    {
+      accessorKey: 'uo',
+      header: 'UO',
+      cell: ({ row }) => <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{row.original.uo}</span>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Criado em',
+      cell: ({ row }) => <span className="text-[12px] font-mono text-[var(--fg-muted)]">{row.original.createdAt}</span>,
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-0.5" onClick={e => e.stopPropagation()}>
+          <button type="button" onClick={() => setDrawerItem(row.original)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button type="button" onClick={() => startEdit(row.original)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+      ),
+    },
+  ], [selectionMode, allSelected, selected]);
+
+  const table = useReactTable({
+    data: paged,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: { columnVisibility: { select: selectionMode } },
+  });
+
   return (
     <div className="p-6 pb-16">
       {tab === 'list' ? (
@@ -212,48 +271,38 @@ export function MaquinasPage({ navigate }) {
             </div>
           ) : (
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
-              <table className="w-full text-[13px] border-collapse">
-                <thead className="bg-[var(--bg-secondary)]">
-                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
-                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Máquina</th>
-                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">UO</th>
-                    <th className="text-right px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
-                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paged.map((m, idx) => (
-                    <tr key={m.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(m.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(m.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
-                        <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} aria-label={`Selecionar ${m.name}`} className="accent-[var(--fg)] cursor-pointer" />
-                      </td>
-                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
-                        <button type="button" onClick={() => setDrawerItem(m)} className="text-left w-full">
-                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
-                          <div className="text-[12px] font-mono text-[var(--fg-muted)] leading-snug mt-0.5">
-                            {getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}
-                          </div>
-                        </button>
-                      </td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
-                      </td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>{m.createdAt}</td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-right ${idx === paged.length - 1 ? 'border-b-0' : ''}`}>
-                        <div className="flex items-center justify-end gap-0.5">
-                          <button type="button" onClick={() => setDrawerItem(m)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          </button>
-                          <button type="button" onClick={() => { startEdit(m); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <TableRow key={headerGroup.id} className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                      {headerGroup.headers.map(header => (
+                        <TableHead key={header.id} className={`px-3.5 py-2.5 border-b border-[var(--border)] ${header.id === 'select' && !selectionMode ? 'hidden' : ''} ${header.id === 'actions' ? 'text-right w-20' : 'text-left'}`}>
+                          {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        </TableHead>
+                      ))}
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows.length ? (
+                    table.getRowModel().rows.map(row => (
+                      <TableRow key={row.id} className="hover:bg-[var(--surface-hover)] transition-colors" onClick={() => selectionMode && toggleSelect(row.original.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                        {row.getVisibleCells().map(cell => (
+                          <TableCell key={cell.id} className="px-3.5 py-2.5 border-b border-[var(--border-subtle)] text-[13px]">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">
+                        Nenhum resultado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
                   <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
@@ -264,13 +313,13 @@ export function MaquinasPage({ navigate }) {
                     </button>
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                       const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                      const p = start + i;
-                      if (p > totalPages) return null;
+                      const pg = start + i;
+                      if (pg > totalPages) return null;
                       return (
-                        <button key={p} type="button" onClick={() => setPage(p)}
+                        <button key={pg} type="button" onClick={() => setPage(pg)}
                           className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                            p === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                          }`}>{p}</button>
+                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                          }`}>{pg}</button>
                       );
                     })}
                     <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
