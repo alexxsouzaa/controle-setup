@@ -1,11 +1,13 @@
-import { useContext, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
+import { useMemo } from 'react';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
-import { AppData, Flow, Machine } from '../types';
+import type { Flow, Machine } from '../types';
+import { useMachines, useFlows, useStats } from '../queries';
 
 export function DashboardPage({ navigate }: { navigate: (path: string) => void }) {
-  const { stats, flows, machines } = useContext(AppDataContext) as AppData;
+  const { data: flows = [] } = useFlows();
+  const { data: machines = [] } = useMachines();
+  const stats = useStats();
 
   const recent = useMemo(() => [...flows].sort((a: Flow, b: Flow) => (b.date || '').localeCompare(a.date || '')).slice(0, 5), [flows]);
   const recentMachines = useMemo(() => [...machines].slice(-4), [machines]);

@@ -1,10 +1,12 @@
 import React, { useState, useContext, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
-import { AppData, Config, UoConfig } from '../types';
+import { useMachines } from '../queries';
+import { useConfig, useUpdateConfig } from '../queries';
+import { useLogAction } from '../queries';
+import { Config, UoConfig } from '../types';
 
 const TABS = [
   { id: 'geral', label: 'Geral', icon: 'settings' },
@@ -66,7 +68,10 @@ function TagInput({ values, onAdd, onRemove, placeholder }: {
 }
 
 export function ConfigPage() {
-  const { config, updateConfig, logAction, machines } = useContext(AppDataContext) as AppData;
+  const { data: machines = [] } = useMachines();
+  const { data: config = {} as Config } = useConfig();
+  const { mutate: updateConfig } = useUpdateConfig();
+  const { mutate: logAction } = useLogAction();
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => number };
   const [tab, setTab] = useState<string>('geral');
 
@@ -105,7 +110,7 @@ export function ConfigPage() {
     const uoCfg: Record<string, UoConfig> = {};
     uoConfigs.forEach(u => { uoCfg[u.uo] = { toolingCategories: u.toolingCategories, formatTypes: u.formatTypes, productCategories: u.productCategories, lines: u.lines }; });
     updateConfig({ uoConfigs: uoCfg });
-    logAction('update', 'Configuração', 'Configurações salvas');
+    logAction({ type: 'update', entity: 'Configuração', detail: 'Configurações salvas' });
     const saved = document.getElementById('saved-toast');
     if (saved) { saved.classList.add('visible'); setTimeout(() => saved.classList.remove('visible'), 2000); }
     toast('Configurações salvas com sucesso!');

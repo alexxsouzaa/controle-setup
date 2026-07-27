@@ -1,6 +1,5 @@
-import { useState, useContext, useRef, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
-import { ToastContext } from '../contexts/ToastContext';
+import { useState, useRef, useMemo } from 'react';
+import { useToast } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
@@ -9,7 +8,9 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { ImagePreview } from '../components/ImagePreview';
 import { getToolingOptions } from '../utils/compatibility';
-import { AppData, Machine } from '../types';
+import { useMachines, useAddMachine, useUpdateMachine, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../queries';
+import { useAppStore } from '../stores/appStore';
+import { Machine, Config } from '../types';
 
 const MAX_IMAGE_SIZE = 500 * 1024;
 
@@ -39,8 +40,15 @@ function readFileAsDataURL(file: File): Promise<string> {
 }
 
 export function MaquinasPage({ navigate }: { navigate: (path: string) => void }) {
-  const { machines, addMachine, deleteMachine, deleteMachines, updateMachine, logAction, getCurrentUser, config } = useContext(AppDataContext) as AppData;
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
+  const { data: machines = [] } = useMachines();
+  const { mutate: addMachine } = useAddMachine();
+  const { mutate: updateMachine } = useUpdateMachine();
+  const { mutate: deleteMachine } = useDeleteMachine();
+  const { mutate: deleteMachines } = useDeleteMachines();
+  const { mutate: logAction } = useLogAction();
+  const { data: config = {} as Config } = useConfig();
+  const currentUser = useAppStore(s => s.currentUser);
+  const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
   const [uoFilter, setUoFilter] = useState<string>('');
@@ -51,7 +59,7 @@ export function MaquinasPage({ navigate }: { navigate: (path: string) => void })
   const [page, setPage] = useState<number>(1);
   const [step, setStep] = useState<number>(1);
   const perPage = 10;
-  const [form, setForm] = useState<MachineForm>({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });
+  const [form, setForm] = useState<MachineForm>({ name: '', lines: [], uo: '', image: '', createdBy: currentUser, toolingCategories: [] });
   const [imageError, setImageError] = useState<string>('');
   const [lineDropdownOpen, setLineDropdownOpen] = useState<boolean>(false);
   const [lineSearch, setLineSearch] = useState<string>('');
@@ -78,7 +86,7 @@ export function MaquinasPage({ navigate }: { navigate: (path: string) => void })
   const filteredTooling = toolingSearch ? toolingOptions.filter((c: string) => c.toLowerCase().includes(toolingSearch.toLowerCase())) : toolingOptions;
 
   const resetForm = () => {
-    setForm({ name: '', lines: [], uo: '', image: '', createdBy: getCurrentUser(), toolingCategories: [] });
+    setForm({ name: '', lines: [], uo: '', image: '', createdBy: currentUser, toolingCategories: [] });
     setEditingId(null); setImageError(''); setStep(1); setLineSearch(''); setLineInput('');
   };
 
@@ -110,14 +118,14 @@ export function MaquinasPage({ navigate }: { navigate: (path: string) => void })
     }
     const createdAt = new Date().toISOString().slice(0, 10);
     const machineData = { ...form, createdAt, updatedAt: createdAt };
-    if (editingId) { updateMachine(editingId, machineData); logAction('update', 'Máquina', `${form.name} atualizada`); toast('Máquina atualizada com sucesso!'); }
-    else { addMachine(machineData); logAction('create', 'Máquina', `${form.name} cadastrada`); toast('Máquina cadastrada com sucesso!'); }
+    if (editingId) { updateMachine({ id: editingId, updates: machineData }); logAction({ type: 'update', entity: 'Máquina', detail: `${form.name} atualizada` }); toast('Máquina atualizada com sucesso!'); }
+    else { addMachine(machineData); logAction({ type: 'create', entity: 'Máquina', detail: `${form.name} cadastrada` }); toast('Máquina cadastrada com sucesso!'); }
     setSavedName(form.name);
     setStep(2);
   };
 
   const startEdit = (m: Machine) => {
-    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || getCurrentUser(), toolingCategories: m.toolingCategories || [] });
+    setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || currentUser, toolingCategories: m.toolingCategories || [] });
     setEditingId(m.id);
     setTab('create');
     setStep(1);
@@ -144,7 +152,7 @@ export function MaquinasPage({ navigate }: { navigate: (path: string) => void })
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
     deleteMachines(Array.from(selected));
-    logAction('delete', 'Máquina', `${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa`);
+    logAction({ type: 'delete', entity: 'Máquina', detail: `${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
     toast(`${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
   };
@@ -546,7 +554,7 @@ export function MaquinasPage({ navigate }: { navigate: (path: string) => void })
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const m = drawerItem; setDrawerItem(null); startEdit(m); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteMachine(drawerItem.id); logAction('delete', 'Máquina', `${drawerItem.name} excluída`); toast('Máquina excluída com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteMachine(drawerItem.id); logAction({ type: 'delete', entity: 'Máquina', detail: `${drawerItem.name} excluída` }); toast('Máquina excluída com sucesso!'); setDrawerItem(null); } }}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>

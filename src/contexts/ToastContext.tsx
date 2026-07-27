@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback, useRef, ReactNode } from 'react';
+import { createContext, useState, useCallback, useRef, ReactNode, useContext } from 'react';
 
 interface ToastItem {
   id: number;
@@ -14,6 +14,10 @@ interface ToastContextValue {
 let toastId = 0;
 
 export const ToastContext = createContext<ToastContextValue>({ toast: () => 0, removeToast: () => {} });
+
+export function useToast() {
+  return useContext(ToastContext);
+}
 
 interface ToastProviderProps {
   children: ReactNode;

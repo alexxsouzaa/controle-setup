@@ -1,5 +1,4 @@
 import { useState, useContext, useEffect, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { useSortable } from '../hooks/useSortable';
 import { Button } from '../components/Button';
@@ -7,7 +6,8 @@ import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
 import { printPDF } from '../utils/pdf';
 import type { PDFBlock } from '../utils/pdf';
-import { AppData, Flow } from '../types';
+import { Flow } from '../types';
+import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction, useExport } from '../queries';
 
 const statusVariant: Record<string, string> = {
   'Concluído': 'success',
@@ -21,10 +21,10 @@ const STATUSES = ['Concluído', 'Em andamento', 'Pendente', 'Cancelado'];
 interface FlowDrawerProps {
   flow: Flow;
   onClose: () => void;
-  updateFlow: (id: string, updates: Partial<Flow>) => void;
+  updateFlow: (variables: { id: string; updates: Partial<Flow> }) => void;
   deleteFlow: (id: string) => void;
   duplicateFlow: (id: string) => void;
-  logAction: (type: string, entity: string, detail: string) => void;
+  logAction: (variables: { type: string; entity: string; detail: string }) => void;
   toast: (msg: string, type?: string) => void;
   navigate: (path: string) => void;
   handleExportPDF: (flow: Flow) => void;
@@ -36,8 +36,8 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
 
   const updateStatus = (newStatus: string) => {
     setLocalStatus(newStatus);
-    updateFlow(flow.id, { status: newStatus });
-    logAction('update', 'Fluxo', `Status do fluxo alterado para ${newStatus}`);
+    updateFlow({ id: flow.id, updates: { status: newStatus } });
+    logAction({ type: 'update', entity: 'Fluxo', detail: `Status do fluxo alterado para ${newStatus}` });
     toast(`Status alterado para ${newStatus}`);
   };
 
@@ -114,8 +114,8 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
             a.click(); URL.revokeObjectURL(url);
           }}><Icon name="download" size={14} />Exportar</Button>
           <button type="button" onClick={() => { handleExportPDF(flow); }} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] transition-colors">PDF</button>
-          <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction('duplicate', 'Fluxo', `${flow.name} duplicado`); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
-          <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction('delete', 'Fluxo', `${flow.name} excluído`); toast('Fluxo excluído com sucesso!'); onClose(); } }}
+          <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction({ type: 'duplicate', entity: 'Fluxo', detail: `${flow.name} duplicado` }); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
+          <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction({ type: 'delete', entity: 'Fluxo', detail: `${flow.name} excluído` }); toast('Fluxo excluído com sucesso!'); onClose(); } }}
             className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
         </div>
       </div>
@@ -124,7 +124,13 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
 }
 
 export function FluxosPage({ navigate }: { navigate: (path: string) => void }) {
-  const { flows, deleteFlow, deleteFlows, duplicateFlow, updateFlow, logAction, exportAll } = useContext(AppDataContext) as AppData;
+  const { data: flows = [] } = useFlows();
+  const { mutate: updateFlow } = useUpdateFlow();
+  const { mutate: deleteFlow } = useDeleteFlow();
+  const { mutate: deleteFlows } = useDeleteFlows();
+  const { mutate: duplicateFlow } = useDuplicateFlow();
+  const { mutate: logAction } = useLogAction();
+  const exportAll = useExport();
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
   const { sorted } = useSortable(flows as unknown as Record<string, string>[], 'date');
   const [search, setSearch] = useState<string>('');
@@ -193,7 +199,7 @@ export function FluxosPage({ navigate }: { navigate: (path: string) => void }) {
     const ids = Array.from(selected);
     clearSelection();
     deleteFlows(ids);
-    logAction('delete', 'Fluxo', `${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} em massa`);
+    logAction({ type: 'delete', entity: 'Fluxo', detail: `${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} em massa` });
     toast(`${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} com sucesso!`);
   };
 

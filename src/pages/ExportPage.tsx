@@ -1,9 +1,11 @@
 import { useState, useContext } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
-import { AppData } from '../types';
+import { useExport } from '../queries';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos, useHistory } from '../queries';
+import { useStats } from '../queries';
+import { useAppStore } from '../stores/appStore';
 
 type ExportKey = 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
 
@@ -28,10 +30,17 @@ function jsonToXML(obj: Record<string, unknown>, root = 'data'): string {
 }
 
 export function ExportPage() {
-  const ctx = useContext(AppDataContext) as AppData;
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => number };
-  const data = {} as Record<ExportKey, unknown[]>;
-  ENTITIES.forEach(e => { data[e.key] = ctx[e.key] || []; });
+  const { data: machines = [] } = useMachines();
+  const { data: products = [] } = useProducts();
+  const { data: pieces = [] } = usePieces();
+  const { data: flows = [] } = useFlows();
+  const { data: formatos = [] } = useFormatos();
+  const { data: history = [] } = useHistory();
+  const exportAll = useExport();
+  const stats = useStats();
+  const currentUser = useAppStore(s => s.currentUser);
+  const data: Record<ExportKey, unknown[]> = { machines, products, pieces, flows, formatos };
   const counts = {} as Record<ExportKey, number>;
   ENTITIES.forEach(e => { counts[e.key] = data[e.key].length; });
 

@@ -1,10 +1,9 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
-import { AppData } from '../types';
+import { useHistory, useClearHistory } from '../queries';
 
 const TYPE_ICONS = { create: 'check-circle', update: 'wrench', delete: 'alert', import: 'upload', export: 'download', duplicate: 'file' } as const;
 const TYPE_COLORS = { create: 'var(--success)', update: 'var(--fg)', delete: 'var(--danger)', import: 'var(--fg)', export: 'var(--fg-secondary)', duplicate: 'var(--warning)' } as const;
@@ -18,7 +17,8 @@ const FILTERS: { id: string; label: string }[] = [
 ];
 
 export function HistoricoPage() {
-  const { history, clearHistory } = useContext(AppDataContext) as AppData;
+  const { data: history = [] } = useHistory();
+  const { mutate: clearHistory } = useClearHistory();
   const { toast } = useContext(ToastContext) as { toast: (msg: string) => void };
   const [filter, setFilter] = useState<string>('');
   const [search, setSearch] = useState<string>('');

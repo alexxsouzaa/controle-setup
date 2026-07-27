@@ -1,12 +1,14 @@
-import { useState, useContext, useRef } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
+import { useState, useContext, useRef, useMemo } from 'react';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { ImagePreview } from '../components/ImagePreview';
-import { AppData, Piece, Machine } from '../types';
+import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction } from '../queries';
+import { useMachines } from '../queries';
+import { useAppStore } from '../stores/appStore';
+import { Piece, Machine } from '../types';
 
 const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
 const MAX_IMAGE_SIZE = 500 * 1024;
@@ -38,7 +40,14 @@ function guessCategory(name: string): string {
 }
 
 export function PecasPage() {
-  const { pieces, machines, addPiece, deletePiece, deletePieces, updatePiece, logAction, getCurrentUser } = useContext(AppDataContext) as AppData;
+  const { data: pieces = [] } = usePieces();
+  const { data: machines = [] } = useMachines();
+  const { mutate: addPiece } = useAddPiece();
+  const { mutate: updatePiece } = useUpdatePiece();
+  const { mutate: deletePiece } = useDeletePiece();
+  const { mutate: deletePieces } = useDeletePieces();
+  const { mutate: logAction } = useLogAction();
+  const currentUser = useAppStore(s => s.currentUser);
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -49,7 +58,7 @@ export function PecasPage() {
   const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const perPage = 10;
-  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
   const [imageError, setImageError] = useState<string>('');
   const [machineDropdownOpen, setMachineDropdownOpen] = useState<boolean>(false);
   const [machineSearch, setMachineSearch] = useState<string>('');
@@ -58,7 +67,7 @@ export function PecasPage() {
   const filteredMachines = machineSearch ? machines.filter((m: Machine) => m.name.toLowerCase().includes(machineSearch.toLowerCase())) : machines;
 
   const resetForm = () => {
-    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: getCurrentUser(), createdAt: new Date().toISOString().slice(0, 10) });
+    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
     setEditingId(null); setImageError(''); setMachineSearch('');
   };
 
@@ -83,9 +92,9 @@ export function PecasPage() {
     if (!form.specification) { toast('Informe a especificação da peça.', 'warning'); return; }
     if (form.compatibleMachineIds.length === 0) { toast('Selecione pelo menos uma máquina compatível.', 'warning'); return; }
     const category = guessCategory(form.name);
-    if (editingId) { updatePiece(editingId, { ...form, category }); }
+    if (editingId) { updatePiece({ id: editingId, updates: { ...form, category } }); }
     else { addPiece({ ...form, category }); }
-    logAction(editingId ? 'update' : 'create', 'Peça', editingId ? `${form.name} atualizada` : `${form.name} cadastrada`);
+    logAction({ type: editingId ? 'update' : 'create', entity: 'Peça', detail: editingId ? `${form.name} atualizada` : `${form.name} cadastrada` });
     toast(editingId ? 'Peça atualizada com sucesso!' : 'Peça cadastrada com sucesso!');
     resetForm();
     setTab('list');
@@ -95,7 +104,7 @@ export function PecasPage() {
     setForm({
       name: p.name || '', specification: p.specification || '',
       compatibleMachineIds: p.compatibleMachineIds || [], image: p.image || '',
-      createdBy: p.createdBy || getCurrentUser(), createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
+      createdBy: p.createdBy || currentUser, createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     });
     setEditingId(p.id);
     setTab('create');
@@ -119,7 +128,7 @@ export function PecasPage() {
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} peça${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
     deletePieces(Array.from(selected));
-    logAction('delete', 'Peça', `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa`);
+    logAction({ type: 'delete', entity: 'Peça', detail: `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
     toast(`${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
   };
@@ -436,7 +445,7 @@ export function PecasPage() {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deletePiece(drawerItem.id); logAction('delete', 'Peça', `${drawerItem.name} excluída`); toast('Peça excluída com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deletePiece(drawerItem.id); logAction({ type: 'delete', entity: 'Peça', detail: `${drawerItem.name} excluída` }); toast('Peça excluída com sucesso!'); setDrawerItem(null); } }}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>

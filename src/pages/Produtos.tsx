@@ -1,12 +1,12 @@
-import { useState, useContext, useRef } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
+import { useState, useContext, useRef, useMemo } from 'react';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
-import { AppData, Product } from '../types';
+import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useDeleteProducts, useLogAction } from '../queries';
+import { Product } from '../types';
 
 const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
 
@@ -21,7 +21,12 @@ interface ProductForm {
 }
 
 export function ProdutosPage() {
-  const { products, addProduct, deleteProduct, deleteProducts, updateProduct, logAction } = useContext(AppDataContext) as AppData;
+  const { data: products = [] } = useProducts();
+  const { mutate: addProduct } = useAddProduct();
+  const { mutate: updateProduct } = useUpdateProduct();
+  const { mutate: deleteProduct } = useDeleteProduct();
+  const { mutate: deleteProducts } = useDeleteProducts();
+  const { mutate: logAction } = useLogAction();
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -60,9 +65,9 @@ export function ProdutosPage() {
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatórios: Código, Nome e Volume.', 'warning'); return; }
-    if (editingId) { updateProduct(editingId, { ...form, vol: Number(form.vol) }); }
+    if (editingId) {       updateProduct({ id: editingId, updates: { ...form, vol: Number(form.vol) } }); }
     else { addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) }); }
-    logAction(editingId ? 'update' : 'create', 'Produto', editingId ? `${form.name} atualizado` : `${form.name} cadastrado`);
+    logAction({ type: editingId ? 'update' : 'create', entity: 'Produto', detail: editingId ? `${form.name} atualizado` : `${form.name} cadastrado` });
     toast(editingId ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!');
     resetForm();
     setTab('list');
@@ -92,7 +97,7 @@ export function ProdutosPage() {
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} produto${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
     deleteProducts(Array.from(selected));
-    logAction('delete', 'Produto', `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
+    logAction({ type: 'delete', entity: 'Produto', detail: `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
     toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
   };
@@ -357,7 +362,7 @@ export function ProdutosPage() {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction('delete', 'Produto', `${drawerItem.name} excluído`); toast('Produto excluído com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction({ type: 'delete', entity: 'Produto', detail: `${drawerItem.name} excluído` }); toast('Produto excluído com sucesso!'); setDrawerItem(null); } }}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>

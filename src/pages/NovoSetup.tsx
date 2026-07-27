@@ -1,5 +1,4 @@
 import { useState, useContext, useMemo, useEffect } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -9,7 +8,9 @@ import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { ImagePreview } from '../components/ImagePreview';
 import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../utils/compatibility';
-import { AppData, Machine, Product, Piece, Flow, Formato, FlowPart } from '../types';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../queries';
+import { useAppStore } from '../stores/appStore';
+import { Machine, Product, Piece, Flow, Formato, FlowPart } from '../types';
 
 const STEPS = [
   { key: 'context', label: 'Contexto', num: 1 },
@@ -62,8 +63,16 @@ interface ModalGroup {
 }
 
 export function NovoSetupPage({ navigate }: { navigate: (path: string) => void }) {
-  const ctx = useContext(AppDataContext) as AppData;
-  const { machines, products, pieces, flows, formatos, addProduct, addFlow, updateFlow, logAction, getCurrentUser } = ctx;
+  const { data: machines = [] } = useMachines();
+  const { data: products = [] } = useProducts();
+  const { data: pieces = [] } = usePieces();
+  const { data: flows = [] } = useFlows();
+  const { data: formatos = [] } = useFormatos();
+  const { mutate: addProduct } = useAddProduct();
+  const { mutate: addFlow } = useAddFlow();
+  const { mutate: updateFlow } = useUpdateFlow();
+  const { mutate: logAction } = useLogAction();
+  const currentUser = useAppStore(s => s.currentUser);
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
 
   const [step, setStep] = useState<number>(1);
@@ -270,7 +279,7 @@ export function NovoSetupPage({ navigate }: { navigate: (path: string) => void }
       status: 'Concluído',
       ver: `V${newVersion}`,
       updatedAt: new Date().toISOString().slice(0, 10),
-      updatedBy: getCurrentUser(),
+      updatedBy: currentUser,
     };
 
     if (isEditing) {
@@ -279,12 +288,12 @@ export function NovoSetupPage({ navigate }: { navigate: (path: string) => void }
         return;
       }
       const { status: _s, ...updateData } = flowData;
-      updateFlow(editingFlowId!, updateData);
-      logAction('update', 'Fluxo', `${flowName} atualizado`);
+      updateFlow({ id: editingFlowId!, updates: updateData });
+      logAction({ type: 'update', entity: 'Fluxo', detail: `${flowName} atualizado` });
       toast('Fluxo atualizado com sucesso!');
     } else {
-      addFlow({ ...flowData, createdBy: getCurrentUser() });
-      logAction('create', 'Fluxo', flowName);
+      addFlow({ ...flowData, createdBy: currentUser });
+      logAction({ type: 'create', entity: 'Fluxo', detail: flowName });
       toast('Fluxo criado com sucesso!');
     }
     setCreatedFlowName(flowName);
@@ -876,7 +885,7 @@ export function NovoSetupPage({ navigate }: { navigate: (path: string) => void }
             <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)] mb-2 block">Metadados</span>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><div className="text-xs text-[var(--fg-secondary)]">Criado por</div><div className="font-medium">{getCurrentUser()}</div></div>
+                <div><div className="text-xs text-[var(--fg-secondary)]">Criado por</div><div className="font-medium">{currentUser}</div></div>
                 <div><div className="text-xs text-[var(--fg-secondary)]">Data</div><div className="font-medium">{new Date().toISOString().slice(0, 10)}</div></div>
                 <div><div className="text-xs text-[var(--fg-secondary)]">Status inicial</div><div className="font-medium"><Badge variant="success">Ativo</Badge></div></div>
                 <div><div className="text-xs text-[var(--fg-secondary)]">Versão</div><div className="font-medium font-mono">V{flows.filter((f: Flow) => f.code === (activeProduct?.code || '')).length + 1}</div></div>

@@ -1,5 +1,4 @@
 import { useState, useContext, useMemo } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -7,7 +6,10 @@ import { Icon } from '../components/Icon';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
 import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
-import { AppData, Formato, Product, Piece, Machine } from '../types';
+import { useProducts, useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../queries';
+import { useConfig } from '../queries';
+import { useAppStore } from '../stores/appStore';
+import { Formato, Product, Piece, Machine, Config } from '../types';
 
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
 const VOL_UNITS = ['ml', 'g'];
@@ -40,8 +42,16 @@ interface FormatoPayload {
 }
 
 export function FormatosPage({ navigate }: { navigate: (path: string) => void }) {
-  const ctx = useContext(AppDataContext) as AppData;
-  const { formatos, products, pieces, machines, addFormato, updateFormato, deleteFormatos, logAction, getCurrentUser, config } = ctx;
+  const { data: formatos = [] } = useFormatos();
+  const { data: products = [] } = useProducts();
+  const { data: pieces = [] } = usePieces();
+  const { data: machines = [] } = useMachines();
+  const { data: config = {} as Config } = useConfig();
+  const { mutate: addFormato } = useAddFormato();
+  const { mutate: updateFormato } = useUpdateFormato();
+  const { mutate: deleteFormatos } = useDeleteFormatos();
+  const { mutate: logAction } = useLogAction();
+  const currentUser = useAppStore(s => s.currentUser);
   const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -73,7 +83,7 @@ export function FormatosPage({ navigate }: { navigate: (path: string) => void })
   const [piecePage, setPiecePage] = useState<number>(1);
 
   const [formatName, setFormatName] = useState<string>('');
-  const [createdBy, setCreatedBy] = useState<string>(getCurrentUser());
+  const [createdBy, setCreatedBy] = useState<string>(currentUser);
 
   const productFiltered = products.filter((p: Product) =>
     !productSearch || p.name.toLowerCase().includes(productSearch) || p.code.toLowerCase().includes(productSearch)
@@ -102,7 +112,7 @@ export function FormatosPage({ navigate }: { navigate: (path: string) => void })
     setMachineSearch('');
     setSelectedPartIds([]); setSelectedAltPartIds([]);
     setPartsWithAlternatives([]);
-    setFormatName(''); setCreatedBy(getCurrentUser());
+    setFormatName(''); setCreatedBy(currentUser);
     setEditingId(null); setStep(1);
   };
 
@@ -181,12 +191,12 @@ export function FormatosPage({ navigate }: { navigate: (path: string) => void })
       createdBy,
     };
     if (editingId) {
-      updateFormato(editingId, payload);
-      logAction('update', 'Formato', `${formatName} atualizado`);
+      updateFormato({ id: editingId, updates: payload });
+      logAction({ type: 'update', entity: 'Formato', detail: `${formatName} atualizado` });
       toast('Formato atualizado com sucesso!');
     } else {
       addFormato(payload);
-      logAction('create', 'Formato', `${formatName} criado`);
+      logAction({ type: 'create', entity: 'Formato', detail: `${formatName} criado` });
       toast('Formato criado com sucesso!');
     }
     setSavedName(formatName.trim());
@@ -203,7 +213,7 @@ export function FormatosPage({ navigate }: { navigate: (path: string) => void })
     if (prod) setSelectedProduct(prod);
     setSelectedPartIds(fmt.partIds || (fmt.pieces || []).map((p: FormatoPiece | Record<string, unknown>) => (p as FormatoPiece).pieceId).filter(Boolean) as string[]);
     setSelectedAltPartIds(fmt.alternativePartIds || []);
-    setCreatedBy(fmt.createdBy || getCurrentUser());
+    setCreatedBy(fmt.createdBy || currentUser);
     setEditingId(fmt.id);
     setStep(1);
     setTab('create');
@@ -223,7 +233,7 @@ export function FormatosPage({ navigate }: { navigate: (path: string) => void })
     if (selectedCount === 0) return;
     if (!confirm(`Excluir ${selectedCount} formato${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
     deleteFormatos(Array.from(selected));
-    logAction('delete', 'Formato', `${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa`);
+    logAction({ type: 'delete', entity: 'Formato', detail: `${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
     toast(`${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
     clearSelection();
   };

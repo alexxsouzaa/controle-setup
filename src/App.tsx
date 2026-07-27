@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AppDataProvider } from './contexts/AppDataContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { useHashRoute } from './hooks/useHashRoute';
 import { Sidebar } from './components/Sidebar';
@@ -50,8 +49,7 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <AppDataProvider>
-        <ToastProvider>
+      <ToastProvider>
         <div className="flex min-h-screen">
           <div className={`sidebar-overlay ${menuOpen ? 'open' : ''}`} onClick={closeMenu} />
           <Sidebar active={hash} navigate={navigate} className={menuOpen ? 'mobile-open' : ''} />
@@ -60,8 +58,7 @@ export default function App() {
             <main className="flex-1 flex flex-col overflow-y-auto min-h-0" aria-label="Conteúdo principal">{route.page}</main>
           </div>
         </div>
-        </ToastProvider>
-      </AppDataProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

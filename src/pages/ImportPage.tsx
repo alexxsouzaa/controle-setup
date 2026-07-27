@@ -1,9 +1,8 @@
-import React, { useState, useRef, useContext } from 'react';
-import { AppDataContext } from '../contexts/AppDataContext';
+import React, { useState, useRef } from 'react';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
-import { AppData } from '../types';
+import { useFlows, useImportData, useLogAction } from '../queries';
 
 const ENTITY_INFO = [
   { key: 'machines', label: 'Máquinas', icon: 'box' },
@@ -34,7 +33,9 @@ interface ParsedData {
 }
 
 export function ImportPage({ navigate }: { navigate: (path: string) => void }) {
-  const { flows, importData, logAction } = useContext(AppDataContext) as AppData;
+  const { data: flows = [] } = useFlows();
+  const { mutateAsync: importData } = useImportData();
+  const { mutate: logAction } = useLogAction();
   const [drag, setDrag] = useState<boolean>(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [pendingData, setPendingData] = useState<ParsedData | null>(null);
@@ -105,7 +106,7 @@ export function ImportPage({ navigate }: { navigate: (path: string) => void }) {
     reader.readAsText(file);
   };
 
-  const finalizeImport = (data: ParsedData) => {
+  const finalizeImport = async (data: ParsedData) => {
     if (Object.keys(renamedMap).length > 0 && data.flows) {
       data = JSON.parse(JSON.stringify(data));
       Object.entries(renamedMap).forEach(([index, newName]) => {
@@ -113,12 +114,12 @@ export function ImportPage({ navigate }: { navigate: (path: string) => void }) {
       });
     }
     const importedNames = (data.flows || []).map(f => f.name).filter(Boolean);
-    const count = importData(data);
+    const count = (await importData(data)) as number;
     setConflicts([]);
     setPendingData(null);
     setRenamedMap({});
     if (count > 0) {
-      logAction('import', 'Fluxo', `${count} fluxo${count !== 1 ? 's' : ''} importado${count !== 1 ? 's' : ''}`);
+      logAction({ type: 'import', entity: 'Fluxo', detail: `${count} fluxo${count !== 1 ? 's' : ''} importado${count !== 1 ? 's' : ''}` });
       sessionStorage.setItem('cs-imported-flows', JSON.stringify(importedNames));
       navigate('/fluxos');
     } else {
