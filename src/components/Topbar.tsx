@@ -6,16 +6,12 @@ import { Button } from './Button';
 interface TopbarProps {
   title: string;
   onNew?: () => void;
-  onMenuToggle: () => void;
 }
 
-export function Topbar({ title, onNew, onMenuToggle }: TopbarProps) {
+export function Topbar({ title, onNew }: TopbarProps) {
   const { theme, toggle } = useContext(ThemeContext);
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-3 sticky top-0 z-10">
-      <button type="button" onClick={onMenuToggle} className="topbar-menu-btn hidden mr-1" aria-label="Abrir menu">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
       <h1 className="text-[14px] font-semibold text-[var(--fg)] mr-auto">{title}</h1>
       <div className="flex items-center gap-2">
         <span className="text-[11px] text-[var(--fg-muted)] font-mono">
