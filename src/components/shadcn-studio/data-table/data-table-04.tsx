@@ -1,5 +1,8 @@
+'use client'
+
 import { useId, useMemo, useState } from 'react'
 
+import type { Column, ColumnDef, ColumnFiltersState, RowData, SortingState } from '@tanstack/react-table'
 import {
   flexRender,
   getCoreRowModel,
@@ -8,10 +11,7 @@ import {
   getFacetedUniqueValues,
   getFilteredRowModel,
   getSortedRowModel,
-  useReactTable,
-  type Column,
-  type ColumnFiltersState,
-  type SortingState,
+  useReactTable
 } from '@tanstack/react-table'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -20,45 +20,47 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { SearchIcon } from "lucide-react"
-import { cn } from '@/lib/utils'
+import { SearchIcon } from 'lucide-react'
 
-interface ProductItem {
-  id: string;
-  product: string;
-  productImage: string;
-  fallback: string;
-  price: number;
-  availability: string;
-  rating: number;
+declare module '@tanstack/react-table' {
+  interface ColumnMeta<TData extends RowData, TValue> {
+    filterVariant?: 'text' | 'range' | 'select'
+  }
 }
 
-interface ColumnMeta {
-  filterVariant?: 'range' | 'select' | 'text';
+type Item = {
+  id: string
+  product: string
+  productImage: string
+  fallback: string
+  price: number
+  availability: 'In Stock' | 'Out of Stock' | 'Limited'
+  rating: number
 }
 
-const columns = [
+const columns: ColumnDef<Item>[] = [
   {
     id: 'select',
-    header: ({ table }: { table: ReturnType<typeof useReactTable<ProductItem>> }) => (
+    header: ({ table }) => (
       <Checkbox
         checked={table.getIsAllPageRowsSelected()}
         indeterminate={table.getIsSomePageRowsSelected()}
-        onCheckedChange={(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(!!value)}
-        aria-label='Select all' />
+        onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+        aria-label='Select all'
+      />
     ),
-    cell: ({ row }: { row: { getIsSelected: () => boolean; toggleSelected: (value: boolean) => void } }) => (
+    cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value: boolean | 'indeterminate') => row.toggleSelected(!!value)}
-        aria-label='Select row' />
-    ),
-    meta: {} as ColumnMeta,
+        onCheckedChange={value => row.toggleSelected(!!value)}
+        aria-label='Select row'
+      />
+    )
   },
   {
     header: 'Product',
     accessorKey: 'product',
-    cell: ({ row }: { row: { original: ProductItem; getValue: (key: string) => string } }) => (
+    cell: ({ row }) => (
       <div className='flex items-center gap-3'>
         <Avatar className='rounded-sm'>
           <AvatarImage src={row.original.productImage} alt={row.original.fallback} />
@@ -66,51 +68,50 @@ const columns = [
         </Avatar>
         <div className='font-medium'>{row.getValue('product')}</div>
       </div>
-    ),
-    meta: {} as ColumnMeta,
+    )
   },
   {
     header: 'Price',
     accessorKey: 'price',
-    cell: ({ row }: { row: { getValue: (key: string) => number } }) => <div>${row.getValue('price')}</div>,
+    cell: ({ row }) => <div>${row.getValue('price')}</div>,
     enableSorting: false,
     meta: {
       filterVariant: 'range'
-    } as ColumnMeta,
+    }
   },
   {
     header: 'Availability',
     accessorKey: 'availability',
-    cell: ({ row }: { row: { getValue: (key: string) => string } }) => {
-      const status = row.getValue('availability') as string;
+    cell: ({ row }) => {
+      const availability = row.getValue('availability') as string
 
-      const styleMap: Record<string, string> = {
+      const styles = {
         'In Stock':
           'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
         'Out of Stock':
           'bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive',
         Limited:
           'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5'
-      };
-      const styles = styleMap[status as keyof typeof styleMap] || '';
-      return <span className={cn(styles, 'px-2 py-1 rounded-md text-xs font-medium')}>{status}</span>;
+      }[availability]
+
+      return <Badge className={styles}>{row.getValue('availability')}</Badge>
     },
     enableSorting: false,
     meta: {
       filterVariant: 'select'
-    } as ColumnMeta,
+    }
   },
   {
     header: 'Rating',
     accessorKey: 'rating',
-    cell: ({ row }: { row: { getValue: (key: string) => number } }) => <div>{row.getValue('rating')}</div>,
+    cell: ({ row }) => <div>{row.getValue('rating')}</div>,
     meta: {
       filterVariant: 'range'
-    } as ColumnMeta,
+    }
   }
 ]
 
-const items: ProductItem[] = [
+const items: Item[] = [
   {
     id: '1',
     product: 'Black Chair',
@@ -185,123 +186,6 @@ const items: ProductItem[] = [
   }
 ]
 
-function Filter({
-  column
-}: {
-  column: Column<ProductItem, unknown>;
-}) {
-  const id = useId()
-  const columnFilterValue = column.getFilterValue() as [number | undefined, number | undefined] | string | undefined
-  const { filterVariant = 'text' } = (column.columnDef.meta ?? {}) as ColumnMeta
-  const columnHeader = typeof column.columnDef.header === 'string' ? column.columnDef.header : ''
-
-  const sortedUniqueValues = useMemo(() => {
-    if (filterVariant === 'range') return []
-
-    const values = Array.from(column.getFacetedUniqueValues().keys())
-
-    const flattenedValues = values.reduce((acc: unknown[], curr: unknown) => {
-      if (Array.isArray(curr)) {
-        return [...acc, ...curr]
-      }
-
-      return [...acc, curr]
-    }, [])
-
-    return Array.from(new Set(flattenedValues)).sort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [column.getFacetedUniqueValues(), filterVariant])
-
-  if (filterVariant === 'range') {
-    const rangeValue = columnFilterValue as [number | undefined, number | undefined] | undefined;
-    return (
-      <div className='*:not-first:mt-2'>
-        <Label>{columnHeader}</Label>
-        <div className='flex'>
-          <Input
-            id={`${id}-range-1`}
-            className='flex-1 rounded-r-none [-moz-appearance:textfield] focus:z-10 [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none'
-            value={rangeValue?.[0] ?? ''}
-            onChange={e =>
-              column.setFilterValue((old: [number | undefined, number | undefined]) => [
-                e.target.value ? Number(e.target.value) : undefined,
-                old?.[1]
-              ])
-            }
-            placeholder='Min'
-            type='number'
-            aria-label={`${columnHeader} min`} />
-          <Input
-            id={`${id}-range-2`}
-            className='-ms-px flex-1 rounded-l-none [-moz-appearance:textfield] focus:z-10 [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none'
-            value={rangeValue?.[1] ?? ''}
-            onChange={e =>
-              column.setFilterValue((old: [number | undefined, number | undefined]) => [
-                old?.[0],
-                e.target.value ? Number(e.target.value) : undefined
-              ])
-            }
-            placeholder='Max'
-            type='number'
-            aria-label={`${columnHeader} max`} />
-        </div>
-      </div>
-    );
-  }
-
-  if (filterVariant === 'select') {
-    const selectItems = [
-      { label: 'All', value: 'all' },
-      ...sortedUniqueValues.map(value => ({
-        label: String(value),
-        value: String(value)
-      }))
-    ]
-
-    return (
-      <div className='*:not-first:mt-2'>
-        <Label htmlFor={`${id}-select`}>{columnHeader}</Label>
-        <Select
-          items={selectItems}
-          value={(columnFilterValue as string)?.toString() ?? 'all'}
-          onValueChange={(value) => {
-            column.setFilterValue(value === 'all' ? undefined : value)
-          }}>
-          <SelectTrigger id={`${id}-select`} className='w-full'>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className='p-1'>
-            {selectItems.map(item => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  }
-
-  return (
-    <div className='*:not-first:mt-2'>
-      <Label htmlFor={`${id}-input`}>{columnHeader}</Label>
-      <div className='relative'>
-        <Input
-          id={`${id}-input`}
-          className='peer pl-9'
-          value={(columnFilterValue as string ?? '')}
-          onChange={e => column.setFilterValue(e.target.value)}
-          placeholder={`Search ${columnHeader.toLowerCase()}`}
-          type='text' />
-        <div
-          className='text-muted-foreground/80 pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50'>
-          <SearchIcon size={16} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const DataTableWithColumnFilterDemo = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
@@ -356,7 +240,7 @@ const DataTableWithColumnFilterDemo = () => {
                     <TableHead key={header.id} className='relative h-10 border-t select-none'>
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -382,7 +266,121 @@ const DataTableWithColumnFilterDemo = () => {
       </div>
       <p className='text-muted-foreground mt-4 text-center text-sm'>Data table with column filter</p>
     </div>
-  );
+  )
+}
+
+function Filter({ column }: { column: Column<Item, unknown> }) {
+  const id = useId()
+  const columnFilterValue = column.getFilterValue()
+  const { filterVariant } = column.columnDef.meta ?? {}
+  const columnHeader = typeof column.columnDef.header === 'string' ? column.columnDef.header : ''
+
+  const sortedUniqueValues = useMemo(() => {
+    if (filterVariant === 'range') return []
+
+    const values = Array.from(column.getFacetedUniqueValues().keys())
+
+    const flattenedValues = values.reduce((acc: string[], curr) => {
+      if (Array.isArray(curr)) {
+        return [...acc, ...curr]
+      }
+
+      return [...acc, curr]
+    }, [])
+
+    return Array.from(new Set(flattenedValues)).sort()
+  }, [column.getFacetedUniqueValues(), filterVariant])
+
+  if (filterVariant === 'range') {
+    return (
+      <div className='*:not-first:mt-2'>
+        <Label>{columnHeader}</Label>
+        <div className='flex'>
+          <Input
+            id={`${id}-range-1`}
+            className='flex-1 rounded-r-none [-moz-appearance:textfield] focus:z-10 [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none'
+            value={(columnFilterValue as [number, number])?.[0] ?? ''}
+            onChange={e =>
+              column.setFilterValue((old: [number, number]) => [
+                e.target.value ? Number(e.target.value) : undefined,
+                old?.[1]
+              ])
+            }
+            placeholder='Min'
+            type='number'
+            aria-label={`${columnHeader} min`}
+          />
+          <Input
+            id={`${id}-range-2`}
+            className='-ms-px flex-1 rounded-l-none [-moz-appearance:textfield] focus:z-10 [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none'
+            value={(columnFilterValue as [number, number])?.[1] ?? ''}
+            onChange={e =>
+              column.setFilterValue((old: [number, number]) => [
+                old?.[0],
+                e.target.value ? Number(e.target.value) : undefined
+              ])
+            }
+            placeholder='Max'
+            type='number'
+            aria-label={`${columnHeader} max`}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (filterVariant === 'select') {
+    const selectItems = [
+      { label: 'All', value: 'all' },
+      ...sortedUniqueValues.map(value => ({
+        label: String(value),
+        value: String(value)
+      }))
+    ]
+
+    return (
+      <div className='*:not-first:mt-2'>
+        <Label htmlFor={`${id}-select`}>{columnHeader}</Label>
+        <Select
+          items={selectItems}
+          value={columnFilterValue?.toString() ?? 'all'}
+          onValueChange={value => {
+            column.setFilterValue(value === 'all' ? undefined : value)
+          }}
+        >
+          <SelectTrigger id={`${id}-select`} className='w-full'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className='p-1'>
+            {selectItems.map(item => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
+  return (
+    <div className='*:not-first:mt-2'>
+      <Label htmlFor={`${id}-input`}>{columnHeader}</Label>
+      <div className='relative'>
+        <Input
+          id={`${id}-input`}
+          className='peer pl-9'
+          value={(columnFilterValue ?? '') as string}
+          onChange={e => column.setFilterValue(e.target.value)}
+          placeholder={`Search ${columnHeader.toLowerCase()}`}
+          type='text'
+        />
+        <div className='text-muted-foreground/80 pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50'>
+          <SearchIcon size={16} />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default DataTableWithColumnFilterDemo
