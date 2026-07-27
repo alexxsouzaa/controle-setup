@@ -34,7 +34,7 @@ export function DashboardPage() {
           <Button variant="secondary" size="sm" onClick={() => navigate('/fluxos')}>
             <Icon name="file" size={14} />Fluxos
           </Button>
-          <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}>
+          <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}>
             <Icon name="plus" size={14} />Novo Fluxo
           </Button>
         </div>
@@ -77,7 +77,7 @@ export function DashboardPage() {
                 <Icon name="file" size={20} />
               </div>
               <p className="text-[13px] text-[var(--fg-muted)] mb-1">Nenhum fluxo registrado</p>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/novo-setup')}>Criar primeiro fluxo</Button>
+              <Button variant="secondary" size="sm" onClick={() => navigate('/novo-fluxo')}>Criar primeiro fluxo</Button>
             </div>
           ) : (
             <div>
@@ -122,9 +122,9 @@ export function DashboardPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--fg-muted)] mb-2">Ações rápidas</p>
               <div className="space-y-1">
                 {[
-                  { label: 'Criar Novo Fluxo', icon: 'wrench' as const, href: '/novo-setup' },
+                  { label: 'Criar Novo Fluxo', icon: 'wrench' as const, href: '/novo-fluxo' },
                   { label: 'Importar Dados', icon: 'upload' as const, href: '/importar' },
-                  { label: 'Configurações', icon: 'settings' as const, href: '/opcoes' },
+                  { label: 'Configurações', icon: 'settings' as const, href: '/configuracoes' },
                 ].map(item => (
                   <button key={item.label} type="button" onClick={() => navigate(item.href)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-[4px] text-[12px] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] transition-colors text-left">

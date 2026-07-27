@@ -103,7 +103,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
         <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-[var(--border)] shrink-0">
           <Button variant="primary" size="sm" onClick={() => {
             sessionStorage.setItem('cs-edit-flow', JSON.stringify(flow));
-            navigate('/novo-setup');
+            navigate('/novo-fluxo');
             onClose();
           }}><Icon name="edit" size={14} />Editar</Button>
           <Button variant="secondary" size="sm" onClick={() => {
@@ -283,7 +283,7 @@ export function FluxosPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             {selectionMode ? 'Sair' : 'Selecionar'}
           </button>
-          <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={14} />Novo Fluxo</Button>
+          <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}><Icon name="plus" size={14} />Novo Fluxo</Button>
         </div>
       </div>
 
@@ -313,7 +313,7 @@ export function FluxosPage() {
           <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="file" size={24} /></div>
           <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{flows.length === 0 ? 'Nenhum fluxo cadastrado' : 'Nenhum fluxo encontrado'}</p>
           <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{flows.length === 0 ? 'Crie o primeiro fluxo de setup.' : 'Tente ajustar a busca.'}</p>
-          {flows.length === 0 && <Button variant="primary" size="sm" onClick={() => navigate('/novo-setup')}><Icon name="plus" size={14} />Novo Fluxo</Button>}
+          {flows.length === 0 && <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}><Icon name="plus" size={14} />Novo Fluxo</Button>}
         </div>
       ) : (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
@@ -354,7 +354,7 @@ export function FluxosPage() {
                       <button type="button" onClick={() => setDrawerFlow(s as unknown as Flow)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                       </button>
-                      <button type="button" onClick={() => { sessionStorage.setItem('cs-edit-flow', JSON.stringify(s)); navigate('/novo-setup'); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                      <button type="button" onClick={() => { sessionStorage.setItem('cs-edit-flow', JSON.stringify(s)); navigate('/novo-fluxo'); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
                     </div>

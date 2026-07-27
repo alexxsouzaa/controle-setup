@@ -21,7 +21,7 @@ const ALLOW_NEW_PATHS = new Set(['/dashboard', '/fluxos', '/maquinas', '/produto
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/fluxos': 'Fluxos de Setup',
-  '/novo-setup': 'Novo Fluxo',
+  '/novo-fluxo': 'Novo Fluxo',
   '/importar': 'Importar',
   '/maquinas': 'Máquinas',
   '/produtos': 'Produtos',
@@ -29,7 +29,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/formatos': 'Formatos',
   '/exportar': 'Exportar',
   '/historico': 'Histórico',
-  '/opcoes': 'Configurações',
+  '/configuracoes': 'Configurações',
 };
 
 function AppLayout() {
@@ -48,7 +48,7 @@ function AppLayout() {
       <div className={`sidebar-overlay ${menuOpen ? 'open' : ''}`} onClick={closeMenu} />
       <Sidebar className={menuOpen ? 'mobile-open' : ''} />
       <div className="flex-1 ml-60 flex flex-col">
-        <Topbar title={title} onNew={showNew ? () => navigate('/novo-setup') : undefined} onMenuToggle={toggleMenu} />
+        <Topbar title={title} onNew={showNew ? () => navigate('/novo-fluxo') : undefined} onMenuToggle={toggleMenu} />
         <main className="flex-1 flex flex-col overflow-y-auto min-h-0" aria-label="Conteúdo principal">
           <Outlet />
         </main>
@@ -66,7 +66,7 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/fluxos" element={<FluxosPage />} />
-              <Route path="/novo-setup" element={<NovoSetupPage />} />
+              <Route path="/novo-fluxo" element={<NovoSetupPage />} />
               <Route path="/importar" element={<ImportPage />} />
               <Route path="/maquinas" element={<MaquinasPage />} />
               <Route path="/produtos" element={<ProdutosPage />} />
@@ -74,7 +74,7 @@ export default function App() {
               <Route path="/formatos" element={<FormatosPage />} />
               <Route path="/exportar" element={<ExportPage />} />
               <Route path="/historico" element={<HistoricoPage />} />
-              <Route path="/opcoes" element={<ConfigPage />} />
+              <Route path="/configuracoes" element={<ConfigPage />} />
               <Route path="/" element={<DashboardPage />} />
               <Route path="*" element={<DashboardPage />} />
             </Route>

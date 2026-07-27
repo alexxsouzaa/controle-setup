@@ -17,7 +17,7 @@ interface SidebarGroup {
 const groups: SidebarGroup[] = [
   { label: 'Operação', items: [
     { id: '/dashboard', icon: 'home', label: 'Dashboard' },
-    { id: '/novo-setup', icon: 'wrench', label: 'Novo Fluxo' },
+    { id: '/novo-fluxo', icon: 'wrench', label: 'Novo Fluxo' },
     { id: '/fluxos', icon: 'file', label: 'Fluxos de Setup' },
   ]},
   { label: 'Catálogo', items: [
@@ -30,7 +30,7 @@ const groups: SidebarGroup[] = [
     { id: '/importar', icon: 'upload', label: 'Importar' },
     { id: '/exportar', icon: 'download', label: 'Exportar' },
     { id: '/historico', icon: 'clock', label: 'Histórico' },
-    { id: '/opcoes', icon: 'settings', label: 'Configurações' },
+    { id: '/configuracoes', icon: 'settings', label: 'Configurações' },
   ]},
 ];
 
