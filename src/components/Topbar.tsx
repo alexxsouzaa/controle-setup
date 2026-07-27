@@ -19,14 +19,14 @@ export function Topbar() {
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-3 sticky top-0 z-10">
       <SidebarTrigger className="-ml-1" />
-      <Breadcrumb className="mr-auto">
-        <BreadcrumbList>
+      <Breadcrumb className="flex items-center mr-auto">
+        <BreadcrumbList className="text-[11px] gap-1">
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="text-[11px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+                className="text-[11px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors leading-none">
                 CS Setup
               </button>
             </BreadcrumbLink>
@@ -46,7 +46,7 @@ export function Topbar() {
                     <button
                       type="button"
                       onClick={() => navigate(fullPath)}
-                      className="text-[11px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
+                      className="text-[11px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors leading-none">
                       {label}
                     </button>
                   </BreadcrumbLink>
