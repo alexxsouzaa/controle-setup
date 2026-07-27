@@ -5,11 +5,11 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 interface NavSubItem {
   title: string;
   url: string;
+  icon: React.ReactNode;
 }
 
 interface NavItem {
   title: string;
-  icon: React.ReactNode;
   items: NavSubItem[];
   isActive?: boolean;
 }
@@ -34,6 +34,7 @@ export function NavMain({ items, pathname }: NavMainProps) {
                   isActive={pathname === subItem.url}
                   onClick={() => navigate(subItem.url)}
                   tooltip={subItem.title}>
+                  {subItem.icon}
                   <span>{subItem.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

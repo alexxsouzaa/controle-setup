@@ -6,38 +6,35 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { TeamSwitcher } from "@/components/team-switcher"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, BoxIcon, Settings2Icon } from "lucide-react"
+import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon } from "lucide-react"
 
 const data = {
   navMain: [
     {
       title: "Operação",
-      icon: <LayoutDashboardIcon />,
       items: [
-        { title: "Dashboard", url: "/dashboard" },
-        { title: "Novo Fluxo", url: "/novo-fluxo" },
-        { title: "Fluxos de Setup", url: "/fluxos" },
+        { title: "Dashboard", url: "/dashboard", icon: <LayoutDashboardIcon /> },
+        { title: "Novo Fluxo", url: "/novo-fluxo", icon: <WrenchIcon /> },
+        { title: "Fluxos de Setup", url: "/fluxos", icon: <FileIcon /> },
       ],
       isActive: true,
     },
     {
       title: "Catálogo",
-      icon: <BoxIcon />,
       items: [
-        { title: "Máquinas", url: "/maquinas" },
-        { title: "Produtos", url: "/produtos" },
-        { title: "Peças", url: "/pecas" },
-        { title: "Formatos", url: "/formatos" },
+        { title: "Máquinas", url: "/maquinas", icon: <BoxIcon /> },
+        { title: "Produtos", url: "/produtos", icon: <Grid3X3Icon /> },
+        { title: "Peças", url: "/pecas", icon: <PuzzleIcon /> },
+        { title: "Formatos", url: "/formatos", icon: <ShapesIcon /> },
       ],
     },
     {
       title: "Sistema",
-      icon: <Settings2Icon />,
       items: [
-        { title: "Importar", url: "/importar" },
-        { title: "Exportar", url: "/exportar" },
-        { title: "Histórico", url: "/historico" },
-        { title: "Configurações", url: "/configuracoes" },
+        { title: "Importar", url: "/importar", icon: <UploadIcon /> },
+        { title: "Exportar", url: "/exportar", icon: <DownloadIcon /> },
+        { title: "Histórico", url: "/historico", icon: <ClockIcon /> },
+        { title: "Configurações", url: "/configuracoes", icon: <Settings2Icon /> },
       ],
     },
   ],
