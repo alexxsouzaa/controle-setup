@@ -9,8 +9,9 @@ import { Button } from '../../../components/Button';
 import { Badge } from '../../../components/Badge';
 import { Icon } from '../../../components/Icon';
 import { ImagePreview } from '../../../components/ImagePreview';
-import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
-import { useState, useMemo } from 'react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../../../components/ui/alert-dialog';
+import { TriangleAlertIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 const getLines = (m) => m.lines || (m.line ? [m.line] : []);
 
@@ -25,7 +26,6 @@ export function MachineDetailsPage() {
   const { toast } = useToast();
   const currentUser = useAppStore(s => s.currentUser);
   const [previewImage, setPreviewImage] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const machine = machines.find((m) => m.id === id);
 
@@ -99,8 +99,27 @@ export function MachineDetailsPage() {
                 <Button variant="primary" size="sm" onClick={() => navigate('/maquinas/' + id + '/edit')}>
                   <Icon name="edit" size={14} />Editar
                 </Button>
-                <button type="button" onClick={() => setShowDeleteDialog(true)}
-                  className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
+                <AlertDialog>
+                  <AlertDialogTrigger render={
+                    <button type="button"
+                      className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
+                  } />
+                  <AlertDialogContent>
+                    <AlertDialogHeader className="place-items-center! items-center">
+                      <div className="bg-destructive/10 mx-auto mb-2 flex size-12 items-center justify-center rounded-full">
+                        <TriangleAlertIcon className="text-destructive size-6" />
+                      </div>
+                      <AlertDialogTitle>Excluir {machine.name}?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-center">
+                        Esta ação não pode ser desfeita. Todos os dados da máquina serão permanentemente removidos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction variant="destructive" onClick={handleDelete}>Excluir</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </div>
@@ -235,16 +254,6 @@ export function MachineDetailsPage() {
       )}
 
       {previewImage && <ImagePreview src={previewImage} alt="Foto da máquina" onClose={() => setPreviewImage(null)} />}
-      <ConfirmDialog
-        open={showDeleteDialog}
-        title="Excluir máquina?"
-        message={`Tem certeza que deseja excluir ${machine.name}? Esta ação não pode ser desfeita.`}
-        confirmLabel="Excluir"
-        cancelLabel="Cancelar"
-        variant="danger"
-        onConfirm={() => { setShowDeleteDialog(false); handleDelete(); }}
-        onCancel={() => setShowDeleteDialog(false)}
-      />
     </div>
   );
 }
