@@ -18,8 +18,7 @@ export function Topbar() {
 
   const machineNames = new Map((machines as any[]).map((m: any) => [m.id, m.name]));
 
-  const segments = path === '/' ? ['/dashboard'] : [path];
-  const parts = segments[0].split('/').filter(Boolean);
+  const parts = path === '/' ? ['dashboard'] : path.split('/').filter(Boolean);
 
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-1.5 sticky top-0 z-10">
@@ -38,7 +37,7 @@ export function Topbar() {
             </BreadcrumbLink>
           </BreadcrumbItem>
           {parts.map((segment, i) => {
-            const fullPath = '/' + segments[0].split('/').slice(0, i + 1).filter(Boolean).join('/');
+            const fullPath = '/' + parts.slice(0, i + 1).join('/');
             const label = ROUTE_TITLES[fullPath] || machineNames.get(segment) || (segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '));
             const isLast = i === parts.length - 1;
 
