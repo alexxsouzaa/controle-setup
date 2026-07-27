@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMachines, useDeleteMachine, useLogAction } from '../../../queries';
 import { useToast } from '../../../contexts/ToastContext';
@@ -58,7 +57,7 @@ export function MachineDetailsPage() {
         {/* Header */}
         <div className="flex items-center gap-4 px-6 py-5 border-b border-[var(--border)]">
           {machine.image ? (
-            <button type="button" onClick={() => setPreviewImage(machine.image)} className="shrink-0 cursor-pointer">
+            <button type="button" onClick={() => setPreviewImage(machine.image || null)} className="shrink-0 cursor-pointer">
               <img src={machine.image} alt={machine.name} className="w-12 h-12 rounded-[6px] object-cover border border-[var(--border)]" />
             </button>
           ) : (
@@ -78,7 +77,7 @@ export function MachineDetailsPage() {
         {/* Image preview */}
         {machine.image && (
           <div className="flex justify-center px-6 py-4 border-b border-[var(--border-subtle)]">
-            <button type="button" onClick={() => setPreviewImage(machine.image)} className="cursor-pointer">
+            <button type="button" onClick={() => setPreviewImage(machine.image || null)} className="cursor-pointer">
               <img src={machine.image} alt={machine.name} className="w-40 h-40 rounded-[8px] object-cover border border-[var(--border)]" />
             </button>
           </div>

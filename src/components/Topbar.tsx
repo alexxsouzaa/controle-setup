@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ThemeContext } from '../contexts/ThemeContext';
-import { Icon } from './Icon';
+import { ThemeContext } from '@/contexts/ThemeContext';
+import { Icon } from '@/components/Icon';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { ROUTE_TITLES } from '../app/router/routes';
+import { ROUTE_TITLES } from '@/app/router/routes';
 
 export function Topbar() {
   const { theme, toggle } = useContext(ThemeContext);
