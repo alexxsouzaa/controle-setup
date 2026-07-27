@@ -17,11 +17,11 @@ export function Topbar() {
   const parts = segments[0].split('/').filter(Boolean);
 
   return (
-    <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-3 sticky top-0 z-10">
-      <SidebarTrigger className="-ml-1" />
+    <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-1.5 sticky top-0 z-10">
+      <SidebarTrigger />
       <Breadcrumb className="flex items-center mr-auto">
-        <BreadcrumbList className="text-[11px] gap-1">
-          <BreadcrumbItem>
+        <BreadcrumbList className="text-[11px] gap-0.5 sm:gap-1">
+          <BreadcrumbItem className="gap-0.5">
             <BreadcrumbLink asChild>
               <button
                 type="button"
@@ -37,7 +37,7 @@ export function Topbar() {
             const isLast = i === parts.length - 1;
 
             return (
-              <BreadcrumbItem key={fullPath}>
+              <BreadcrumbItem key={fullPath} className="gap-0.5">
                 <BreadcrumbSeparator />
                 {isLast ? (
                   <BreadcrumbPage className="text-[11px] font-semibold text-[var(--fg)]">{label}</BreadcrumbPage>
