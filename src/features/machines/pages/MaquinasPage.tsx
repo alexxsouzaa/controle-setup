@@ -7,7 +7,6 @@ import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
-import { MachinesDataTable } from '../components/MachinesDataTable';
 import { getToolingOptions } from '../../compatibility';
 import { useMachines, useAddMachine, useUpdateMachine, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
@@ -167,6 +166,8 @@ export function MaquinasPage() {
     clearSelection();
   };
 
+  const getLines = (m: Machine) => m.lines || (m.line ? [m.line] : []);
+
   const UO_FILTERS: { id: string; label: string }[] = [{ id: '', label: 'Todas' }, ...allUos.map((u: string) => ({ id: u, label: u }))];
 
   return (
@@ -243,40 +244,86 @@ export function MaquinasPage() {
               {machines.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Máquina</Button>}
             </div>
           ) : (
-            <MachinesDataTable
-              machines={paged}
-              selectionMode={selectionMode}
-              selected={selected}
-              onToggleSelect={toggleSelect}
-              onToggleSelectAll={toggleSelectAll}
-              allSelected={allSelected}
-              onEdit={startEdit}
-            />
-          )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 mt-2">
-              <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
-              <div className="flex gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                  const pg = start + i;
-                  if (pg > totalPages) return null;
-                  return (
-                    <button key={pg} type="button" onClick={() => setPage(pg)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                        pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                      }`}>{pg}</button>
-                  );
-                })}
-                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-              </div>
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] border-b border-[var(--border)]">
+                    {selectionMode && (
+                      <th className="w-10 px-3.5 py-2.5 text-center">
+                        <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[var(--fg)] cursor-pointer" />
+                      </th>
+                    )}
+                    <th className="px-3.5 py-2.5 text-left">Máquina</th>
+                    <th className="px-3.5 py-2.5 text-left">UO</th>
+                    <th className="px-3.5 py-2.5 text-left">Criado em</th>
+                    <th className="w-24 px-3.5 py-2.5 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paged.length ? paged.map((m: Machine) => (
+                    <tr key={m.id}
+                      className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)]"
+                      onClick={() => selectionMode && toggleSelect(m.id)}
+                      style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                      {selectionMode && (
+                        <td className="px-3.5 py-2.5 text-center">
+                          <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} className="accent-[var(--fg)] cursor-pointer" />
+                        </td>
+                      )}
+                      <td className="px-3.5 py-2.5">
+                        <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/maquinas/' + m.id); }} className="text-left w-full">
+                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
+                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}</div>
+                        </button>
+                      </td>
+                      <td className="px-3.5 py-2.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
+                      </td>
+                      <td className="px-3.5 py-2.5 text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
+                      <td className="px-3.5 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/maquinas/' + m.id); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); startEdit(m); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={selectionMode ? 5 : 4} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">Nenhum resultado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                      const pg = start + i;
+                      if (pg > totalPages) return null;
+                      return (
+                        <button key={pg} type="button" onClick={() => setPage(pg)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                          }`}>{pg}</button>
+                      );
+                    })}
+                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           </>
