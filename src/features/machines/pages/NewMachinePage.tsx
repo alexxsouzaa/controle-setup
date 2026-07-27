@@ -141,24 +141,22 @@ export function NewMachinePage() {
   return (
     <div className="p-6 pb-16">
       {saved ? (
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <div className="text-center py-8">
-              <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
-                <Icon name="check-circle" size={28} />
-              </div>
-              <h3 className="text-[16px] font-semibold mb-1">{editingId ? 'Máquina atualizada!' : 'Máquina criada!'}</h3>
-              <p className="text-[14px] font-medium text-[var(--accent)] mt-1 mb-1">{form.name}</p>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
-              <div className="flex gap-3 justify-center">
-                <Button variant="primary" size="sm" onClick={() => navigate('/maquinas')}><Icon name="box" size={14} />Ver máquinas</Button>
-                <Button variant="secondary" size="sm" onClick={() => { setSaved(false); setForm(prev => ({ ...prev, name: '', lines: [], uo: '', image: '', toolingCategories: [] })); }}><Icon name="plus" size={14} />Criar nova máquina</Button>
-              </div>
+        <Card>
+          <div className="text-center py-8">
+            <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
+              <Icon name="check-circle" size={28} />
             </div>
-          </Card>
-        </div>
+            <h3 className="text-[16px] font-semibold mb-1">{editingId ? 'Máquina atualizada!' : 'Máquina criada!'}</h3>
+            <p className="text-[14px] font-medium text-[var(--accent)] mt-1 mb-1">{form.name}</p>
+            <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
+            <div className="flex gap-3 justify-center">
+              <Button variant="primary" size="sm" onClick={() => navigate('/maquinas')}><Icon name="box" size={14} />Ver máquinas</Button>
+              <Button variant="secondary" size="sm" onClick={() => { setSaved(false); setForm(prev => ({ ...prev, name: '', lines: [], uo: '', image: '', toolingCategories: [] })); }}><Icon name="plus" size={14} />Criar nova máquina</Button>
+            </div>
+          </div>
+        </Card>
       ) : (
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className="space-y-5">
         <button type="button" onClick={handleBack} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">← Voltar para máquinas</button>
 
         <Card>
