@@ -97,16 +97,13 @@ export function MaquinasPage() {
           <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
         </div>
 
-        <div className="flex items-center gap-1.5 flex-1 flex-wrap">
-          {UO_FILTERS.map(f => (
-            <button key={f.id} onClick={() => { setUoFilter(f.id); setPage(1); clearSelection(); }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium border transition-all ${
-                uoFilter === f.id ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border-[var(--border)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'
-              }`}>
-              {f.id && <span className="w-1.5 h-1.5 rounded-full bg-[var(--fg-muted)]" />}
-              {f.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-1 flex-wrap">
+          <select value={uoFilter} onChange={(e) => { setUoFilter(e.target.value); setPage(1); clearSelection(); }}
+            className="shad-select py-1.5 text-[12px] max-w-[180px]">
+            {UO_FILTERS.map(f => (
+              <option key={f.id} value={f.id}>{f.label}</option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
