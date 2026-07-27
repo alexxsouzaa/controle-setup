@@ -7,12 +7,16 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { ROUTE_TITLES } from '@/app/router/routes';
+import { useMachines } from '@/queries/useMachines';
 
 export function Topbar() {
   const { theme, toggle } = useContext(ThemeContext);
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
+  const { data: machines = [] } = useMachines();
+
+  const machineNames = new Map((machines as any[]).map((m: any) => [m.id, m.name]));
 
   const segments = path === '/' ? ['/dashboard'] : [path];
   const parts = segments[0].split('/').filter(Boolean);
@@ -35,7 +39,7 @@ export function Topbar() {
           </BreadcrumbItem>
           {parts.map((segment, i) => {
             const fullPath = '/' + segments[0].split('/').slice(0, i + 1).filter(Boolean).join('/');
-            const label = ROUTE_TITLES[fullPath] || (segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '));
+            const label = ROUTE_TITLES[fullPath] || machineNames.get(segment) || (segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '));
             const isLast = i === parts.length - 1;
 
             return (
