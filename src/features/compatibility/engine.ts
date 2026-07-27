@@ -1,4 +1,9 @@
-import type { Config, Machine, Product, Formato, Piece, FlowPart, Flow } from '../../types';
+import type { Config } from '../config/types/config.types';
+import type { Machine } from '../machines/types/machine.types';
+import type { Product } from '../products/types/product.types';
+import type { Formato } from '../formatos/types/formato.types';
+import type { Piece } from '../pieces/types/piece.types';
+import type { FlowPart, Flow } from '../flows/types/flow.types';
 import type { FormatCompatResult, CompatLevel, UOConfigData } from './types';
 
 interface EnrichedFlowPart extends FlowPart {

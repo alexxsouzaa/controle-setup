@@ -1,2 +1,2 @@
 export * from './engine';
-export * from './types';
+export type { FormatCompatResult, CompatLevel, UOConfigData } from './types/compatibility.types';
