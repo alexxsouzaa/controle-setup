@@ -73,7 +73,7 @@ export function ExportPage() {
   };
 
   return (
-    <div className="pb-16">
+    <div className="p-6 pb-16">
       <div className="border border-[var(--border)] rounded-[8px] overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-between">
           <h3 className="text-[13px] font-semibold text-[var(--fg)]">Entidades</h3>
