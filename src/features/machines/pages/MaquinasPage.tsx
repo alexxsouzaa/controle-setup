@@ -4,12 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
-import { Badge } from '../../../components/Badge';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
-import { ImagePreview } from '../../../components/ImagePreview';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '../../../components/ui/drawer';
 import { getToolingOptions } from '../../compatibility';
 import { useMachines, useAddMachine, useUpdateMachine, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
@@ -57,8 +54,6 @@ export function MaquinasPage() {
   const [search, setSearch] = useState<string>('');
   const [uoFilter, setUoFilter] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [drawerItem, setDrawerItem] = useState<Machine | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState<number>(1);
   const [step, setStep] = useState<number>(1);
@@ -276,7 +271,7 @@ export function MaquinasPage() {
                         </td>
                       )}
                       <td className="px-3.5 py-2.5">
-                        <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDrawerItem(m); }} className="text-left w-full">
+                        <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/maquinas/' + m.id); }} className="text-left w-full">
                           <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
                           <div className="text-[12px] font-mono text-[var(--fg-muted)]">{getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}</div>
                         </button>
@@ -287,7 +282,7 @@ export function MaquinasPage() {
                       <td className="px-3.5 py-2.5 text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
                       <td className="px-3.5 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-0.5">
-                          <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDrawerItem(m); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                          <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate('/maquinas/' + m.id); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                           </button>
                           <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); startEdit(m); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
@@ -513,65 +508,6 @@ export function MaquinasPage() {
         </div>
       )}
 
-      <Drawer open={!!drawerItem} onOpenChange={(open) => !open && setDrawerItem(null)} direction="right">
-        <DrawerContent className="[--drawer-content-width:min(420px,90vw)]">
-          <DrawerHeader>
-            <div className="flex items-center gap-3 min-w-0">
-              {drawerItem?.image ? (
-                <img src={drawerItem.image} alt={drawerItem.name} className="w-8 h-8 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
-              ) : (
-                <div className="w-8 h-8 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
-              )}
-              <DrawerTitle className="truncate">{drawerItem?.name}</DrawerTitle>
-            </div>
-            <DrawerDescription>Detalhes da máquina</DrawerDescription>
-          </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 space-y-5">
-            {drawerItem?.image && (
-              <div className="flex justify-center pt-2">
-                <button type="button" onClick={() => setPreviewImage(drawerItem.image || null)} className="cursor-pointer">
-                  <img src={drawerItem.image} alt={drawerItem.name} className="w-28 h-28 rounded-[8px] object-cover border border-[var(--border)]" />
-                </button>
-              </div>
-            )}
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">UO</div>
-                  <div className="text-[13px] font-medium text-[var(--fg)] mt-0.5">{drawerItem?.uo || '—'}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Criado por</div>
-                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem?.createdBy || '—'}</div>
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-1.5">Linhas</div>
-                <div className="flex flex-wrap gap-1">
-                  {drawerItem && getLines(drawerItem).map((l: string) => <Badge key={l}>{l}</Badge>)}
-                  {drawerItem && getLines(drawerItem).length === 0 && <span className="text-[12px] text-[var(--fg-muted)]">—</span>}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-1.5">Ferramentais</div>
-                <div className="flex flex-wrap gap-1">
-                  {(drawerItem?.toolingCategories || []).map((c: string) => <Badge key={c}>{c}</Badge>)}
-                  {(!drawerItem?.toolingCategories || drawerItem.toolingCategories.length === 0) && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum</span>}
-                </div>
-              </div>
-            </div>
-          </div>
-          <DrawerFooter>
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => { const m = drawerItem; setDrawerItem(null); startEdit(m!); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem?.name}?`)) { if (drawerItem) { deleteMachine(drawerItem.id); logAction({ type: 'delete', entity: 'Máquina', detail: `${drawerItem.name} excluída` }); toast('Máquina excluída com sucesso!'); setDrawerItem(null); } } }}
-                className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
-              <DrawerClose render={<Button variant="secondary" size="sm" />}>Fechar</DrawerClose>
-            </div>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-      {previewImage && <ImagePreview src={previewImage} alt="Foto da máquina" onClose={() => setPreviewImage(null)} />}
     </div>
   );
 }

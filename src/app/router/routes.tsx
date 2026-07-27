@@ -3,6 +3,7 @@ import { FluxosPage } from '../../features/flows/pages/FluxosPage';
 import { NovoSetupPage } from '../../features/setup-flow/pages/NovoSetupPage';
 import { ImportPage } from '../../features/import-export/pages/ImportPage';
 import { MaquinasPage } from '../../features/machines/pages/MaquinasPage';
+import { MachineDetailsPage } from '../../features/machines/pages/MachineDetailsPage';
 import { ProdutosPage } from '../../features/products/pages/ProdutosPage';
 import { PecasPage } from '../../features/pieces/pages/PecasPage';
 import { FormatosPage } from '../../features/formatos/pages/FormatosPage';
@@ -37,6 +38,7 @@ export const routeObjects: RouteDef[] = [
   { path: '/novo-fluxo', element: <NovoSetupPage /> },
   { path: '/importar', element: <ImportPage /> },
   { path: '/maquinas', element: <MaquinasPage /> },
+  { path: '/maquinas/:id', element: <MachineDetailsPage /> },
   { path: '/produtos', element: <ProdutosPage /> },
   { path: '/pecas', element: <PecasPage /> },
   { path: '/formatos', element: <FormatosPage /> },
