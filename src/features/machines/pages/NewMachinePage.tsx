@@ -141,7 +141,7 @@ export function NewMachinePage() {
   if (saved) {
     return (
       <div className="p-6 pb-16">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-2xl mx-auto">
           <Card>
             <div className="text-center py-8">
               <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
@@ -163,7 +163,7 @@ export function NewMachinePage() {
 
   return (
     <div className="p-6 pb-16">
-      <div className="max-w-3xl mx-auto space-y-5">
+      <div className="max-w-2xl mx-auto space-y-5">
         <button type="button" onClick={handleBack} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">← Voltar para máquinas</button>
 
         <Card>
