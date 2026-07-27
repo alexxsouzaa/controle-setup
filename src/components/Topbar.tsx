@@ -35,7 +35,7 @@ export function Topbar() {
           </BreadcrumbItem>
           {parts.map((segment, i) => {
             const fullPath = '/' + segments[0].split('/').slice(0, i + 1).filter(Boolean).join('/');
-            const label = ROUTE_TITLES[fullPath] || segment;
+            const label = ROUTE_TITLES[fullPath] || (segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '));
             const isLast = i === parts.length - 1;
 
             return (
