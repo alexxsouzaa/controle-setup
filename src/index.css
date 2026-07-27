@@ -146,21 +146,6 @@ body {
   height: 100vh;
 }
 
-@media (max-width: 900px) {
-  aside { position: fixed !important; top: 0; left: 0; bottom: 0; width: 280px !important; z-index: 41; transform: translateX(-100%); transition: transform 250ms ease; }
-  aside.mobile-open { transform: translateX(0); }
-  .ml-60 { margin-left: 0 !important; }
-  .topbar-menu-btn { display: flex !important; }
-}
-@media (max-width: 640px) {
-  .main-content-padding { padding: 12px !important; }
-  .stats-grid-mobile { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-  table.fw-table { min-width: 600px; }
-  .mobile-toolbar-wrap { flex-direction: column; align-items: stretch !important; }
-  .mobile-toolbar-wrap > .filter-chips { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-}
-.sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 39; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
-.sidebar-overlay.open { opacity: 1; pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; } }
 
 @keyframes spin { to { transform: rotate(360deg); } }

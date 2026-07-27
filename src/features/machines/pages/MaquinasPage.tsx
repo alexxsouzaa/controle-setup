@@ -91,7 +91,7 @@ export function MaquinasPage() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-xs">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
           <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />

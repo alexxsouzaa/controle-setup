@@ -127,7 +127,7 @@ export function MachineDetailsPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'Fluxos Realizados', value: flowCount, icon: 'file' },
           { label: 'Formatos Vinculados', value: relatedFormatos.length, icon: 'grid-3x3' },
