@@ -1,0 +1,1 @@
+export { FormatosPage } from './FormatosPage';

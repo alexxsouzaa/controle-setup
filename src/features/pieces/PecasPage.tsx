@@ -1,14 +1,14 @@
 import { useState, useContext, useRef, useMemo } from 'react';
-import { ToastContext } from '../contexts/ToastContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Input } from '../components/Input';
-import { ImagePreview } from '../components/ImagePreview';
-import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction } from '../queries';
-import { useMachines } from '../queries';
-import { useAppStore } from '../stores/appStore';
-import { Piece, Machine } from '../types';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
+import { Input } from '../../components/Input';
+import { ImagePreview } from '../../components/ImagePreview';
+import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction } from '../../queries';
+import { useMachines } from '../../queries';
+import { useAppStore } from '../../stores/appStore';
+import { Piece, Machine } from '../../types';
 
 const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
 const MAX_IMAGE_SIZE = 500 * 1024;

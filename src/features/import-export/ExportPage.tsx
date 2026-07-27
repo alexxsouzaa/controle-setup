@@ -1,11 +1,11 @@
 import { useState, useContext } from 'react';
-import { ToastContext } from '../contexts/ToastContext';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { useExport } from '../queries';
-import { useMachines, useProducts, usePieces, useFlows, useFormatos, useHistory } from '../queries';
-import { useStats } from '../queries';
-import { useAppStore } from '../stores/appStore';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
+import { useExport } from '../../queries';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos, useHistory } from '../../queries';
+import { useStats } from '../../queries';
+import { useAppStore } from '../../stores/appStore';
 
 type ExportKey = 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
 

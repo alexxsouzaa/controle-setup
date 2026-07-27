@@ -1,4 +1,5 @@
-import type { Machine, Product, Formato, FlowPart, Piece, Config, Flow } from '../types';
+import type { Config, Machine, Product, Formato, Piece, FlowPart, Flow } from '../../types';
+import type { FormatCompatResult, CompatLevel, UOConfigData } from './types';
 
 interface EnrichedFlowPart extends FlowPart {
   stock?: number;
@@ -18,13 +19,6 @@ interface AlternativeOption {
 
 interface EnrichedFlowPartWithAlternatives extends EnrichedFlowPart {
   alternatives: AlternativeOption[];
-}
-
-interface FormatCompatResult {
-  formato: Formato;
-  level: string;
-  points: number;
-  recommended: boolean;
 }
 
 export const ALL_TOOLING_CATEGORIES: string[] = [
@@ -52,10 +46,10 @@ export function getMachineTooling(machine: Machine | undefined, config: Config):
   return [...uoFallback];
 }
 
-function compatLevel(points: number): { level: string; points: number; recommended: boolean } {
-  if (points >= 4) return { level: 'Alta', points, recommended: true };
-  if (points >= 3) return { level: 'Média', points, recommended: false };
-  return { level: 'Baixa', points, recommended: false };
+function compatLevel(points: number): CompatLevel {
+  if (points >= 4) return { level: 'success' as CompatLevel['level'], points };
+  if (points >= 3) return { level: 'warning' as CompatLevel['level'], points };
+  return { level: 'danger' as CompatLevel['level'], points };
 }
 
 function isMachineCompatible(pieceCompatField: string, machineName: string): boolean {
@@ -79,7 +73,10 @@ export function suggestFormatos(machine: Machine | undefined, product: Product |
       else if (minOk || maxOk) points += 1;
     }
     if (fmt.pieces && fmt.pieces.length > 0) points += 1;
-    if (points > 0) results.push({ formato: fmt, ...compatLevel(points) });
+    if (points > 0) {
+      const cl = compatLevel(points);
+      results.push({ formato: fmt, level: cl.level, points: cl.points });
+    }
   }
   results.sort((a, b) => b.points - a.points);
   return results;

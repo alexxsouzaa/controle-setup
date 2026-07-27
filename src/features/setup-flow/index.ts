@@ -1,0 +1,1 @@
+export { NovoSetupPage } from './NovoSetupPage';

@@ -1,12 +1,12 @@
 import React, { useState, useContext, useMemo } from 'react';
-import { ToastContext } from '../contexts/ToastContext';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Input } from '../components/Input';
-import { useMachines } from '../queries';
-import { useConfig, useUpdateConfig } from '../queries';
-import { useLogAction } from '../queries';
-import { Config, UoConfig } from '../types';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
+import { Input } from '../../components/Input';
+import { useMachines } from '../../queries';
+import { useConfig, useUpdateConfig } from '../../queries';
+import { useLogAction } from '../../queries';
+import { Config, UoConfig } from '../../types';
 
 const TABS = [
   { id: 'geral', label: 'Geral', icon: 'settings' },

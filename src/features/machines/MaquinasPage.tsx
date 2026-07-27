@@ -1,17 +1,17 @@
 import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../contexts/ToastContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
-import { Icon } from '../components/Icon';
-import { Input } from '../components/Input';
-import { Select } from '../components/Select';
-import { ImagePreview } from '../components/ImagePreview';
-import { getToolingOptions } from '../utils/compatibility';
-import { useMachines, useAddMachine, useUpdateMachine, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../queries';
-import { useAppStore } from '../stores/appStore';
-import { Machine, Config } from '../types';
+import { useToast } from '../../contexts/ToastContext';
+import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
+import { Badge } from '../../components/Badge';
+import { Icon } from '../../components/Icon';
+import { Input } from '../../components/Input';
+import { Select } from '../../components/Select';
+import { ImagePreview } from '../../components/ImagePreview';
+import { getToolingOptions } from '../compatibility';
+import { useMachines, useAddMachine, useUpdateMachine, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../queries';
+import { useAppStore } from '../../stores/appStore';
+import { Machine, Config } from '../../types';
 
 const MAX_IMAGE_SIZE = 500 * 1024;
 

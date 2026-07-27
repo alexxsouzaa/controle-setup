@@ -1,0 +1,1 @@
+export { MaquinasPage } from './MaquinasPage';

@@ -1,9 +1,9 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { ToastContext } from '../contexts/ToastContext';
-import { Icon } from '../components/Icon';
-import { Button } from '../components/Button';
-import { EmptyState } from '../components/EmptyState';
-import { useHistory, useClearHistory } from '../queries';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Icon } from '../../components/Icon';
+import { Button } from '../../components/Button';
+import { EmptyState } from '../../components/EmptyState';
+import { useHistory, useClearHistory } from '../../queries';
 
 const TYPE_ICONS = { create: 'check-circle', update: 'wrench', delete: 'alert', import: 'upload', export: 'download', duplicate: 'file' } as const;
 const TYPE_COLORS = { create: 'var(--success)', update: 'var(--fg)', delete: 'var(--danger)', import: 'var(--fg)', export: 'var(--fg-secondary)', duplicate: 'var(--warning)' } as const;

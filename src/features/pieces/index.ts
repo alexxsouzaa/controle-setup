@@ -1,0 +1,1 @@
+export { PecasPage } from './PecasPage';

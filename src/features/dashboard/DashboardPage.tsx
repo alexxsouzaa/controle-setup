@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon } from '../components/Icon';
-import { Button } from '../components/Button';
-import type { Flow, Machine } from '../types';
-import { useMachines, useFlows, useStats } from '../queries';
+import { Icon } from '../../components/Icon';
+import { Button } from '../../components/Button';
+import type { Flow, Machine } from '../../types';
+import { useMachines, useFlows, useStats } from '../../queries';
 
 export function DashboardPage() {
   const navigate = useNavigate();

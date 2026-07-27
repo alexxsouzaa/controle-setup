@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon } from '../components/Icon';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { useFlows, useImportData, useLogAction } from '../queries';
+import { Icon } from '../../components/Icon';
+import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
+import { useFlows, useImportData, useLogAction } from '../../queries';
 
 const ENTITY_INFO = [
   { key: 'machines', label: 'Máquinas', icon: 'box' },

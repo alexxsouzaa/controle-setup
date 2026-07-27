@@ -1,16 +1,16 @@
 import { useState, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContext } from '../contexts/ToastContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Input } from '../components/Input';
-import { Select } from '../components/Select';
-import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../utils/compatibility';
-import { useProducts, useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../queries';
-import { useConfig } from '../queries';
-import { useAppStore } from '../stores/appStore';
-import { Formato, Product, Piece, Machine, Config } from '../types';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
+import { Input } from '../../components/Input';
+import { Select } from '../../components/Select';
+import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../compatibility';
+import { useProducts, useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../../queries';
+import { useConfig } from '../../queries';
+import { useAppStore } from '../../stores/appStore';
+import { Formato, Product, Piece, Machine, Config } from '../../types';
 
 const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
 const VOL_UNITS = ['ml', 'g'];

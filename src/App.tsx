@@ -4,17 +4,17 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
-import { DashboardPage } from './pages/Dashboard';
-import { FluxosPage } from './pages/Fluxos';
-import { NovoSetupPage } from './pages/NovoSetup';
-import { ImportPage } from './pages/ImportPage';
-import { MaquinasPage } from './pages/Maquinas';
-import { ProdutosPage } from './pages/Produtos';
-import { PecasPage } from './pages/Pecas';
-import { FormatosPage } from './pages/Formatos';
-import { ExportPage } from './pages/ExportPage';
-import { HistoricoPage } from './pages/HistoricoPage';
-import { ConfigPage } from './pages/ConfigPage';
+import { DashboardPage } from './features/dashboard';
+import { FluxosPage } from './features/flows';
+import { NovoSetupPage } from './features/setup-flow';
+import { ImportPage } from './features/import-export';
+import { MaquinasPage } from './features/machines';
+import { ProdutosPage } from './features/products';
+import { PecasPage } from './features/pieces';
+import { FormatosPage } from './features/formatos';
+import { ExportPage } from './features/import-export';
+import { HistoricoPage } from './features/history';
+import { ConfigPage } from './features/config';
 
 const ALLOW_NEW_PATHS = new Set(['/dashboard', '/fluxos', '/maquinas', '/produtos', '/pecas', '/formatos']);
 

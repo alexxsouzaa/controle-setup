@@ -1,17 +1,17 @@
 import { useState, useContext, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContext } from '../contexts/ToastContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
-import { Icon } from '../components/Icon';
-import { Input } from '../components/Input';
-import { Select } from '../components/Select';
-import { ImagePreview } from '../components/ImagePreview';
-import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../utils/compatibility';
-import { useMachines, useProducts, usePieces, useFlows, useFormatos, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../queries';
-import { useAppStore } from '../stores/appStore';
-import { Machine, Product, Piece, Flow, Formato, FlowPart } from '../types';
+import { ToastContext } from '../../contexts/ToastContext';
+import { Card } from '../../components/Card';
+import { Button } from '../../components/Button';
+import { Badge } from '../../components/Badge';
+import { Icon } from '../../components/Icon';
+import { Input } from '../../components/Input';
+import { Select } from '../../components/Select';
+import { ImagePreview } from '../../components/ImagePreview';
+import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../compatibility';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../../queries';
+import { useAppStore } from '../../stores/appStore';
+import { Machine, Product, Piece, Flow, Formato, FlowPart } from '../../types';
 
 const STEPS = [
   { key: 'context', label: 'Contexto', num: 1 },
@@ -783,6 +783,7 @@ export function NovoSetupPage() {
                           </div>
                           {totalPages > 1 && (
                             <div className="flex items-center justify-center gap-1 mt-3">
+
                               <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1} className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
                               {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg: number) => (
                                 <button key={pg} onClick={() => setPiecePage(pg)} className={`w-7 h-7 rounded text-[11px] ${pg === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{pg}</button>
