@@ -138,9 +138,9 @@ export function NewMachinePage() {
     }
   };
 
-  if (saved) {
-    return (
-      <div className="p-6 pb-16">
+  return (
+    <div className="p-6 pb-16">
+      {saved ? (
         <div className="max-w-2xl mx-auto">
           <Card>
             <div className="text-center py-8">
@@ -157,12 +157,7 @@ export function NewMachinePage() {
             </div>
           </Card>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 pb-16">
+      ) : (
       <div className="max-w-2xl mx-auto space-y-5">
         <button type="button" onClick={handleBack} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">← Voltar para máquinas</button>
 
@@ -321,6 +316,7 @@ export function NewMachinePage() {
           <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.name || !form.uo || form.lines.length === 0}>{editingId ? 'Salvar' : 'Criar Máquina'}</Button>
         </div>
       </div>
+      )}
     </div>
   );
 }
