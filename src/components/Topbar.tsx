@@ -3,17 +3,11 @@ import { useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { Icon } from './Icon';
-import { Button } from './Button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { ROUTE_TITLES } from '../app/router/routes';
 
-interface TopbarProps {
-  title: string;
-  onNew?: () => void;
-}
-
-export function Topbar({ title, onNew }: TopbarProps) {
+export function Topbar() {
   const { theme, toggle } = useContext(ThemeContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,14 +57,6 @@ export function Topbar({ title, onNew }: TopbarProps) {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="flex items-center gap-2">
-        <span className="text-[11px] text-[var(--fg-muted)] font-mono">
-          {new Date().toLocaleDateString('pt-BR')}
-        </span>
-        {onNew && (
-          <Button variant="primary" size="sm" onClick={onNew} aria-label="Criar novo fluxo">
-            <Icon name="plus" size={15} />Novo
-          </Button>
-        )}
         <button
           type="button"
           onClick={toggle}
