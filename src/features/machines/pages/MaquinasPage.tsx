@@ -3,6 +3,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
 import { Button } from '../../../components/Button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
 import { useMachines, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { Machine, Config } from '../../../types';
@@ -98,12 +100,23 @@ export function MaquinasPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-1 flex-wrap">
-          <select value={uoFilter} onChange={(e) => { setUoFilter(e.target.value); setPage(1); clearSelection(); }}
-            className="shad-select py-1.5 text-[12px] max-w-[180px]">
-            {UO_FILTERS.map(f => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={
+              <button className="shad-select py-1.5 text-[12px] max-w-[180px] flex items-center gap-2 text-left">
+                <span className="flex-1">{UO_FILTERS.find(f => f.id === uoFilter)?.label || 'Todas'}</span>
+                <ChevronDown className="size-3.5 shrink-0" />
+              </button>
+            } />
+            <DropdownMenuContent className="w-48">
+              <DropdownMenuGroup>
+                {UO_FILTERS.map(f => (
+                  <DropdownMenuItem key={f.id} onClick={() => { setUoFilter(f.id); setPage(1); clearSelection(); }}>
+                    {f.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
