@@ -163,7 +163,7 @@ export function NewMachinePage() {
 
   return (
     <div className="p-6 pb-16">
-      <div className="max-w-2xl mx-auto space-y-5">
+      <div className="max-w-3xl mx-auto space-y-5">
         <button type="button" onClick={handleBack} className="text-[12px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">← Voltar para máquinas</button>
 
         <Card>
