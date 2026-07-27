@@ -128,7 +128,7 @@ export function MachineDetailsPage() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="primary" size="sm" onClick={() => navigate('/maquinas')}>
+            <Button variant="primary" size="sm" onClick={() => navigate('/maquinas', { state: { editMachineId: id } })}>
               <Icon name="edit" size={14} />Editar
             </Button>
             <button
