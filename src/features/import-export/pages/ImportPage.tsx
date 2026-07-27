@@ -135,7 +135,7 @@ export function ImportPage() {
 
   return (
     <div className="p-6 pb-16">
-      <div className="max-w-xl">
+      <div className="">
         <div
           role="button"
           tabIndex={0}
