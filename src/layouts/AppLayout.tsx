@@ -4,7 +4,6 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import { SidebarProvider } from '../components/ui/sidebar';
 import { AppSidebar } from '../components/app-sidebar';
 import { Topbar } from '../components/Topbar';
-import { ScrollArea } from '../components/ui/scroll-area';
 
 export function AppLayout() {
   return (
@@ -13,9 +12,9 @@ export function AppLayout() {
         <AppSidebar />
         <main className="flex-1 flex flex-col min-h-screen">
           <Topbar />
-          <ScrollArea className="flex-1" aria-label="Conteúdo principal">
+          <div className="flex-1 overflow-y-auto" aria-label="Conteúdo principal">
             <Outlet />
-          </ScrollArea>
+          </div>
         </main>
       </SidebarProvider>
     </TooltipProvider>
