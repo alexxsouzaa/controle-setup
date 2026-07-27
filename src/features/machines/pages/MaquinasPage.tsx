@@ -78,10 +78,20 @@ export function MaquinasPage() {
       if (m.lines && Array.isArray(m.lines)) m.lines.forEach((l: string) => lines.add(l));
       else if (m.line) lines.add(m.line);
     });
+    if (config?.uoConfigs) {
+      Object.values(config.uoConfigs).forEach((uo: any) => {
+        if (uo.lines) uo.lines.forEach((l: string) => lines.add(l));
+      });
+    }
     return [...lines].sort();
-  }, [machines]);
+  }, [machines, config]);
 
-  const allUos = useMemo(() => [...new Set(machines.map((m: Machine) => m.uo).filter(Boolean))].sort() as string[], [machines]);
+  const allUos = useMemo(() => {
+    const uos = new Set<string>();
+    machines.forEach((m: Machine) => { if (m.uo) uos.add(m.uo); });
+    if (config?.uoConfigs) Object.keys(config.uoConfigs).forEach(u => uos.add(u));
+    return [...uos].sort();
+  }, [machines, config]);
 
   const filteredLines = lineSearch ? allLines.filter((l: string) => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
   const toolingOptions = getToolingOptions(form.uo, config);
