@@ -163,13 +163,6 @@ export function MachineDetailsPage() {
             </div>
           )}
 
-          {machine.image && (
-            <div className="flex justify-center pt-2">
-              <button type="button" onClick={() => setPreviewImage(machine.image)} className="cursor-pointer">
-                <img src={machine.image} alt={machine.name} className="w-48 h-48 rounded-[8px] object-cover border border-[var(--border)]" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Related Flows */}
