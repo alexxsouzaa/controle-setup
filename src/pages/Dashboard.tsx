@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
 import type { Flow, Machine } from '../types';
 import { useMachines, useFlows, useStats } from '../queries';
 
-export function DashboardPage({ navigate }: { navigate: (path: string) => void }) {
+export function DashboardPage() {
+  const navigate = useNavigate();
   const { data: flows = [] } = useFlows();
   const { data: machines = [] } = useMachines();
   const stats = useStats();

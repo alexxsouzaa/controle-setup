@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -32,7 +33,8 @@ interface ParsedData {
   [key: string]: unknown;
 }
 
-export function ImportPage({ navigate }: { navigate: (path: string) => void }) {
+export function ImportPage() {
+  const navigate = useNavigate();
   const { data: flows = [] } = useFlows();
   const { mutateAsync: importData } = useImportData();
   const { mutate: logAction } = useLogAction();

@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ToastContext } from '../contexts/ToastContext';
 import { useSortable } from '../hooks/useSortable';
 import { Button } from '../components/Button';
@@ -26,11 +27,11 @@ interface FlowDrawerProps {
   duplicateFlow: (id: string) => void;
   logAction: (variables: { type: string; entity: string; detail: string }) => void;
   toast: (msg: string, type?: string) => void;
-  navigate: (path: string) => void;
   handleExportPDF: (flow: Flow) => void;
 }
 
-function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF }: FlowDrawerProps) {
+function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, handleExportPDF }: FlowDrawerProps) {
+  const navigate = useNavigate();
   const status = flow.status || 'Concluído';
   const [localStatus, setLocalStatus] = useState<string>(status);
 
@@ -123,7 +124,8 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
   );
 }
 
-export function FluxosPage({ navigate }: { navigate: (path: string) => void }) {
+export function FluxosPage() {
+  const navigate = useNavigate();
   const { data: flows = [] } = useFlows();
   const { mutate: updateFlow } = useUpdateFlow();
   const { mutate: deleteFlow } = useDeleteFlow();

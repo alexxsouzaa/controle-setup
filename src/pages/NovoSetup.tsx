@@ -1,4 +1,5 @@
 import { useState, useContext, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -62,7 +63,8 @@ interface ModalGroup {
   alternatives?: Array<{ piece: Piece; level: string; requiresAdjustment?: boolean }>;
 }
 
-export function NovoSetupPage({ navigate }: { navigate: (path: string) => void }) {
+export function NovoSetupPage() {
+  const navigate = useNavigate();
   const { data: machines = [] } = useMachines();
   const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();

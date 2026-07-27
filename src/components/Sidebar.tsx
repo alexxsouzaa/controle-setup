@@ -1,4 +1,5 @@
 import { Icon } from './Icon';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 type SidebarIcon = 'home' | 'wrench' | 'file' | 'box' | 'grid-3x3' | 'upload' | 'download' | 'clock' | 'settings';
 
@@ -34,12 +35,13 @@ const groups: SidebarGroup[] = [
 ];
 
 interface SidebarProps {
-  active: string;
-  navigate: (path: string) => void;
   className?: string;
 }
 
-export function Sidebar({ active, navigate, className = '' }: SidebarProps) {
+export function Sidebar({ className = '' }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const active = location.pathname;
   return (
     <aside className={`w-60 border-r border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col fixed top-0 left-0 bottom-0 z-20 ${className}`}>
       <div className="flex items-center gap-2.5 px-[18px] py-4 border-b border-[var(--border)] h-[52px]">

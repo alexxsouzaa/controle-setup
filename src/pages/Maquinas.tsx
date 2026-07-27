@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -39,7 +40,8 @@ function readFileAsDataURL(file: File): Promise<string> {
   });
 }
 
-export function MaquinasPage({ navigate }: { navigate: (path: string) => void }) {
+export function MaquinasPage() {
+  const navigate = useNavigate();
   const { data: machines = [] } = useMachines();
   const { mutate: addMachine } = useAddMachine();
   const { mutate: updateMachine } = useUpdateMachine();

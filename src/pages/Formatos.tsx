@@ -1,4 +1,5 @@
 import { useState, useContext, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ToastContext } from '../contexts/ToastContext';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -41,7 +42,8 @@ interface FormatoPayload {
   createdBy: string;
 }
 
-export function FormatosPage({ navigate }: { navigate: (path: string) => void }) {
+export function FormatosPage() {
+  const navigate = useNavigate();
   const { data: formatos = [] } = useFormatos();
   const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();
