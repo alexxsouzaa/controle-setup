@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { Icon } from './Icon';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { ROUTE_TITLES } from '../app/router/routes';
 
@@ -19,6 +20,7 @@ export function Topbar() {
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-1.5 sticky top-0 z-10">
       <SidebarTrigger />
+      <Separator orientation="vertical" className="h-4" />
       <Breadcrumb className="flex items-center mr-auto">
         <BreadcrumbList className="text-[11px] gap-0.5 sm:gap-1">
           <BreadcrumbItem className="gap-0.5">
