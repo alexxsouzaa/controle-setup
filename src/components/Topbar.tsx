@@ -20,7 +20,7 @@ export function Topbar() {
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-1.5 sticky top-0 z-10">
       <SidebarTrigger />
-      <Separator orientation="vertical" className="h-4 data-vertical:self-auto" />
+      <Separator orientation="vertical" className="mx-2 h-4 data-vertical:self-auto" />
       <Breadcrumb className="flex items-center mr-auto">
         <BreadcrumbList className="text-[11px] gap-0.5 sm:gap-1">
           <BreadcrumbItem className="gap-0.5">
