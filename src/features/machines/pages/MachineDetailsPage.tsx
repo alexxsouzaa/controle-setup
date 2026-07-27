@@ -96,7 +96,7 @@ export function MachineDetailsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Button variant="primary" size="sm" onClick={() => navigate('/maquinas', { state: { editMachineId: id } })}>
+                <Button variant="primary" size="sm" onClick={() => navigate('/maquinas/' + id + '/edit')}>
                   <Icon name="edit" size={14} />Editar
                 </Button>
                 <button type="button" onClick={() => setShowDeleteDialog(true)}

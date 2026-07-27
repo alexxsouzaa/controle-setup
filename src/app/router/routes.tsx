@@ -4,6 +4,7 @@ import { NovoSetupPage } from '../../features/setup-flow/pages/NovoSetupPage';
 import { ImportPage } from '../../features/import-export/pages/ImportPage';
 import { MaquinasPage } from '../../features/machines/pages/MaquinasPage';
 import { MachineDetailsPage } from '../../features/machines/pages/MachineDetailsPage';
+import { NewMachinePage } from '../../features/machines/pages/NewMachinePage';
 import { ProdutosPage } from '../../features/products/pages/ProdutosPage';
 import { PecasPage } from '../../features/pieces/pages/PecasPage';
 import { FormatosPage } from '../../features/formatos/pages/FormatosPage';
@@ -19,6 +20,9 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/novo-fluxo': 'Novo Fluxo',
   '/importar': 'Importar',
   '/maquinas': 'Máquinas',
+  '/maquinas/new': 'Nova Máquina',
+  '/maquinas/:id': 'Detalhes',
+  '/maquinas/:id/edit': 'Editar Máquina',
   '/produtos': 'Produtos',
   '/pecas': 'Peças',
   '/formatos': 'Formatos',
@@ -38,6 +42,8 @@ export const routeObjects: RouteDef[] = [
   { path: '/novo-fluxo', element: <NovoSetupPage /> },
   { path: '/importar', element: <ImportPage /> },
   { path: '/maquinas', element: <MaquinasPage /> },
+  { path: '/maquinas/new', element: <NewMachinePage /> },
+  { path: '/maquinas/:id/edit', element: <NewMachinePage /> },
   { path: '/maquinas/:id', element: <MachineDetailsPage /> },
   { path: '/produtos', element: <ProdutosPage /> },
   { path: '/pecas', element: <PecasPage /> },
