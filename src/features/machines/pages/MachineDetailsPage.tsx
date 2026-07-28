@@ -65,7 +65,7 @@ export function MachineDetailsPage() {
   };
 
   return (
-    <div className="pt-4 px-6 pb-16 space-y-6">
+    <div className="pt-8 px-6 pb-16 space-y-6">
       {/* Back */}
       <button type="button" onClick={() => navigate('/maquinas')}
         className="flex items-center gap-1 text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors">
