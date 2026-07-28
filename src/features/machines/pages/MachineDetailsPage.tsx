@@ -11,6 +11,7 @@ import { Icon } from '../../../components/Icon';
 import { ImagePreview } from '../../../components/ImagePreview';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../../../components/ui/alert-dialog';
 import { TriangleAlertIcon } from 'lucide-react';
+import { Separator } from '../../../components/ui/separator';
 import { useMemo, useState } from 'react';
 
 const getLines = (m) => m.lines || (m.line ? [m.line] : []);
@@ -138,11 +139,14 @@ export function MachineDetailsPage() {
           <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2 mb-3">
             <Icon name="settings" size={16} />Ferramentais
           </h2>
-          <div className="space-y-1">
-            {(machine.toolingCategories || []).map((c) => (
-              <div key={c} className="flex items-center gap-2 text-[13px] text-[var(--fg)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--fg-muted)] shrink-0" />
-                {c}
+          <div className="space-y-0">
+            {(machine.toolingCategories || []).map((c, i) => (
+              <div key={c}>
+                {i > 0 && <Separator className="my-2" />}
+                <dl className="flex items-center justify-between">
+                  <dt className="text-[13px] text-[var(--fg)]">{c}</dt>
+                  <dd className="text-[12px] text-[var(--fg-muted)]">Ferramental</dd>
+                </dl>
               </div>
             ))}
             {(!machine.toolingCategories || machine.toolingCategories.length === 0) && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum ferramental configurado.</span>}
