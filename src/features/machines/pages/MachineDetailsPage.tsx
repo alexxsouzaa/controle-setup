@@ -138,8 +138,13 @@ export function MachineDetailsPage() {
           <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2 mb-3">
             <Icon name="settings" size={16} />Ferramentais
           </h2>
-          <div className="flex flex-wrap gap-1.5">
-            {(machine.toolingCategories || []).map((c) => <Badge key={c}>{c}</Badge>)}
+          <div className="space-y-1">
+            {(machine.toolingCategories || []).map((c) => (
+              <div key={c} className="flex items-center gap-2 text-[13px] text-[var(--fg)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--fg-muted)] shrink-0" />
+                {c}
+              </div>
+            ))}
             {(!machine.toolingCategories || machine.toolingCategories.length === 0) && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum ferramental configurado.</span>}
           </div>
         </div>
