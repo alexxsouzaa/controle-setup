@@ -126,27 +126,6 @@ export function MachineDetailsPage() {
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: 'Fluxos Realizados', value: flowCount, icon: 'file' },
-          { label: 'Formatos Vinculados', value: relatedFormatos.length, icon: 'grid-3x3' },
-          { label: 'Linhas', value: getLines(machine).length, icon: 'settings' },
-        ].map((s) => (
-          <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0">
-                <Icon name={s.icon} size={20} />
-              </div>
-              <div>
-                <div className="text-[22px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
-                <div className="text-[11px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Details */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-5 space-y-5">
