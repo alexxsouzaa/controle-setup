@@ -175,7 +175,7 @@ body {
   .badge-success { background: var(--success-muted); color: var(--success); }
   .badge-warning { background: var(--warning-muted); color: var(--warning); }
   .badge-danger { background: var(--danger-muted); color: var(--danger); }
-  .badge-secondary { background: var(--accent-muted); color: var(--accent); }
+  .badge-secondary { background: var(--accent-muted); color: var(--fg-secondary); }
   .font-nums { font-variant-numeric: tabular-nums; }
 }
 
