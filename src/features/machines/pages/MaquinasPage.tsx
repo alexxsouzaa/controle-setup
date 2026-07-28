@@ -6,9 +6,8 @@ import { Button } from '../../../components/Button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
-import { useMachines, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
+import { useMachines, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { Machine, Config } from '../../../types';
-import { MachinesDataTable } from '../components/MachinesDataTable';
 
 interface StatCard {
   label: string;
@@ -16,6 +15,8 @@ interface StatCard {
   icon: string;
   variant: string;
 }
+
+const getLines = (m: Machine) => m.lines || (m.line ? [m.line] : []);
 
 export function MaquinasPage() {
   const navigate = useNavigate();
@@ -27,7 +28,9 @@ export function MaquinasPage() {
   const [search, setSearch] = useState<string>('');
   const [uoFilter, setUoFilter] = useState<string>('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
+  const perPage = 10;
 
   const allUos = useMemo(() => {
     const uos = new Set<string>();
@@ -40,16 +43,18 @@ export function MaquinasPage() {
     (!search || m.name.toLowerCase().includes(search.toLowerCase()) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(search.toLowerCase()))) &&
     (!uoFilter || m.uo === uoFilter)
   );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
   const toggleSelect = (id: string) => { if (!selectionMode) setSelectionMode(true); setSelected(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; }); };
   const toggleSelectAll = () => {
     if (!selectionMode && !allSelected) setSelectionMode(true);
-    if (allSelected) setSelected(new Set());
-    else setSelected(new Set(filtered.map((s: Machine) => s.id)));
+    if (paged.every((s: Machine) => selected.has(s.id))) setSelected(new Set([...selected].filter(id => !paged.some((s: Machine) => s.id === id))));
+    else setSelected(new Set([...selected, ...paged.map((s: Machine) => s.id)]));
   };
   const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
   const selectedCount = selected.size;
-  const allSelected = filtered.length > 0 && filtered.every((s: Machine) => selected.has(s.id));
+  const allSelected = paged.length > 0 && paged.every((s: Machine) => selected.has(s.id));
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
@@ -91,7 +96,7 @@ export function MaquinasPage() {
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-xs">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-          <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); clearSelection(); }} aria-label="Buscar máquinas" />
+          <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
         </div>
 
         <div className="flex items-center gap-2 flex-1 flex-wrap">
@@ -105,7 +110,7 @@ export function MaquinasPage() {
             <DropdownMenuContent className="w-48">
               <DropdownMenuGroup>
                 {UO_FILTERS.map(f => (
-                  <DropdownMenuItem key={f.id} onClick={() => { setUoFilter(f.id); clearSelection(); }}>
+                  <DropdownMenuItem key={f.id} onClick={() => { setUoFilter(f.id); setPage(1); clearSelection(); }}>
                     {f.label}
                   </DropdownMenuItem>
                 ))}
@@ -134,14 +139,83 @@ export function MaquinasPage() {
         </div>
       )}
 
-      <MachinesDataTable
-        machines={filtered}
-        selectionMode={selectionMode}
-        selected={selected}
-        onToggleSelect={toggleSelect}
-        onToggleSelectAll={toggleSelectAll}
-        allSelected={allSelected}
-      />
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="box" size={24} /></div>
+          <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{machines.length === 0 ? 'Nenhuma máquina cadastrada' : 'Nenhuma máquina encontrada'}</p>
+          <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{machines.length === 0 ? 'Cadastre a primeira máquina para começar.' : 'Tente ajustar o filtro ou busca.'}</p>
+          {machines.length === 0 && <Button variant="primary" size="sm" onClick={() => navigate('/maquinas/new')}><Icon name="plus" size={14} />Nova Máquina</Button>}
+        </div>
+      ) : (
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] border-b border-[var(--border)]">
+                {selectionMode && (
+                  <th className="w-10 px-3.5 py-2.5 text-center">
+                    <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[var(--fg)] cursor-pointer" />
+                  </th>
+                )}
+                <th className="px-3.5 py-2.5 text-left">Máquina</th>
+                <th className="px-3.5 py-2.5 text-left">UO</th>
+                <th className="px-3.5 py-2.5 text-left">Criado em</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length ? paged.map((m: Machine) => (
+                <tr key={m.id}
+                  className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] cursor-pointer"
+                  onClick={() => selectionMode && toggleSelect(m.id)}
+                  onDoubleClick={() => { if (!selectionMode) navigate('/maquinas/' + m.id); }}>
+                  {selectionMode && (
+                    <td className="px-3.5 py-2.5 text-center">
+                      <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} className="accent-[var(--fg)] cursor-pointer" />
+                    </td>
+                  )}
+                  <td className="px-3.5 py-2.5">
+                    <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{m.name}</div>
+                    <div className="text-[12px] font-mono text-[var(--fg-muted)]">{getLines(m).slice(0, 3).join(' · ')}{getLines(m).length > 3 ? ` · +${getLines(m).length - 3}` : ''}</div>
+                  </td>
+                  <td className="px-3.5 py-2.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
+                  </td>
+                  <td className="px-3.5 py-2.5 text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={selectionMode ? 4 : 3} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">Nenhum resultado.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
+              <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                  const pg = start + i;
+                  if (pg > totalPages) return null;
+                  return (
+                    <button key={pg} type="button" onClick={() => setPage(pg)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
+                        pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
+                      }`}>{pg}</button>
+                  );
+                })}
+                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
