@@ -83,26 +83,6 @@ export function MachinesDataTable({
       cell: ({ row }) => <span className="text-[12px] font-mono text-muted-foreground">{row.original.createdAt}</span>,
       sortingFn: 'text',
     },
-    {
-      header: 'Criado por',
-      accessorKey: 'createdBy',
-      cell: ({ row }) => <span className="text-[12px] text-muted-foreground">{row.original.createdBy || '—'}</span>,
-    },
-    {
-      header: 'Status',
-      id: 'status',
-      cell: ({ row }) => {
-        const updated = row.original.updatedAt;
-        if (!updated) {
-          return <span className="text-[12px] text-muted-foreground">—</span>;
-        }
-        const daysSinceUpdate = Math.floor((Date.now() - new Date(updated).getTime()) / 86400000);
-        if (daysSinceUpdate <= 30) return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-green-600/10 text-green-600">Ativo</span>;
-        if (daysSinceUpdate <= 90) return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-600/10 text-amber-600">Inativo</span>;
-        return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-red-600/10 text-red-600">Parado</span>;
-      },
-      sortingFn: 'text',
-    },
   ], [selectionMode, selected, allSelected, onToggleSelectAll, onToggleSelect, navigate]);
 
   const table = useReactTable({
