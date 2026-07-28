@@ -94,6 +94,12 @@ export function MachineDetailsPage() {
                   <span className="text-[11px] text-[var(--fg-muted)]">·</span>
                   <span className="text-[11px] text-[var(--fg-muted)]">{machine.createdAt}</span>
                 </div>
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mr-0.5">Linhas</span>
+                  {getLines(machine).map((l) => <Badge key={l}>{l}</Badge>)}
+                  {getLines(machine).length === 0 && <span className="text-[12px] text-[var(--fg-muted)]">—</span>}
+                </div>
+                {machine.notes && <div className="mt-2"><span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Observações</span><p className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{machine.notes}</p></div>}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Button variant="primary" size="sm" onClick={() => navigate('/maquinas/' + id + '/edit')}>
@@ -127,40 +133,15 @@ export function MachineDetailsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Details */}
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-5 space-y-5">
-          <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2">
-            <Icon name="settings" size={16} />Informações
+        {/* Ferramentais */}
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-5">
+          <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2 mb-3">
+            <Icon name="settings" size={16} />Ferramentais
           </h2>
-
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-1">UO</div>
-            <div className="text-[13px] font-medium text-[var(--fg)]">{machine.uo || '—'}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {(machine.toolingCategories || []).map((c) => <Badge key={c}>{c}</Badge>)}
+            {(!machine.toolingCategories || machine.toolingCategories.length === 0) && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum ferramental configurado.</span>}
           </div>
-
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-2">Linhas</div>
-            <div className="flex flex-wrap gap-1.5">
-              {getLines(machine).map((l) => <Badge key={l}>{l}</Badge>)}
-              {getLines(machine).length === 0 && <span className="text-[12px] text-[var(--fg-muted)]">—</span>}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-2">Ferramentais</div>
-            <div className="flex flex-wrap gap-1.5">
-              {(machine.toolingCategories || []).map((c) => <Badge key={c}>{c}</Badge>)}
-              {(!machine.toolingCategories || machine.toolingCategories.length === 0) && <span className="text-[12px] text-[var(--fg-muted)]">Nenhum</span>}
-            </div>
-          </div>
-
-          {machine.notes && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] mb-1">Observações</div>
-              <p className="text-[13px] text-[var(--fg)]">{machine.notes}</p>
-            </div>
-          )}
-
         </div>
 
         {/* Related Flows */}
