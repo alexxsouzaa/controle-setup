@@ -65,7 +65,7 @@ export function MachinesDataTable({
       accessorKey: 'name',
       cell: ({ row }) => (
         <button type="button" onClick={() => navigate('/maquinas/' + row.original.id)} className="text-left w-full">
-          <div className="font-medium truncate">{row.original.name}</div>
+          <div className="font-medium truncate max-w-[360px]">{row.original.name}</div>
           <div className="text-[12px] font-mono text-muted-foreground">
             {getLines(row.original).slice(0, 3).join(' · ')}{getLines(row.original).length > 3 ? ` · +${getLines(row.original).length - 3}` : ''}
           </div>
@@ -111,7 +111,7 @@ export function MachinesDataTable({
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map(header => (
-                  <TableHead key={header.id} className="h-11">
+                  <TableHead key={header.id} style={{ width: `${header.getSize()}px` }} className="h-11">
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <div
                         className={cn(
