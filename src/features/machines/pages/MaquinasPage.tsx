@@ -64,30 +64,6 @@ export function MaquinasPage() {
 
   return (
     <div className="p-6 pb-16">
-      <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
-        {([
-          { label: 'Total', value: machines.length, icon: 'box', variant: 'total' },
-          { label: 'Com Foto', value: machines.filter((m: Machine) => m.image).length, icon: 'upload', variant: 'updated' },
-          { label: 'Com Ferramentais', value: machines.filter((m: Machine) => (m.toolingCategories?.length ?? 0) > 0).length, icon: 'wrench', variant: 'outdated' },
-          { label: 'UOs', value: allUos.length, icon: 'grid-3x3', variant: 'failed' },
-        ] as StatCard[]).map(s => (
-          <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-[6px] flex items-center justify-center shrink-0 ${
-              s.variant === 'total' ? 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]' :
-              s.variant === 'updated' ? 'bg-[var(--success-muted)] text-[var(--success)]' :
-              s.variant === 'outdated' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' :
-              'bg-[var(--danger-muted)] text-[var(--danger)]'
-            }`}>
-              <Icon name={s.icon} size={20} />
-            </div>
-            <div>
-              <div className="text-[24px] font-bold font-mono tracking-[-0.02em] text-[var(--fg)] leading-none">{s.value}</div>
-              <div className="text-[12px] text-[var(--fg-secondary)] mt-0.5">{s.label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-xs">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
