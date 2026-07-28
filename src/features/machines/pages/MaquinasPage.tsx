@@ -159,6 +159,8 @@ export function MaquinasPage() {
                 <th className="px-3.5 py-2.5 text-left">Máquina</th>
                 <th className="px-3.5 py-2.5 text-left">UO</th>
                 <th className="px-3.5 py-2.5 text-left">Criado em</th>
+                <th className="px-3.5 py-2.5 text-left">Criado por</th>
+                <th className="px-3.5 py-2.5 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -180,10 +182,20 @@ export function MaquinasPage() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
                   </td>
                   <td className="px-3.5 py-2.5 text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
+                  <td className="px-3.5 py-2.5 text-[12px] text-[var(--fg-muted)]">{m.createdBy || '—'}</td>
+                  <td className="px-3.5 py-2.5">
+                    {(() => {
+                      if (!m.updatedAt) return <span className="text-[12px] text-[var(--fg-muted)]">—</span>;
+                      const days = Math.floor((Date.now() - new Date(m.updatedAt).getTime()) / 86400000);
+                      if (days <= 30) return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--success-muted)] text-[var(--success)]">Ativo</span>;
+                      if (days <= 90) return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--warning-muted)] text-[var(--warning)]">Inativo</span>;
+                      return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--danger-muted)] text-[var(--danger)]">Parado</span>;
+                    })()}
+                  </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={selectionMode ? 4 : 3} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">Nenhum resultado.</td>
+                  <td colSpan={selectionMode ? 6 : 5} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">Nenhum resultado.</td>
                 </tr>
               )}
             </tbody>
