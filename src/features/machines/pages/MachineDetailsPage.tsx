@@ -136,7 +136,7 @@ export function MachineDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ferramentais */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-5">
-          <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2 mb-3">
+          <h2 className="text-[13px] font-semibold text-[var(--fg)] flex items-center gap-2 mb-6">
             <Icon name="settings" size={16} />Ferramentais
           </h2>
           <div className="space-y-0">
