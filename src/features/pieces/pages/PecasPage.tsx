@@ -16,6 +16,10 @@ const MAX_IMAGE_SIZE = 500 * 1024;
 interface PieceForm {
   name: string;
   specification: string;
+  category: string;
+  sealingType: string;
+  diameterMin: string;
+  diameterMax: string;
   compatibleMachineIds: string[];
   image: string;
   createdBy: string;
@@ -30,6 +34,24 @@ function readFileAsDataURL(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
+const CATEGORY_STRATEGIES: Record<string, string> = {
+  'Faca': 'sealing',
+  'Mordente': 'sealing',
+  'Régua do Mordente': 'sealing',
+  'Batedor do Mordente': 'sealing',
+  'Copos': 'diameter',
+  'Ponteira do Empurrador': 'diameter',
+  'Ponteira do Centralizador': 'diameter',
+  'Bico de Envase': 'diameter',
+  'Ponteira': 'diameter',
+  'Berço': 'diameter',
+  'Estação de Limpeza': 'diameter',
+  'Bico de Ar Quente': 'combined',
+  'Camisa do Bico de Ar Quente': 'combined',
+  'Ponteira do Bico de Ar Quente': 'combined',
+  'Suporte do Camisa do Bico de Ar Quente': 'combined',
+};
 
 function guessCategory(name: string): string {
   const lower = (name || '').toLowerCase();
@@ -67,7 +89,7 @@ export function PecasPage() {
   const filteredMachines = machineSearch ? machines.filter((m: Machine) => m.name.toLowerCase().includes(machineSearch.toLowerCase())) : machines;
 
   const resetForm = () => {
-    setForm({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
+    setForm({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
     setEditingId(null); setImageError(''); setMachineSearch('');
   };
 
@@ -91,9 +113,12 @@ export function PecasPage() {
     if (!form.name) { toast('Informe o nome da peça.', 'warning'); return; }
     if (!form.specification) { toast('Informe a especificação da peça.', 'warning'); return; }
     if (form.compatibleMachineIds.length === 0) { toast('Selecione pelo menos uma máquina compatível.', 'warning'); return; }
-    const category = guessCategory(form.name);
-    if (editingId) { updatePiece({ id: editingId, updates: { ...form, category } }); }
-    else { addPiece({ ...form, category }); }
+    const category = form.category || guessCategory(form.name);
+    const sealingType = form.sealingType || undefined;
+    const diameterMin = form.diameterMin ? Number(form.diameterMin) : undefined;
+    const diameterMax = form.diameterMax ? Number(form.diameterMax) : undefined;
+    if (editingId) { updatePiece({ id: editingId, updates: { ...form, category, sealingType, diameterMin, diameterMax } }); }
+    else { addPiece({ ...form, category, sealingType, diameterMin, diameterMax }); }
     logAction({ type: editingId ? 'update' : 'create', entity: 'Peça', detail: editingId ? `${form.name} atualizada` : `${form.name} cadastrada` });
     toast(editingId ? 'Peça atualizada com sucesso!' : 'Peça cadastrada com sucesso!');
     resetForm();
@@ -103,6 +128,9 @@ export function PecasPage() {
   const startEdit = (p: Piece) => {
     setForm({
       name: p.name || '', specification: p.specification || '',
+      category: p.category || '', sealingType: p.sealingType || '',
+      diameterMin: p.diameterMin != null ? String(p.diameterMin) : '',
+      diameterMax: p.diameterMax != null ? String(p.diameterMax) : '',
       compatibleMachineIds: p.compatibleMachineIds || [], image: p.image || '',
       createdBy: p.createdBy || currentUser, createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
     });
@@ -301,6 +329,41 @@ export function PecasPage() {
                 <Input placeholder="Ex: 250 mm" value={form.specification} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, specification: e.target.value })} />
               </div>
             </div>
+            <div className="mt-4">
+              <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Categoria</label>
+              <select
+                value={form.category}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, category: e.target.value })}
+                className="shad-select w-full"
+              >
+                <option value="">Auto-detectar pelo nome</option>
+                {ALL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
+            {form.category && CATEGORY_STRATEGIES[form.category] === 'sealing' && (
+              <div className="mt-4">
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Tipo de Selagem</label>
+                <Input placeholder="Ex: padrão, serrilhada, lisa" value={form.sealingType} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sealingType: e.target.value })} />
+              </div>
+            )}
+            {form.category && (CATEGORY_STRATEGIES[form.category] === 'diameter' || CATEGORY_STRATEGIES[form.category] === 'combined') && (
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Diâmetro Mínimo (mm)</label>
+                  <Input type="number" min="0" placeholder="Ex: 30" value={form.diameterMin} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, diameterMin: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Diâmetro Máximo (mm)</label>
+                  <Input type="number" min="0" placeholder="Ex: 50" value={form.diameterMax} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, diameterMax: e.target.value })} />
+                </div>
+              </div>
+            )}
+            {form.category && CATEGORY_STRATEGIES[form.category] === 'combined' && (
+              <div className="mt-4">
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Tipo de Selagem</label>
+                <Input placeholder="Ex: padrão, reforçado" value={form.sealingType} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sealingType: e.target.value })} />
+              </div>
+            )}
           </Card>
           <Card>
             <div className="flex items-center gap-2 mb-4">

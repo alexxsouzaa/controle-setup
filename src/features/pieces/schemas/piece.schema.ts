@@ -13,4 +13,7 @@ export const pieceSchema = z.object({
   unit: z.string().min(1, 'Unidade é obrigatória'),
   image: z.string().optional(),
   imageUrl: z.string().optional(),
+  sealingType: z.string().optional(),
+  diameterMin: z.number().min(0).optional(),
+  diameterMax: z.number().min(0).optional(),
 });
