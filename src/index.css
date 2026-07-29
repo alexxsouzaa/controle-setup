@@ -148,6 +148,11 @@ body {
   height: 100vh;
 }
 
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; } }
 
 @keyframes spin { to { transform: rotate(360deg); } }
