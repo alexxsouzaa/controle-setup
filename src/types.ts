@@ -52,6 +52,9 @@ export interface Piece {
   imageUrl?: string;
   createdBy?: string;
   createdAt?: string;
+  sealingType?: string;
+  diameterMin?: number;
+  diameterMax?: number;
 }
 
 export interface FlowPart {
