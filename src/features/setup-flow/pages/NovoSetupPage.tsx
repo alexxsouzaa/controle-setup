@@ -8,21 +8,20 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { ImagePreview } from '../../../components/ImagePreview';
-import { suggestFormatos, suggestPrimaryParts, suggestAlternativeParts } from '../../compatibility';
-import { useMachines, useProducts, usePieces, useFlows, useFormatos, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../../../queries';
+import { resolveSetup } from '../../compatibility';
+import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
-import { Machine, Product, Piece, Flow, Formato, FlowPart } from '../../../types';
+import { Machine, Product, Piece, Flow, FlowPart } from '../../../types';
 
 const STEPS = [
   { key: 'context', label: 'Contexto', num: 1 },
   { key: 'product', label: 'Produto', num: 2 },
-  { key: 'format', label: 'Formato', num: 3 },
-  { key: 'setup', label: 'Setup', num: 4 },
-  { key: 'review', label: 'Revisão', num: 5 },
-  { key: 'done', label: 'Concluído', num: 6 },
+  { key: 'config', label: 'Configuração', num: 3 },
+  { key: 'review', label: 'Revisão', num: 4 },
+  { key: 'done', label: 'Concluído', num: 5 },
 ];
 
-const COMPAT_COLORS: Record<string, string> = { Alta: 'success', Média: 'warning', Baixa: 'info', Ideal: 'success', Condicional: 'warning' };
+const SEALING_OPTIONS = ['Selo Plano', 'Selo Triangular', 'Selo Redondo', 'Selo Rasgo', 'Selo Válvula'];
 
 interface NewProductForm {
   code: string;
@@ -69,7 +68,6 @@ export function NovoSetupPage() {
   const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();
   const { data: flows = [] } = useFlows();
-  const { data: formatos = [] } = useFormatos();
   const { mutate: addProduct } = useAddProduct();
   const { mutate: addFlow } = useAddFlow();
   const { mutate: updateFlow } = useUpdateFlow();
@@ -92,8 +90,8 @@ export function NovoSetupPage() {
   const [newProduct, setNewProduct] = useState<NewProductForm>({ code: '', name: '', vol: '', unit: 'ml', category: '' });
   const [codeExists, setCodeExists] = useState<boolean>(false);
 
-  const [selectedFormato, setSelectedFormato] = useState<Formato | null>(null);
-  const [showFormatList, setShowFormatList] = useState<boolean>(false);
+  const [sealingType, setSealingType] = useState<string>('');
+  const [tubeDiameter, setTubeDiameter] = useState<string>('');
 
   const [partsWithAlternatives, setPartsWithAlternatives] = useState<PartWithAlt[]>([]);
   const [partSelections, setPartSelections] = useState<Record<string, PartSelection>>({});
@@ -119,10 +117,8 @@ export function NovoSetupPage() {
       else if (flow.code && flow.product) {
         setNewProduct({ code: flow.code, name: flow.product, vol: String(parseInt(flow.vol) || ''), unit: (flow.vol || '').includes('g') ? 'g' : 'ml', category: '' });
       }
-      if (flow.formatId) {
-        const fmt = formatos.find((f: Formato) => f.id === flow.formatId);
-        if (fmt) setSelectedFormato(fmt);
-      }
+      if (flow.sealingType) setSealingType(flow.sealingType);
+      if (flow.tubeDiameter) setTubeDiameter(flow.tubeDiameter);
       const primaries = flow.parts?.primary || (flow.tooling || []).filter((t: Record<string, unknown>) => t.isPrimary) || [];
       const alternatives = flow.parts?.alternative || (flow.tooling || []).filter((t: Record<string, unknown>) => t.isAlternative) || [];
       const selections: Record<string, PartSelection> = {};
@@ -150,16 +146,11 @@ export function NovoSetupPage() {
     [selectedProduct, newProduct]
   );
 
-  const suggestedFormats = useMemo(() => {
-    if (!activeProduct || !selectedMachine) return [];
-    return suggestFormatos(selectedMachine, activeProduct, formatos);
-  }, [activeProduct, selectedMachine, formatos]);
-
   const productFiltered = products.filter((p: Product) =>
     productSearch && (p.name.toLowerCase().includes(productSearch) || p.code.toLowerCase().includes(productSearch))
   ).slice(0, 10);
 
-  const goToStep = (s: number) => { if (s >= 1 && s <= 6) setStep(s); };
+  const goToStep = (s: number) => { if (s >= 1 && s <= 5) setStep(s); };
 
   const handleSelectLine = (line: string) => { setSelectedLine(line); };
 
@@ -201,35 +192,67 @@ export function NovoSetupPage() {
     }
   };
 
-  const handleConfirmFormat = (fmt: Formato | { pieces: never[] }) => {
-    setSelectedFormato(fmt as Formato);
-    const primaries = suggestPrimaryParts(fmt as Formato, pieces);
-    const withAlts = suggestAlternativeParts(primaries, selectedMachine, pieces);
+  const setupResolution = useMemo(() => {
+    if (!selectedMachine || (!sealingType && !tubeDiameter)) return null;
+    return resolveSetup(
+      { sealingType, tubeDiameter: Number(tubeDiameter) || 0 },
+      selectedMachine,
+      pieces,
+    );
+  }, [selectedMachine, sealingType, tubeDiameter, pieces]);
+
+  const handleSuggestSetup = () => {
+    if (!setupResolution || setupResolution.parts.length === 0) return;
+    const withAlts: PartWithAlt[] = setupResolution.parts.map((sp) => {
+      const sameCategory = pieces.filter((p: Piece) => p.category === sp.piece.category && p.id !== sp.piece.id);
+      return {
+        pieceId: sp.piece.id,
+        pieceName: sp.piece.name,
+        pieceCode: sp.piece.code || '',
+        pieceCategory: sp.piece.category || sp.group,
+        isPrimary: true,
+        available: (sp.piece.stock || 0) > (sp.piece.min || 0),
+        image: sp.piece.image,
+        stock: sp.piece.stock,
+        min: sp.piece.min,
+        unit: sp.piece.unit,
+        compat: sp.piece.compat,
+        code: sp.piece.code,
+        name: sp.piece.name,
+        group: sp.group,
+        category: sp.piece.category,
+        alternatives: sameCategory.map((p: Piece) => ({
+          piece: p,
+          level: p.sealingType === sealingType ? 'exact' : p.diameterMin != null && Number(tubeDiameter) >= p.diameterMin && Number(tubeDiameter) <= (p.diameterMax || Infinity) ? 'range' : 'fallback',
+          requiresAdjustment: false,
+        })),
+      };
+    });
     setPartsWithAlternatives(withAlts);
     const defaults: Record<string, PartSelection> = {};
     withAlts.forEach((p: PartWithAlt) => {
       defaults[p.pieceCategory || p.group || ''] = {
         primary: p.pieceName,
         primaryId: p.pieceId,
-        alternative: p.alternatives && p.alternatives.length > 0 ? p.alternatives[0].piece.name : null,
-        alternativeId: p.alternatives && p.alternatives.length > 0 ? p.alternatives[0].piece.id : null,
+        alternative: null,
+        alternativeId: null,
       };
     });
     setPartSelections(defaults);
-    goToStep(4);
   };
+
+  useEffect(() => {
+    if (setupResolution && partsWithAlternatives.length === 0) {
+      handleSuggestSetup();
+    }
+  }, [setupResolution]);
 
   const handleSelectPrimary = (group: string, piece: Piece) => {
     setPartsWithAlternatives(prev => prev.map((p: PartWithAlt) => {
       if ((p.pieceCategory || p.group || '') === group) {
         const full = pieces.find((pp: Piece) => pp.id === piece.id) || piece;
-        const alts = suggestAlternativeParts([{
-          pieceId: piece.id,
-          pieceName: piece.name,
-          pieceCode: piece.code || '',
-          pieceCategory: p.pieceCategory || group,
-        }], selectedMachine, pieces);
-        return { ...full, pieceId: piece.id, pieceName: piece.name, pieceCode: piece.code || '', pieceCategory: group, isPrimary: true, available: (full.stock || 0) > (full.min || 0), alternatives: alts[0]?.alternatives || [] };
+        const sameCategory = pieces.filter((pp: Piece) => pp.category === (p.pieceCategory || group) && pp.id !== piece.id);
+        return { ...full, pieceId: piece.id, pieceName: piece.name, pieceCode: piece.code || '', pieceCategory: group, isPrimary: true, available: (full.stock || 0) > (full.min || 0), alternatives: sameCategory.map((pp: Piece) => ({ piece: pp, level: pp.sealingType === sealingType ? 'exact' : 'fallback', requiresAdjustment: false })) };
       }
       return p;
     }));
@@ -272,8 +295,8 @@ export function NovoSetupPage() {
       productId: activeProduct?.id || '',
       code: activeProduct?.code || '—',
       vol: activeProduct ? `${activeProduct.vol} ${activeProduct.unit || 'ml'}` : '—',
-      formatId: selectedFormato?.id || '',
-      formatoName: selectedFormato?.name || '',
+      sealingType,
+      tubeDiameter,
       parts: { primary: primaryList, alternative: alternativeList },
       tooling: [...primaryList, ...alternativeList] as unknown as Record<string, unknown>[],
       toolingCount: primaryList.length,
@@ -299,14 +322,14 @@ export function NovoSetupPage() {
       toast('Fluxo criado com sucesso!');
     }
     setCreatedFlowName(flowName);
-    goToStep(6);
+    goToStep(5);
   };
 
   const resetAll = () => {
     setSelectedMachineId(''); setSelectedLine(''); setSelectedProduct(null);
     setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' });
     setCodeExists(false); setProductSearch('');
-    setSelectedFormato(null); setShowFormatList(false);
+    setSealingType(''); setTubeDiameter('');
     setPartsWithAlternatives([]);
     setPartSelections({}); setCreatedFlowName('');
     setEditingFlowId(null); setMachineSearch('');
@@ -507,309 +530,242 @@ export function NovoSetupPage() {
         </Card>
       )}
 
-      {/* STEP 3: FORMATO */}
+      {/* STEP 3: CONFIGURAÇÃO */}
       {step === 3 && (
         <Card>
-          <h3 className="text-lg font-semibold mb-1">Formato recomendado</h3>
-          <p className="text-sm text-[var(--fg-secondary)] mb-4">Com base nas características do produto e na máquina selecionada, encontramos os formatos compatíveis.</p>
+          <h3 className="text-lg font-semibold mb-1">Configuração do setup</h3>
+          <p className="text-sm text-[var(--fg-secondary)] mb-4">Informe as características do produto para sugerir as peças automaticamente.</p>
 
-          {activeProduct && (
-            <div className="mb-4 p-3 bg-[var(--bg)] rounded-[6px] border border-[var(--border)] text-sm">
-              <span className="font-medium">{activeProduct.name}</span>
-              <span className="text-[var(--fg-secondary)]"> · {activeProduct.code} · {activeProduct.vol} {activeProduct.unit || 'ml'}</span>
-              <span className="text-[var(--fg-secondary)]"> · Máquina {selectedMachine?.name}</span>
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Tipo de selagem</label>
+              <Select value={sealingType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSealingType(e.target.value); setPartsWithAlternatives([]); setPartSelections({}); }}>
+                <option value="">Selecione...</option>
+                {SEALING_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Diâmetro do tubo (mm)</label>
+              <Input type="number" placeholder="Ex: 35" min="1" value={tubeDiameter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setTubeDiameter(e.target.value); setPartsWithAlternatives([]); setPartSelections({}); }} />
+            </div>
+          </div>
+
+          {setupResolution && setupResolution.warnings.length > 0 && (
+            <div className="mb-4 p-3 bg-[var(--warning-muted)] border border-[var(--warning)] rounded-[6px]">
+              <div className="flex items-start gap-2">
+                <Icon name="alert" size={16} className="mt-0.5 shrink-0" />
+                <div className="text-sm text-[var(--warning)]">
+                  {setupResolution.warnings.map((w, i) => <p key={i}>{w}</p>)}
+                </div>
+              </div>
             </div>
           )}
 
-          {suggestedFormats.length === 0 ? (
-            <div className="py-8 text-center">
+          {partsWithAlternatives.length > 0 && (
+            <>
+              <p className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider mb-3">Peças sugeridas</p>
+              <div className="space-y-3">
+                {partsWithAlternatives.map((part: PartWithAlt) => {
+                  const group = part.pieceCategory || part.group || '';
+                  const sel = partSelections[group] || { primary: null, primaryId: null, alternative: null, alternativeId: null };
+                  const primaryPiece = (sel.primary ? pieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary) || part : part) as PartWithAlt;
+                  const alt = part.alternatives || [];
+                  return (
+                    <div key={group} className="border border-[var(--border)] rounded-[6px] overflow-hidden">
+                      <div className="p-4 bg-[var(--bg)]">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold ${sel.primary ? 'bg-[var(--success)] text-white' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border border-[var(--border)]'}`}>
+                              {sel.primary ? '✓' : '!'}
+                            </div>
+                            <span className="text-sm font-semibold uppercase tracking-wide">{group}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-[var(--border)]">
+                          {primaryPiece.image ? (
+                            <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-10 h-10 rounded-[6px] object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image || null)} />
+                          ) : (
+                            <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={18} /></div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{sel.primary || part.pieceName || '—'}</span>
+                              <Badge variant={sel.primary ? 'success' : 'warning'}>{sel.primary ? 'Principal' : 'Pendente'}</Badge>
+                            </div>
+                            <div className="text-xs text-[var(--fg-secondary)]">
+                              {primaryPiece.pieceCode && <span className="font-mono">{primaryPiece.pieceCode}</span>}
+                              {primaryPiece.stock != null && <span> · Estoque: {primaryPiece.stock} {primaryPiece.unit || 'un'}</span>}
+                              {primaryPiece.compat && <span> · Compat: {primaryPiece.compat}</span>}
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'primary' })}>Alterar</Button>
+                        </div>
+
+                        {alt.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs text-[var(--fg-secondary)] mb-1.5 font-medium">Peça alternativa</p>
+                            {sel.alternative ? (
+                              <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)]">
+                                <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={18} /></div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{sel.alternative}</span>
+                                    <Badge>Alternativa</Badge>
+                                  </div>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}>Alterar</Button>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}
+                                className="w-full p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)] text-sm text-[var(--fg-secondary)] hover:border-[var(--accent)] transition-colors text-left">
+                                + Adicionar peça alternativa ({alt.length} disponíve{alt.length !== 1 ? 'is' : 'l'})
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {alt.length === 0 && primaryPiece.available === false && (
+                          <div className="mt-3 p-3 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-[6px]">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Icon name="alert" size={16} />
+                              <span className="text-sm font-medium text-[var(--danger)]">Peça principal indisponível</span>
+                            </div>
+                            <p className="text-xs text-[var(--fg-secondary)]">Nenhuma alternativa encontrada. Selecione manualmente ou revise os dados.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {!sealingType && !tubeDiameter && (
+            <div className="py-6 text-center border-t border-[var(--border)] pt-6">
+              <div className="w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3">
+                <Icon name="box" size={24} />
+              </div>
+              <p className="text-sm font-medium mb-1">Preencha as características</p>
+              <p className="text-xs text-[var(--fg-secondary)]">Informe o tipo de selagem e/ou diâmetro para que o motor de compatibilidade sugira as peças ideais.</p>
+            </div>
+          )}
+
+          {sealingType && !setupResolution?.parts?.length && partsWithAlternatives.length === 0 && (
+            <div className="py-6 text-center">
               <div className="w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3">
                 <Icon name="alert" size={24} />
               </div>
-              <p className="text-sm font-medium mb-1">Nenhum formato compatível encontrado</p>
-              <p className="text-xs text-[var(--fg-secondary)] mb-4">Não existem formatos cadastrados para este produto. Cadastre um formato ou selecione as peças manualmente.</p>
-              <div className="flex gap-2 justify-center">
-                <Button variant="secondary" size="sm" onClick={() => navigate('/formatos')}>Cadastrar formato</Button>
-                <Button variant="primary" size="sm" onClick={() => { setSelectedFormato(null); handleConfirmFormat({ pieces: [] } as unknown as Formato); }}>Continuar sem formato</Button>
-              </div>
-            </div>
-          ) : !showFormatList && suggestedFormats[0] ? (
-            <div className="space-y-4">
-              <div className="p-5 rounded-[6px] border-2 border-[var(--accent)] bg-[var(--accent-muted)]">
-                <div className="flex items-center gap-2 mb-2">
-                   <Badge variant={COMPAT_COLORS[suggestedFormats[0].level] as 'success' | 'warning' | 'danger' | 'info' | 'secondary'}>Recomendado</Badge>
-                  <Badge variant={COMPAT_COLORS[suggestedFormats[0].level] as 'success' | 'warning' | 'danger' | 'info' | 'secondary'}>{suggestedFormats[0].level}</Badge>
-                </div>
-                <div className="text-base font-semibold">{suggestedFormats[0].formato.name}</div>
-                <div className="text-sm text-[var(--fg-secondary)] mt-1">
-                  {((suggestedFormats[0].formato as unknown as Record<string, string>).tipo) && <span>{(suggestedFormats[0].formato as unknown as Record<string, string>).tipo} · </span>}
-                  {suggestedFormats[0].formato.pieces && <span>{suggestedFormats[0].formato.pieces.length} peça{suggestedFormats[0].formato.pieces.length !== 1 ? 's' : ''}</span>}
-                  {((suggestedFormats[0].formato as unknown as Record<string, number>).volMin) != null && <span> · {(suggestedFormats[0].formato as unknown as Record<string, string>).volMin as string}–{(suggestedFormats[0].formato as unknown as Record<string, string>).volMax as string} ml</span>}
-                </div>
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {(suggestedFormats[0].formato.pieces || []).slice(0, 5).map((p) => (
-                    <Badge key={p.pieceId as string}>{p.pieceName as string}</Badge>
-                  ))}
-                  {(suggestedFormats[0]!.formato.pieces || []).length > 5 && <Badge>+{suggestedFormats[0]!.formato.pieces!.length - 5}</Badge>}
-                </div>
-              </div>
-              {suggestedFormats.length > 1 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Outros formatos compatíveis</p>
-                  {suggestedFormats.slice(1).map(({ formato, level }) => (
-                    <div key={formato.id} className="p-3 rounded-[6px] border border-[var(--border)] bg-[var(--surface)]">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium">{formato.name}</div>
-                          <div className="text-xs text-[var(--fg-secondary)]">
-                            {((formato as unknown as Record<string, string>).tipo) && <span>{(formato as unknown as Record<string, string>).tipo} · </span>}
-                            {formato.pieces && <span>{formato.pieces.length} peça{formato.pieces.length !== 1 ? 's' : ''} · </span>}
-                            Compatibilidade: {level}
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => handleConfirmFormat(formato)}>Selecionar</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex gap-3">
-                <Button variant="primary" onClick={() => handleConfirmFormat(suggestedFormats[0].formato)}>Confirmar formato</Button>
-                <Button variant="ghost" onClick={() => setShowFormatList(true)}>Escolher outro formato</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {suggestedFormats.map(({ formato, level }) => (
-                <button key={formato.id} type="button" onClick={() => handleConfirmFormat(formato)}
-                  className={`w-full text-left p-4 rounded-[6px] border-2 transition-all ${selectedFormato?.id === formato.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold">{formato.name}</span>
-                        <Badge variant={COMPAT_COLORS[level] as 'success' | 'warning' | 'danger' | 'info' | 'secondary'}>Compatibilidade: {level}</Badge>
-                      </div>
-                      <div className="text-xs text-[var(--fg-secondary)]">
-                        {((formato as unknown as Record<string, string>).tipo) && <span>{(formato as unknown as Record<string, string>).tipo} · </span>}
-                        {formato.pieces && <span>{formato.pieces.length} peça{formato.pieces.length !== 1 ? 's' : ''}</span>}
-                        {((formato as unknown as Record<string, number>).volMin) != null && <span> · {(formato as unknown as Record<string, string>).volMin as string}–{(formato as unknown as Record<string, string>).volMax as string} ml</span>}
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {(formato.pieces || []).slice(0, 5).map((p) => <Badge key={p.pieceId as string}>{p.pieceName as string}</Badge>)}
-                      </div>
-                    </div>
-                    <Icon name="arrow-right" size={18} />
-                  </div>
-                </button>
-              ))}
-              <Button variant="ghost" onClick={() => handleConfirmFormat({ pieces: [] } as unknown as Formato)}>Continuar sem formato</Button>
+              <p className="text-sm font-medium mb-1">Nenhuma peça compatível encontrada</p>
+              <p className="text-xs text-[var(--fg-secondary)]">Não há peças cadastradas que correspondam às características informadas. Cadastre novas peças ou ajuste os critérios.</p>
             </div>
           )}
 
           <div className="flex justify-between mt-6">
             <Button variant="ghost" onClick={() => goToStep(2)}>← Produto</Button>
-            <div />
+            <Button variant="primary" onClick={() => goToStep(4)} disabled={!Object.values(partSelections).some(s => s.primary)}>Revisar →</Button>
           </div>
         </Card>
       )}
 
-      {/* STEP 4: SETUP (PEÇAS) */}
-      {step === 4 && (
-        <Card>
-          <h3 className="text-lg font-semibold mb-1">Configuração das peças</h3>
-          <p className="text-sm text-[var(--fg-secondary)] mb-4">
-            {selectedFormato ? `Peças sugeridas pelo formato "${selectedFormato.name}".` : 'Selecione manualmente as peças para cada componente.'}
-          </p>
-
-          {partsWithAlternatives.length === 0 && (
-            <div className="py-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3">
-                <Icon name="box" size={24} />
+      {modalGroup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }}>
+          <div className="absolute inset-0 bg-[var(--overlay)]" />
+          <div role="dialog" aria-modal="true" aria-label={`Selecionar peça para ${modalGroup.group}`} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-lg mx-4 p-6 z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold">{modalGroup.group}</h3>
+                <p className="text-xs text-[var(--fg-secondary)] mt-0.5">{modalGroup.type === 'primary' ? 'Selecionar peça principal' : 'Selecionar peça alternativa'}</p>
+                <div className="relative mt-2">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
+                  <input className="shad-input pl-8 py-1.5 text-xs" placeholder="Buscar peça..." value={pieceSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPieceSearch(e.target.value); setPiecePage(1); }} />
+                </div>
               </div>
-              <p className="text-sm font-medium mb-1">Nenhuma peça sugerida</p>
-              <p className="text-xs text-[var(--fg-secondary)] mb-4">Não foi possível sugerir peças automaticamente. Selecione manualmente.</p>
+              <button type="button" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0 ml-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
             </div>
-          )}
-
-          <div className="space-y-3">
-            {partsWithAlternatives.map((part: PartWithAlt) => {
-              const group = part.pieceCategory || part.group || '';
-              const sel = partSelections[group] || { primary: null, primaryId: null, alternative: null, alternativeId: null };
-              const primaryPiece = (sel.primary ? pieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary) || part : part) as PartWithAlt;
-              const alt = part.alternatives || [];
-              return (
-                <div key={group} className="border border-[var(--border)] rounded-[6px] overflow-hidden">
-                  <div className="p-4 bg-[var(--bg)]">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold ${sel.primary ? 'bg-[var(--success)] text-white' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border border-[var(--border)]'}`}>
-                          {sel.primary ? '✓' : '!'}
-                        </div>
-                        <span className="text-sm font-semibold uppercase tracking-wide">{group}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-[var(--border)]">
-                      {primaryPiece.image ? (
-                        <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-10 h-10 rounded-[6px] object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image || null)} />
-                      ) : (
-                        <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={18} /></div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{sel.primary || part.pieceName || '—'}</span>
-                          <Badge variant={sel.primary ? 'success' : 'warning'}>{sel.primary ? 'Principal' : 'Pendente'}</Badge>
-                        </div>
-                        <div className="text-xs text-[var(--fg-secondary)]">
-                          {primaryPiece.pieceCode && <span className="font-mono">{primaryPiece.pieceCode}</span>}
-                          {primaryPiece.stock != null && <span> · Estoque: {primaryPiece.stock} {primaryPiece.unit || 'un'}</span>}
-                          {primaryPiece.compat && <span> · Compat: {primaryPiece.compat}</span>}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'primary' })}>Alterar</Button>
-                    </div>
-
-                    {alt.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs text-[var(--fg-secondary)] mb-1.5 font-medium">Peça alternativa</p>
-                        {sel.alternative ? (
-                          <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)]">
-                            <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={18} /></div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{sel.alternative}</span>
-                                <Badge>Alternativa</Badge>
-                              </div>
-                            </div>
-                            <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}>Alterar</Button>
+            <div className="max-h-72 overflow-y-auto -mx-6 px-6" style={{ minHeight: 150 }}>
+              {modalGroup.type === 'alternative' && modalGroup.alternatives ? (
+                modalGroup.alternatives.length === 0 ? (
+                  <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma alternativa encontrada.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {modalGroup.alternatives.filter((a: { piece: Piece; level: string; requiresAdjustment?: boolean }) => !pieceSearch || a.piece.name.toLowerCase().includes(pieceSearch) || (a.piece.code || '').toLowerCase().includes(pieceSearch)).map((a: { piece: Piece; level: string; requiresAdjustment?: boolean }, i: number) => (
+                      <button key={i} type="button" onClick={() => handleSelectAlternative(modalGroup.group, a)}
+                        className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.alternativeId === a.piece.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                        <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{a.piece.name}</div>
+                          <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
+                            {a.piece.code && <span className="font-mono">{a.piece.code}</span>}
+                            <span>· Compat: {a.level}</span>
+                            {a.piece.stock != null && <span>· Est: {a.piece.stock}</span>}
+                            {a.requiresAdjustment && <span className="text-[var(--warning)]">· Requer ajuste</span>}
                           </div>
-                        ) : (
-                          <button type="button" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}
-                            className="w-full p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)] text-sm text-[var(--fg-secondary)] hover:border-[var(--accent)] transition-colors text-left">
-                            + Adicionar peça alternativa ({alt.length} disponíve{alt.length !== 1 ? 'is' : 'l'})
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {alt.length === 0 && primaryPiece.available === false && (
-                      <div className="mt-3 p-3 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-[6px]">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Icon name="alert" size={16} />
-                          <span className="text-sm font-medium text-[var(--danger)]">Peça principal indisponível</span>
                         </div>
-                        <p className="text-xs text-[var(--fg-secondary)]">Nenhuma alternativa encontrada. Selecione manualmente ou revise os dados.</p>
-                      </div>
-                    )}
+                        {partSelections[modalGroup.group]?.alternativeId === a.piece.id && <Badge variant="success">Selecionado</Badge>}
+                      </button>
+                    ))}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {modalGroup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }}>
-              <div className="absolute inset-0 bg-[var(--overlay)]" />
-              <div role="dialog" aria-modal="true" aria-label={`Selecionar peça para ${modalGroup.group}`} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-lg mx-4 p-6 z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold">{modalGroup.group}</h3>
-                    <p className="text-xs text-[var(--fg-secondary)] mt-0.5">{modalGroup.type === 'primary' ? 'Selecionar peça principal' : 'Selecionar peça alternativa'}</p>
-                    <div className="relative mt-2">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-                      <input className="shad-input pl-8 py-1.5 text-xs" placeholder="Buscar peça..." value={pieceSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPieceSearch(e.target.value); setPiecePage(1); }} />
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0 ml-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  </button>
-                </div>
-                <div className="max-h-72 overflow-y-auto -mx-6 px-6" style={{ minHeight: 150 }}>
-                  {modalGroup.type === 'alternative' && modalGroup.alternatives ? (
-                    modalGroup.alternatives.length === 0 ? (
-                      <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma alternativa encontrada.</div>
-                    ) : (
+                )
+              ) : (
+                (() => {
+                  const catPieces = piecesForCategory(modalGroup.group);
+                  const filtered = pieceSearch ? catPieces.filter((p: Piece) => p.name.toLowerCase().includes(pieceSearch) || p.code.toLowerCase().includes(pieceSearch)) : catPieces;
+                  const perPage = 8;
+                  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+                  const paged = filtered.slice((piecePage - 1) * perPage, piecePage * perPage);
+                  if (catPieces.length === 0) return <div className="flex items-center justify-center h-24 text-center"><p className="text-sm text-[var(--fg-muted)]">Nenhuma peça na categoria "{modalGroup.group}".</p></div>;
+                  if (filtered.length === 0) return <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma peça encontrada.</div>;
+                  return (
+                    <>
                       <div className="space-y-2">
-                        {modalGroup.alternatives.filter((a: { piece: Piece; level: string; requiresAdjustment?: boolean }) => !pieceSearch || a.piece.name.toLowerCase().includes(pieceSearch) || (a.piece.code || '').toLowerCase().includes(pieceSearch)).map((a: { piece: Piece; level: string; requiresAdjustment?: boolean }, i: number) => (
-                          <button key={i} type="button" onClick={() => handleSelectAlternative(modalGroup.group, a)}
-                            className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.alternativeId === a.piece.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                            <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
+                        {paged.map((p: Piece) => (
+                          <button key={p.id} type="button" onClick={() => handleSelectPrimary(modalGroup.group, p)}
+                            className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.primaryId === p.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+                            {p.image ? (
+                              <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setPreviewImage(p.image || null); }}>
+                                <img src={p.image} alt={p.name} className="w-9 h-9 rounded-[6px] object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
+                              </button>
+                            ) : (
+                              <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
+                            )}
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{a.piece.name}</div>
+                              <div className="text-sm font-medium truncate">{p.name}</div>
                               <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                                {a.piece.code && <span className="font-mono">{a.piece.code}</span>}
-                                <span>· Compat: {a.level}</span>
-                                {a.piece.stock != null && <span>· Est: {a.piece.stock}</span>}
-                                {a.requiresAdjustment && <span className="text-[var(--warning)]">· Requer ajuste</span>}
+                                <span className="font-mono">{p.code}</span>
+                                <span>· Est: {p.stock} {p.unit || 'un'}</span>
                               </div>
                             </div>
-                            {partSelections[modalGroup.group]?.alternativeId === a.piece.id && <Badge variant="success">Selecionado</Badge>}
+                            {partSelections[modalGroup.group]?.primaryId === p.id && <Icon name="check-circle" size={16} />}
                           </button>
                         ))}
                       </div>
-                    )
-                  ) : (
-                    (() => {
-                      const catPieces = piecesForCategory(modalGroup.group);
-                      const filtered = pieceSearch ? catPieces.filter((p: Piece) => p.name.toLowerCase().includes(pieceSearch) || p.code.toLowerCase().includes(pieceSearch)) : catPieces;
-                      const perPage = 8;
-                      const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-                      const paged = filtered.slice((piecePage - 1) * perPage, piecePage * perPage);
-                      if (catPieces.length === 0) return <div className="flex items-center justify-center h-24 text-center"><p className="text-sm text-[var(--fg-muted)]">Nenhuma peça na categoria "{modalGroup.group}".</p></div>;
-                      if (filtered.length === 0) return <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma peça encontrada.</div>;
-                      return (
-                        <>
-                          <div className="space-y-2">
-                            {paged.map((p: Piece) => (
-                              <button key={p.id} type="button" onClick={() => handleSelectPrimary(modalGroup.group, p)}
-                                className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.primaryId === p.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                                {p.image ? (
-                                  <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setPreviewImage(p.image || null); }}>
-                                    <img src={p.image} alt={p.name} className="w-9 h-9 rounded-[6px] object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
-                                  </button>
-                                ) : (
-                                  <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium truncate">{p.name}</div>
-                                  <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                                    <span className="font-mono">{p.code}</span>
-                                    <span>· Est: {p.stock} {p.unit || 'un'}</span>
-                                  </div>
-                                </div>
-                                {partSelections[modalGroup.group]?.primaryId === p.id && <Icon name="check-circle" size={16} />}
-                              </button>
-                            ))}
-                          </div>
-                          {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-1 mt-3">
-
-                              <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1} className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
-                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg: number) => (
-                                <button key={pg} onClick={() => setPiecePage(pg)} className={`w-7 h-7 rounded text-[11px] ${pg === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{pg}</button>
-                              ))}
-                              <button type="button" onClick={() => setPiecePage(p => Math.min(totalPages, p + 1))} disabled={piecePage === totalPages} className={`w-7 h-7 rounded text-[11px] ${piecePage === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>›</button>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()
-                  )}
-                </div>
-                <div className="mt-3 pt-3 border-t border-[var(--border)]"><Button variant="ghost" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="w-full">Fechar</Button></div>
-              </div>
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-1 mt-3">
+                          <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1} className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg: number) => (
+                            <button key={pg} onClick={() => setPiecePage(pg)} className={`w-7 h-7 rounded text-[11px] ${pg === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{pg}</button>
+                          ))}
+                          <button type="button" onClick={() => setPiecePage(p => Math.min(totalPages, p + 1))} disabled={piecePage === totalPages} className={`w-7 h-7 rounded text-[11px] ${piecePage === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>›</button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
+              )}
             </div>
-          )}
-
-          <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => goToStep(3)}>← Formato</Button>
-            <Button variant="primary" onClick={() => goToStep(5)}>Avançar →</Button>
+            <div className="mt-3 pt-3 border-t border-[var(--border)]"><Button variant="ghost" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="w-full">Fechar</Button></div>
           </div>
-        </Card>
+        </div>
       )}
 
-      {/* STEP 5: REVISÃO */}
-      {step === 5 && (
+
+
+      {/* STEP 4: REVISÃO */}
+      {step === 4 && (
         <Card>
           <h3 className="text-lg font-semibold mb-1">Revise o setup</h3>
           <p className="text-sm text-[var(--fg-secondary)] mb-4">Confira as informações antes de salvar o fluxo.</p>
@@ -840,17 +796,19 @@ export function NovoSetupPage() {
 
             <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Formato</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Características</span>
                 <button type="button" onClick={() => goToStep(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
               </div>
-              <div className="text-sm font-medium">{selectedFormato?.name || 'Nenhum formato selecionado'}</div>
-              {selectedFormato?.tipo && <div className="text-xs text-[var(--fg-secondary)] mt-0.5">Tipo: {selectedFormato.tipo}</div>}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><div className="text-xs text-[var(--fg-secondary)]">Tipo de selagem</div><div className="font-medium">{sealingType || '—'}</div></div>
+                <div><div className="text-xs text-[var(--fg-secondary)]">Diâmetro do tubo</div><div className="font-medium">{tubeDiameter ? `${tubeDiameter} mm` : '—'}</div></div>
+              </div>
             </div>
 
             <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças principais</span>
-                <button type="button" onClick={() => goToStep(4)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                <button type="button" onClick={() => goToStep(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
               </div>
               {Object.entries(partSelections).filter(([, s]) => s.primary).length === 0 ? (
                 <p className="text-sm text-[var(--fg-muted)]">Nenhuma peça configurada.</p>
@@ -871,7 +829,7 @@ export function NovoSetupPage() {
               <div className="p-4 bg-[var(--bg)] rounded-[6px] border border-[var(--border)]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças alternativas</span>
-                  <button type="button" onClick={() => goToStep(4)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                <button type="button" onClick={() => goToStep(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
                 </div>
                 <div className="space-y-1.5">
                   {Object.entries(partSelections).filter(([, s]) => s.alternative).map(([group, sel]) => (
@@ -897,14 +855,14 @@ export function NovoSetupPage() {
           </div>
 
           <div className="flex justify-between mt-6">
-            <Button variant="ghost" onClick={() => goToStep(4)}>← Setup</Button>
+            <Button variant="ghost" onClick={() => goToStep(3)}>← Configuração</Button>
             <Button variant="primary" onClick={handleSave}>Salvar fluxo</Button>
           </div>
         </Card>
       )}
 
-      {/* STEP 6: CONCLUÍDO */}
-      {step === 6 && (
+      {/* STEP 5: CONCLUÍDO */}
+      {step === 5 && (
         <div className="max-w-lg mx-auto">
           <Card>
             <div className="text-center py-8">
