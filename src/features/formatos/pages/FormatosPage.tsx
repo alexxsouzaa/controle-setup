@@ -438,10 +438,10 @@ export function FormatosPage() {
           {step === 2 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={16} /></div>
+                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={15} /></div>
                 <div>
-                  <h3 className="text-sm font-semibold">2. Selecione a máquina</h3>
-                  <p className="text-xs text-[var(--fg-secondary)]">Escolha a máquina e linha para este formato.</p>
+                  <h3 className="text-[14px] font-semibold text-[var(--fg)]">2. Selecione a máquina</h3>
+                  <p className="text-[11px] text-[var(--fg-secondary)]">Escolha a máquina e linha para este formato.</p>
                 </div>
               </div>
               <div className="mb-4">
@@ -449,9 +449,12 @@ export function FormatosPage() {
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
                   <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
                 </div>
-                {machineSearch && (() => {
-                  const filtered = machines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
-                  if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
+                {machineSearch ? (() => {
+                  const filtered = machines.filter((m: Machine) => {
+                    if (selectedUo && m.uo !== selectedUo) return false;
+                    return m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch));
+                  });
+                  if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada para esta UO.</p>;
                   return (
                     <div className="border border-[var(--border)] rounded-[6px] mt-2 max-h-60 overflow-y-auto">
                       {filtered.map((m: Machine) => (
@@ -466,7 +469,9 @@ export function FormatosPage() {
                       ))}
                     </div>
                   );
-                })()}
+                })() : selectedMachine && (
+                  <div className="mt-2" />
+                )}
               </div>
               {selectedMachine ? (
                 <div className="p-4 bg-[var(--accent-muted)] border border-[var(--fg-muted)] rounded-[6px] mb-4">
@@ -496,7 +501,7 @@ export function FormatosPage() {
               )}
               <div className="flex justify-between mt-6">
                 <Button variant="ghost" onClick={() => go(1)}>← Configuração</Button>
-                <Button variant="primary" disabled={!selectedMachineId || !selectedLine} onClick={handleMachineNext}>Avançar →</Button>
+                <Button variant="primary" size="sm" disabled={!selectedMachineId || !selectedLine} onClick={handleMachineNext}>Avançar →</Button>
               </div>
             </Card>
           )}
