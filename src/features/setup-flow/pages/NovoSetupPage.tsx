@@ -571,69 +571,69 @@ export function NovoSetupPage() {
                   const alt = part.alternatives || [];
                   return (
                     <div key={group} className="border border-[var(--border)] rounded-[6px] overflow-hidden">
-                      <div className="p-4 bg-[var(--bg)]">
-                        <div className="flex items-center justify-between mb-2">
+                      <div className="px-4 py-2.5 bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded flex items-center justify-center ${sel.primary ? 'bg-[var(--success)] text-white' : 'bg-[var(--surface)] border border-[var(--border)]'}`}>
-                              {sel.primary ? <Icon name="check-circle" size={14} /> : <Icon name="box" size={14} className="text-[var(--fg-muted)]" />}
-                            </div>
-                            <span className="text-sm font-semibold uppercase tracking-wide">{group}</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide">{group}</span>
+                            <Badge variant={sel.primary ? 'success' : 'warning'}>{sel.primary ? 'OK' : 'Pendente'}</Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-[var(--fg-muted)]">
+                            {alt.length > 0 && <span>{alt.length} alternativa{alt.length !== 1 ? 's' : ''}</span>}
                           </div>
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-[var(--border)]">
-                          {primaryPiece.image ? (
-                            <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-10 h-10 rounded-[6px] object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image || null)} />
-                          ) : (
-                            <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={18} /></div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">{sel.primary || part.pieceName || '—'}</span>
-                              <Badge variant={sel.primary ? 'success' : 'warning'}>{sel.primary ? 'Principal' : 'Pendente'}</Badge>
-                            </div>
-                            <div className="text-xs text-[var(--fg-secondary)]">
-                              {primaryPiece.pieceCode && <span className="font-mono">{primaryPiece.pieceCode}</span>}
-                              {primaryPiece.stock != null && <span> · Estoque: {primaryPiece.stock} {primaryPiece.unit || 'un'}</span>}
-                              {primaryPiece.compat && <span> · Compat: {primaryPiece.compat}</span>}
+                      <div className="p-3 bg-[var(--surface)]">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {primaryPiece.image ? (
+                              <img src={primaryPiece.image} alt={primaryPiece.pieceName || primaryPiece.name} className="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(primaryPiece.image || null)} />
+                            ) : (
+                              <div className="w-9 h-9 rounded-[4px] bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">{sel.primary || part.pieceName || 'Nenhuma peça selecionada'}</div>
+                              <div className="text-[11px] text-[var(--fg-secondary)]">
+                                {primaryPiece.pieceCode && <span className="font-mono">{primaryPiece.pieceCode}</span>}
+                                {primaryPiece.stock != null && <span> · Est: {primaryPiece.stock}</span>}
+                              </div>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'primary' })}>Alterar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'primary' })}>{sel.primary ? 'Trocar' : 'Selecionar'}</Button>
                         </div>
 
                         {alt.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs text-[var(--fg-secondary)] mb-1.5 font-medium">Peça alternativa</p>
-                            {sel.alternative ? (
-                              <div className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)]">
-                                <div className="w-10 h-10 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={18} /></div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">{sel.alternative}</span>
-                                    <Badge>Alternativa</Badge>
+                          <div className="mt-2 pt-2 border-t border-[var(--border-subtle)]">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-9 h-9 rounded-[4px] bg-[var(--bg)] border border-dashed border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
+                                <div className="min-w-0 flex-1">
+                                  {sel.alternative ? (
+                                    <div className="text-sm font-medium truncate">{sel.alternative}</div>
+                                  ) : (
+                                    <div className="text-sm text-[var(--fg-muted)]">Nenhuma alternativa selecionada</div>
+                                  )}
+                                  <div className="text-[11px] text-[var(--fg-secondary)]">
+                                    {sel.alternative ? 'Peça alternativa' : `${alt.length} disponíve${alt.length !== 1 ? 'is' : 'l'}`}
                                   </div>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}>Alterar</Button>
                               </div>
-                            ) : (
-                              <button type="button" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}
-                                className="w-full p-3 bg-[var(--surface)] rounded-[6px] border border-dashed border-[var(--border)] text-sm text-[var(--fg-secondary)] hover:border-[var(--accent)] transition-colors text-left">
-                                + Adicionar peça alternativa ({alt.length} disponíve{alt.length !== 1 ? 'is' : 'l'})
-                              </button>
-                            )}
-                          </div>
-                        )}
-
-                        {alt.length === 0 && primaryPiece.available === false && (
-                          <div className="mt-3 p-3 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-[6px]">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Icon name="alert" size={16} />
-                              <span className="text-sm font-medium text-[var(--danger)]">Peça principal indisponível</span>
+                              <Button variant="ghost" size="sm" onClick={() => setModalGroup({ group, type: 'alternative', alternatives: alt })}>
+                                {sel.alternative ? 'Trocar' : 'Adicionar'}
+                              </Button>
                             </div>
-                            <p className="text-xs text-[var(--fg-secondary)]">Nenhuma alternativa encontrada. Selecione manualmente ou revise os dados.</p>
                           </div>
                         )}
                       </div>
+
+                      {alt.length === 0 && primaryPiece.available === false && (
+                        <div className="px-3 pb-3">
+                          <div className="p-2.5 bg-[var(--danger-muted)] border border-[var(--danger)] rounded-[4px] flex items-center gap-2">
+                            <Icon name="alert" size={14} className="text-[var(--danger)] shrink-0" />
+                            <span className="text-[11px] text-[var(--danger)]">Peça indisponível. Selecione manualmente.</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
