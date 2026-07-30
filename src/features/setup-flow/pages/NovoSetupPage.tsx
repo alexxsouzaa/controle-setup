@@ -8,10 +8,10 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { ImagePreview } from '../../../components/ImagePreview';
-import { resolveSetup } from '../../compatibility';
-import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction } from '../../../queries';
+import { resolveSetup, getFormatTypeOptions } from '../../compatibility';
+import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
-import { Machine, Product, Piece, Flow, FlowPart } from '../../../types';
+import { Machine, Product, Piece, Flow, FlowPart, Config } from '../../../types';
 
 const STEPS = [
   { key: 'context', label: 'Contexto', num: 1 },
@@ -20,8 +20,6 @@ const STEPS = [
   { key: 'review', label: 'Revisão', num: 4 },
   { key: 'done', label: 'Concluído', num: 5 },
 ];
-
-const SEALING_OPTIONS = ['Selo Plano', 'Selo Triangular', 'Selo Redondo', 'Selo Rasgo', 'Selo Válvula'];
 
 interface NewProductForm {
   code: string;
@@ -68,6 +66,7 @@ export function NovoSetupPage() {
   const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();
   const { data: flows = [] } = useFlows();
+  const { data: config = {} as Config } = useConfig();
   const { mutate: addProduct } = useAddProduct();
   const { mutate: addFlow } = useAddFlow();
   const { mutate: updateFlow } = useUpdateFlow();
@@ -541,7 +540,7 @@ export function NovoSetupPage() {
               <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Tipo de selagem</label>
               <Select value={sealingType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSealingType(e.target.value); setPartsWithAlternatives([]); setPartSelections({}); }}>
                 <option value="">Selecione...</option>
-                {SEALING_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                {getFormatTypeOptions(selectedMachine?.uo, config).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
               </Select>
             </div>
             <div>
