@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useContext, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContext } from '../../../contexts/ToastContext';
@@ -9,6 +10,7 @@ import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { ImagePreview } from '../../../components/ImagePreview';
 import { PieceSelector } from '../../../components/shadcn-studio/command/PieceSelector';
+import { Separator } from '../../../components/ui/separator';
 import { resolveSetup, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
@@ -560,13 +562,15 @@ export function NovoSetupPage() {
           {partsWithAlternatives.length > 0 && (
             <>
               <p className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider mb-3">Peças sugeridas</p>
-              <div className="space-y-3">
-                {partsWithAlternatives.map((part: PartWithAlt) => {
+              <div className="flex flex-col">
+                {partsWithAlternatives.map((part: PartWithAlt, idx) => {
                   const group = part.pieceCategory || part.group || '';
                   const sel = partSelections[group] || { primary: null, primaryId: null, alternative: null, alternativeId: null };
                   const primaryPiece = (sel.primary ? pieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary) || part : part) as PartWithAlt;
                   const alt = part.alternatives || [];
                   return (
+                    <React.Fragment key={group}>
+                      {idx > 0 && <Separator className="my-1" />}
                     <div key={group} className="border border-[var(--border)] rounded-[6px] overflow-hidden">
                       <div className="px-4 py-2.5 bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                         <div className="flex items-center justify-between">
@@ -632,6 +636,7 @@ export function NovoSetupPage() {
                         </div>
                       )}
                     </div>
+                    </React.Fragment>
                   );
                 })}
               </div>
