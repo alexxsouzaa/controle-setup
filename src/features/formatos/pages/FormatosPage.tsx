@@ -140,11 +140,27 @@ export function FormatosPage() {
     goToStep(3);
   };
 
-  const togglePart = (id: string) => {
-    setSelectedPartIds(prev => prev.includes(id) ? prev.filter((x: string) => x !== id) : [...prev, id]);
+  const togglePart = (id: string, category: string) => {
+    setSelectedPartIds(prev => {
+      const withoutCurrent = prev.filter((x: string) => {
+        const p = pieces.find((pc: Piece) => pc.id === x);
+        return p?.category !== category;
+      });
+      if (prev.includes(id)) return withoutCurrent;
+      setSelectedAltPartIds(alt => alt.filter((x: string) => x !== id));
+      return [...withoutCurrent, id];
+    });
   };
-  const toggleAltPart = (id: string) => {
-    setSelectedAltPartIds(prev => prev.includes(id) ? prev.filter((x: string) => x !== id) : [...prev, id]);
+  const toggleAltPart = (id: string, category: string) => {
+    setSelectedAltPartIds(prev => {
+      const withoutCurrent = prev.filter((x: string) => {
+        const p = pieces.find((pc: Piece) => pc.id === x);
+        return p?.category !== category;
+      });
+      if (prev.includes(id)) return withoutCurrent;
+      setSelectedPartIds(part => part.filter((x: string) => x !== id));
+      return [...withoutCurrent, id];
+    });
   };
   const piecesForCategory = (cat: string) => pieces.filter((p: Piece) => p.category === cat);
 
@@ -497,21 +513,22 @@ export function FormatosPage() {
               <div className="space-y-3">
                 {partsWithAlternatives.length > 0 ? partsWithAlternatives.map((group: FormatoGroup) => {
                   const catPieces = group.pieces || pieces.filter((p: Piece) => p.category === group.category);
-                  const selectedInCat = selectedPartIds.filter((id: string) => catPieces.some((p: Piece) => p.id === id));
-                  const altInCat = selectedAltPartIds.filter((id: string) => catPieces.some((p: Piece) => p.id === id));
+                  const primaryInCat = selectedPartIds.find((id: string) => catPieces.some((p: Piece) => p.id === id));
+                  const altInCat = selectedAltPartIds.find((id: string) => catPieces.some((p: Piece) => p.id === id));
                   return (
                     <div key={group.category} className="border border-[var(--border)] rounded-lg overflow-hidden">
                       <div className="p-3 bg-[var(--bg)]">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-semibold uppercase">{group.category}</span>
-                          <span className="text-xs text-[var(--fg-secondary)]">{selectedInCat.length} selecionada{selectedInCat.length !== 1 ? 's' : ''}</span>
+                          <span className="text-xs text-[var(--fg-secondary)]">{primaryInCat ? '1 principal' : '0 principal'} · {altInCat ? '1 alternativa' : '0 alternativa'}</span>
                         </div>
                         <div className="space-y-1.5">
                           {catPieces.map((p: Piece) => {
                             const isPrimary = selectedPartIds.includes(p.id);
                             const isAlt = selectedAltPartIds.includes(p.id);
+                            const disabled = Boolean(!isPrimary && !isAlt && primaryInCat && altInCat);
                             return (
-                              <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+                              <div key={p.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isPrimary ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : isAlt ? 'border-[var(--warning)] bg-[var(--warning-muted)]' : 'border-[var(--border)] bg-[var(--surface)]'} ${disabled ? 'opacity-40' : ''}`}>
                                 <div className="flex items-center gap-2 min-w-0">
                                   {p.image ? (
                                     <img src={p.image} alt={p.name} className="w-8 h-8 rounded object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(p.image || null)} />
@@ -520,17 +537,19 @@ export function FormatosPage() {
                                   )}
                                   <div className="min-w-0">
                                     <div className="text-xs font-medium truncate">{p.name}</div>
-                                    <div className="text-[10px] text-[var(--fg-secondary)]">{p.code} · Est: {p.stock}</div>
+                                    <div className="text-[10px] text-[var(--fg-secondary)]">{p.code} · Est: {p.stock}{isPrimary ? ' · Principal' : ''}{isAlt ? ' · Alternativa' : ''}</div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
-                                  <button type="button" onClick={() => togglePart(p.id)}
-                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isPrimary ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
-                                    {isPrimary ? 'Principal' : 'Principal'}
+                                  <button type="button" onClick={() => togglePart(p.id, group.category)}
+                                    disabled={disabled && !isPrimary}
+                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isPrimary ? 'bg-[var(--accent)] text-white' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
+                                    Principal
                                   </button>
-                                  <button type="button" onClick={() => toggleAltPart(p.id)}
-                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isAlt ? 'bg-[var(--warning)] text-white' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
-                                    {isAlt ? 'Alternativa' : 'Alternativa'}
+                                  <button type="button" onClick={() => toggleAltPart(p.id, group.category)}
+                                    disabled={disabled && !isAlt}
+                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isAlt ? 'bg-[var(--warning)] text-white' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
+                                    Alternativa
                                   </button>
                                 </div>
                               </div>
