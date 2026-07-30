@@ -8,7 +8,7 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { ImagePreview } from '../../../components/ImagePreview';
-import { PieceSelector } from '../../../components/shadcn-studio/command/command-08';
+import { PieceSelector } from '../../../components/shadcn-studio/command/PieceSelector';
 import { resolveSetup, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';

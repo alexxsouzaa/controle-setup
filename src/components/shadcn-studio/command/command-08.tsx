@@ -1,125 +1,182 @@
+// @ts-nocheck
+'use client'
+
 import * as React from 'react'
-import { Button } from '@/components/Button'
-import { Icon } from '@/components/Icon'
-import type { Piece } from '@/types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator
+} from '@/components/ui/command'
+import { PlusIcon } from 'lucide-react'
 
-interface PieceSelectorProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  pieces: Piece[]
-  selectedId?: string | null
-  onSelect: (piece: Piece) => void
-  title?: string
-}
+const teamLeads = [
+  {
+    name: 'Alice Carter',
+    email: 'alice.carter@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-1.png',
+    fallback: 'AC'
+  },
+  {
+    name: 'Marcus Webb',
+    email: 'marcus.webb@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-2.png',
+    fallback: 'MW'
+  },
+  {
+    name: 'Priya Sharma',
+    email: 'priya.sharma@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-3.png',
+    fallback: 'PS'
+  },
+  {
+    name: 'Liam Nguyen',
+    email: 'liam.nguyen@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-4.png',
+    fallback: 'LN'
+  }
+]
 
-export function PieceSelector({ open, onOpenChange, pieces, selectedId, onSelect, title = 'Selecionar peça' }: PieceSelectorProps) {
-  const [search, setSearch] = React.useState('')
+const developers = [
+  {
+    name: 'Sofia Reyes',
+    email: 'sofia.reyes@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-5.png',
+    fallback: 'SR'
+  },
+  {
+    name: 'Ethan Brooks',
+    email: 'ethan.brooks@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-6.png',
+    fallback: 'EB'
+  },
+  {
+    name: 'Nadia Kowalski',
+    email: 'nadia.kowalski@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-7.png',
+    fallback: 'NK'
+  },
+  {
+    name: 'James Park',
+    email: 'james.park@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-8.png',
+    fallback: 'JP'
+  }
+]
 
-  React.useEffect(() => {
-    if (!open) setSearch('')
-  }, [open])
+const designers = [
+  {
+    name: 'Liam Carter',
+    email: 'liam.carter@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-9.png',
+    fallback: 'LC'
+  },
+  {
+    name: 'Ava Mitchell',
+    email: 'ava.mitchell@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-10.png',
+    fallback: 'AM'
+  },
+  {
+    name: 'Noah Bennett',
+    email: 'noah.bennett@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-11.png',
+    fallback: 'NB'
+  },
+  {
+    name: 'Isabella Nguyen',
+    email: 'isabella.nguyen@company.com',
+    avatar: 'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-12.png',
+    fallback: 'IN'
+  }
+]
 
-  const grouped = React.useMemo(() => {
-    const map = new Map<string, Piece[]>()
-    pieces.forEach(p => {
-      const cat = p.category || 'Sem categoria'
-      if (!map.has(cat)) map.set(cat, [])
-      map.get(cat)!.push(p)
-    })
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
-  }, [pieces])
-
-  const filtered = React.useMemo(() => {
-    if (!search) return grouped
-    const q = search.toLowerCase()
-    return grouped
-      .map(([cat, catPieces]) => [
-        cat,
-        catPieces.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
-      ] as [string, Piece[]])
-      .filter(([, catPieces]) => catPieces.length > 0)
-  }, [grouped, search])
-
-  if (!open) return null
+const CommandMembers = () => {
+  const [open, setOpen] = React.useState(false)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={() => onOpenChange(false)}>
-      <div className="absolute inset-0 bg-[var(--overlay)]" />
-      <div
-        role="dialog"
-        aria-label={title}
-        className="relative bg-[var(--surface)] border border-[var(--border)] rounded-[12px] shadow-xl w-full max-w-lg mx-4 z-10 overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="p-3 pb-0">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none">
-              <Icon name="search" size={14} />
-            </span>
-            <input
-              className="shad-input pl-8 py-1.5 text-[12px]"
-              placeholder="Buscar peça por nome ou código..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              autoFocus
-            />
-          </div>
-        </div>
-
-        <div className="max-h-80 overflow-y-auto px-3 py-2" style={{ minHeight: 160 }}>
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Icon name="box" size={24} className="text-[var(--fg-muted)]" />
-              <p className="text-sm text-[var(--fg-muted)] mt-2">Nenhuma peça encontrada</p>
-            </div>
-          ) : filtered.map(([category, catPieces]) => (
-            <div key={category} className="mb-2">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] px-2 py-1.5">
-                {category}
-              </div>
-              <div className="space-y-1">
-                {catPieces.map(piece => {
-                  const isSelected = piece.id === selectedId
-                  return (
-                    <button
-                      key={piece.id}
-                      type="button"
-                      onClick={() => { onSelect(piece); onOpenChange(false) }}
-                      className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-[6px] border text-sm transition-all ${
-                        isSelected
-                          ? 'border-[var(--accent)] bg-[var(--accent-muted)]'
-                          : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'
-                      }`}
-                    >
-                      {piece.image ? (
-                        <img src={piece.image} alt={piece.name} className="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
-                      ) : (
-                        <div className="w-9 h-9 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
-                          <Icon name="box" size={16} />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{piece.name}</div>
-                        <div className="text-[11px] text-[var(--fg-secondary)]">
-                          <span className="font-mono">{piece.code}</span>
-                          <span className="ml-1.5">Est: {piece.stock} {piece.unit || 'un'}</span>
-                        </div>
-                      </div>
-                      <Button size="sm" variant={isSelected ? 'ghost' : 'primary'} disabled={isSelected}>
-                        {isSelected ? 'Selecionado' : 'Selecionar'}
-                      </Button>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="p-3 pt-2 border-t border-[var(--border)]">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">Fechar</Button>
-        </div>
-      </div>
+    <div className='flex flex-col gap-4'>
+      <Button onClick={() => setOpen(true)} variant='outline' className='w-fit'>
+        Invite Members
+      </Button>
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <Command>
+          <CommandInput placeholder='Type a command or search...' />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading='Team Leads'>
+              {teamLeads.map(member => (
+                <CommandItem key={member.email} className='gap-2 py-2'>
+                  <Avatar>
+                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarFallback className='text-xs'>{member.fallback}</AvatarFallback>
+                  </Avatar>
+                  <div className='flex flex-1 flex-col'>
+                    <span className='text-sm font-medium'>{member.name}</span>
+                    <span className='text-muted-foreground text-xs'>{member.email}</span>
+                  </div>
+                  <div className='ml-auto' data-slot='command-shortcut'>
+                    <Button size='sm'>
+                      <PlusIcon />{' '}
+                      Invite
+                    </Button>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading='Developers'>
+              {developers.map(member => (
+                <CommandItem key={member.email} className='gap-2 py-2'>
+                  <Avatar>
+                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarFallback className='text-xs'>{member.fallback}</AvatarFallback>
+                  </Avatar>
+                  <div className='flex flex-1 flex-col'>
+                    <span className='text-sm font-medium'>{member.name}</span>
+                    <span className='text-muted-foreground text-xs'>{member.email}</span>
+                  </div>
+                  <div className='ml-auto' data-slot='command-shortcut'>
+                    <Button size='sm'>
+                      <PlusIcon />{' '}
+                      Invite
+                    </Button>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading='Designers'>
+              {designers.map(member => (
+                <CommandItem key={member.email} className='gap-2 py-2'>
+                  <Avatar>
+                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarFallback className='text-xs'>{member.fallback}</AvatarFallback>
+                  </Avatar>
+                  <div className='flex flex-1 flex-col'>
+                    <span className='text-sm font-medium'>{member.name}</span>
+                    <span className='text-muted-foreground text-xs'>{member.email}</span>
+                  </div>
+                  <div className='ml-auto' data-slot='command-shortcut'>
+                    <Button size='sm'>
+                      <PlusIcon />{' '}
+                      Invite
+                    </Button>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
     </div>
   )
 }
+
+export default CommandMembers
