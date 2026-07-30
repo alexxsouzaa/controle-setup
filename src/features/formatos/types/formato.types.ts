@@ -8,6 +8,9 @@ export interface Formato {
   volume?: number;
   volMin?: number;
   volumeUnit?: string;
+  uo?: string;
+  category?: string;
+  diameter?: number;
   productId?: string;
   machineId?: string;
   partIds?: string[];

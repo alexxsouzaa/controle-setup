@@ -6,13 +6,13 @@ import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
-import { suggestFormatos, getMachineTooling, getFormatTypeOptions } from '../../compatibility';
-import { useProducts, useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../../../queries';
+import { getMachineTooling, getFormatTypeOptions } from '../../compatibility';
+import { useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../../../queries';
 import { useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
-import { Formato, Product, Piece, Machine, Config } from '../../../types';
+import { Formato, Piece, Machine, Config } from '../../../types';
 
-const STEPS = ['Produto', 'Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
+const STEPS = ['Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
 const VOL_UNITS = ['ml', 'g'];
 
 interface FormatoPiece {
@@ -30,12 +30,12 @@ interface FormatoGroup {
 interface FormatoPayload {
   name: string;
   formatType: string;
+  uo: string;
+  category?: string;
+  diameter?: number;
   volume: number;
   volumeUnit: string;
   machineId: string;
-  productId: string;
-  productName: string;
-  productCode: string;
   partIds: string[];
   alternativePartIds: string[];
   pieces: FormatoPiece[];
@@ -45,7 +45,6 @@ interface FormatoPayload {
 export function FormatosPage() {
   const navigate = useNavigate();
   const { data: formatos = [] } = useFormatos();
-  const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();
   const { data: machines = [] } = useMachines();
   const { data: config = {} as Config } = useConfig();
@@ -66,8 +65,9 @@ export function FormatosPage() {
   const perPage = 10;
   const [savedName, setSavedName] = useState<string>('');
 
-  const [productSearch, setProductSearch] = useState<string>('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedUo, setSelectedUo] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
+  const [diameter, setDiameter] = useState<string>('');
 
   const [formatType, setFormatType] = useState<string>('');
   const [volume, setVolume] = useState<string>('');
@@ -87,27 +87,18 @@ export function FormatosPage() {
   const [formatName, setFormatName] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>(currentUser);
 
-  const productFiltered = products.filter((p: Product) =>
-    !productSearch || p.name.toLowerCase().includes(productSearch) || p.code.toLowerCase().includes(productSearch)
-  ).slice(0, 15);
-
-  const activeProduct = selectedProduct;
-  const productVol = activeProduct ? Number(activeProduct.vol) : 0;
   const formatNameSuggestion = useMemo(() => {
-    const code = activeProduct?.code || '';
-    const vol = volume || activeProduct?.vol || '';
-    const unit = volumeUnit || activeProduct?.unit || 'ml';
+    const uoLabel = selectedUo || '';
+    const cat = category || '';
+    const diam = diameter ? `Ø${diameter}` : '';
+    const vol = volume || '';
+    const unit = volumeUnit || 'ml';
     const fmt = formatType || '';
-    return `${code} - ${fmt} - ${vol}${unit}`.toUpperCase();
-  }, [activeProduct, volume, volumeUnit, formatType]);
-
-  const suggestedFormats = useMemo(() => {
-    if (!activeProduct || !selectedMachine) return [];
-    return suggestFormatos(selectedMachine, activeProduct, formatos);
-  }, [activeProduct, selectedMachine, formatos]);
+    return `${uoLabel}${cat ? ` - ${cat}` : ''}${diam ? ` ${diam}` : ''} - ${fmt} - ${vol}${unit}`.toUpperCase();
+  }, [selectedUo, category, diameter, volume, volumeUnit, formatType]);
 
   const resetForm = () => {
-    setSelectedProduct(null); setProductSearch('');
+    setSelectedUo(''); setCategory(''); setDiameter('');
     setFormatType(''); setVolume(''); setVolumeUnit('ml');
     setSelectedMachineId('');
     setSelectedLine('');
@@ -118,25 +109,15 @@ export function FormatosPage() {
     setEditingId(null); setStep(1);
   };
 
-  const goToStep = (s: number) => { if (s >= 1 && s <= 6) setStep(s); };
+  const goToStep = (s: number) => { if (s >= 1 && s <= 5) setStep(s); };
 
   const volumeNum = Number(volume) || 0;
-  const volForCompat = volumeNum || productVol || 0;
-  const availableFormatTypes = getFormatTypeOptions(selectedMachine?.uo, config);
-
-  const handleSelectProduct = (p: Product) => {
-    setSelectedProduct(p);
-    setProductSearch('');
-    const suggested = p.image || '';
-    if (suggested && availableFormatTypes.includes(suggested)) setFormatType(suggested);
-    if (p.vol) setVolume(String(p.vol));
-    if (p.unit) setVolumeUnit(p.unit);
-  };
 
   const handleConfigNext = () => {
+    if (!selectedUo) { toast('Selecione a UO.', 'warning'); return; }
     if (!formatType) { toast('Selecione o tipo de formato.', 'warning'); return; }
     if (!volumeNum || volumeNum <= 0) { toast('Informe uma volumetria válida.', 'warning'); return; }
-    goToStep(3);
+    goToStep(2);
   };
 
   const handleMachineNext = () => {
@@ -156,7 +137,7 @@ export function FormatosPage() {
     });
     setSelectedPartIds(selIds);
     setSelectedAltPartIds(altIds);
-    goToStep(4);
+    goToStep(3);
   };
 
   const togglePart = (id: string) => {
@@ -181,12 +162,12 @@ export function FormatosPage() {
     const payload: FormatoPayload = {
       name: formatName.trim(),
       formatType,
+      uo: selectedUo,
+      category,
+      diameter: diameter ? Number(diameter) : undefined,
       volume: volumeNum,
       volumeUnit,
       machineId: selectedMachineId,
-      productId: selectedProduct!.id,
-      productName: selectedProduct!.name,
-      productCode: selectedProduct!.code,
       partIds: selectedPartIds,
       alternativePartIds: selectedAltPartIds,
       pieces: [...fmtPieces, ...altPieces.map((p: FormatoPiece) => ({ ...p, isAlternative: true }))],
@@ -202,17 +183,18 @@ export function FormatosPage() {
       toast('Formato criado com sucesso!');
     }
     setSavedName(formatName.trim());
-    goToStep(6);
+    goToStep(5);
   };
 
   const startEdit = (fmt: Formato) => {
     setFormatName(fmt.name || '');
     setFormatType(fmt.formatType || fmt.tipo || '');
+    setSelectedUo(fmt.uo || '');
+    setCategory(fmt.category || '');
+    setDiameter(fmt.diameter ? String(fmt.diameter) : '');
     setVolume(fmt.volume ? String(fmt.volume) : (fmt.volMin ? String(fmt.volMin) : ''));
     setVolumeUnit(fmt.volumeUnit || 'ml');
     setSelectedMachineId(fmt.machineId || '');
-    const prod = products.find((p: Product) => p.id === fmt.productId || p.code === (fmt as unknown as Record<string, unknown>).productCode);
-    if (prod) setSelectedProduct(prod);
     setSelectedPartIds(fmt.partIds || (fmt.pieces || []).map((p: FormatoPiece | Record<string, unknown>) => (p as FormatoPiece).pieceId).filter(Boolean) as string[]);
     setSelectedAltPartIds(fmt.alternativePartIds || []);
     setCreatedBy(fmt.createdBy || currentUser);
@@ -223,7 +205,7 @@ export function FormatosPage() {
 
   const go = (s: number) => goToStep(s);
 
-  const filtered = search ? formatos.filter((f: Formato) => f.name?.toLowerCase().includes(search) || ((f as unknown as Record<string, unknown>).productName as string || '').toLowerCase().includes(search)) : formatos;
+  const filtered = search ? formatos.filter((f: Formato) => f.name?.toLowerCase().includes(search) || (f.uo || '').toLowerCase().includes(search) || (f.formatType || f.tipo || '').toLowerCase().includes(search)) : formatos;
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -247,7 +229,7 @@ export function FormatosPage() {
           <div className="grid lg:grid-cols-4 gap-3 mb-5">
             {[
               { label: 'Formatos', value: formatos.length, icon: 'grid-3x3' },
-              { label: 'Produtos', value: products.length, icon: 'box' },
+              { label: 'UOs', value: [...new Set(machines.map((m: Machine) => m.uo).filter(Boolean))].length, icon: 'box' },
               { label: 'Máquinas', value: machines.length, icon: 'settings' },
               { label: 'Peças', value: pieces.length, icon: 'wrench' },
             ].map((s, i) => (
@@ -303,7 +285,7 @@ export function FormatosPage() {
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
                     <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={false} onChange={() => {}} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
                     <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Formato</th>
-                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Produto</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">UO</th>
                     <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20 hidden sm:table-cell">Peças</th>
                     <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
                   </tr>
@@ -322,7 +304,7 @@ export function FormatosPage() {
                           <div className="text-[12px] font-mono text-[var(--fg-muted)]">{fmt.formatType || fmt.tipo || '—'} · {(fmt.pieces || []).length} peça{(fmt.pieces || []).length !== 1 ? 's' : ''}</div>
                         </button>
                       </td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell text-[var(--fg-secondary)]`}>{(fmt as unknown as Record<string, unknown>).productName as string} <span className="text-[var(--fg-muted)] font-mono text-[11px]">({(fmt as unknown as Record<string, unknown>).productCode as string})</span></td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell text-[var(--fg-secondary)]`}>{fmt.uo || '—'} <span className="text-[var(--fg-muted)] font-mono text-[11px]">{fmt.category ? `· ${fmt.category}` : ''}{fmt.diameter ? ` · Ø${fmt.diameter}` : ''}</span></td>
                       <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden sm:table-cell text-[12px] font-mono text-[var(--fg-muted)]`}>{(fmt.pieces || []).length}</td>
                       <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
                         <div className="flex items-center justify-end gap-0.5">
@@ -368,7 +350,7 @@ export function FormatosPage() {
             </div>
           )}
         </>
-      ) : step < 6 ? (
+      ) : step < 5 ? (
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="flex items-center justify-center gap-0 mb-6 p-3 bg-[var(--surface)] border border-[var(--border)] rounded-[8px]">
             {STEPS.map((s, i) => (
@@ -387,76 +369,37 @@ export function FormatosPage() {
           {step === 1 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
-                <div>
-                  <h3 className="text-sm font-semibold">1. Selecionar Produto</h3>
-                  <p className="text-xs text-[var(--fg-secondary)]">Escolha o produto que será associado a este formato.</p>
-                </div>
-              </div>
-              {selectedProduct ? (
-                <div className="p-4 bg-[var(--accent-light)] border border-[var(--accent)] rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-semibold text-[var(--accent)]">{selectedProduct.name}</div>
-                      <div className="text-xs text-[var(--fg-secondary)] mt-0.5">{selectedProduct.code} · {selectedProduct.category || '—'} · {selectedProduct.vol} {selectedProduct.unit}</div>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(null); setProductSearch(''); }}>Trocar</Button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-                    <input className="shad-input pl-9" placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProductSearch(e.target.value.toLowerCase())} aria-label="Buscar produtos" />
-                  </div>
-                  {productSearch && productFiltered.length > 0 && (
-                    <div className="border border-[var(--border)] rounded-lg mt-2 overflow-hidden max-h-60 overflow-y-auto">
-                      {productFiltered.map((p: Product) => (
-                        <button key={p.id} type="button" onClick={() => handleSelectProduct(p)}
-                          className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-[var(--bg)] transition-colors">
-                          <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
-                          <div>
-                            <div className="text-sm font-medium">{p.name}</div>
-                            <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.category} · {p.vol} {p.unit}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {productSearch && productFiltered.length === 0 && (
-                    <p className="text-sm text-[var(--fg-secondary)] mt-2">Nenhum produto encontrado.</p>
-                  )}
-                </div>
-              )}
-              <div className="flex justify-between mt-6">
-                <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
-                <Button variant="primary" disabled={!selectedProduct} onClick={() => { if (selectedProduct) go(2); }}>Avançar →</Button>
-              </div>
-            </Card>
-          )}
-
-          {step === 2 && (
-            <Card>
-              <div className="flex items-center gap-2 mb-5">
                 <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={16} /></div>
                 <div>
-                  <h3 className="text-sm font-semibold">2. Configuração do Formato</h3>
-                  <p className="text-xs text-[var(--fg-secondary)]">Defina o formato e a volumetria para o produto selecionado.</p>
+                  <h3 className="text-sm font-semibold">1. Configuração do Formato</h3>
+                  <p className="text-xs text-[var(--fg-secondary)]">Defina a UO, o tipo de formato e a volumetria.</p>
                 </div>
               </div>
-              {selectedProduct && (
-                <div className="mb-4 p-3 bg-[var(--bg)] rounded-lg border border-[var(--border)] text-sm">
-                  <span className="font-medium">{selectedProduct.name}</span>
-                  <span className="text-[var(--fg-secondary)]"> · {selectedProduct.code} · {selectedProduct.vol} {selectedProduct.unit}</span>
-                </div>
-              )}
               <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">UO *</label>
+                  <Select value={selectedUo} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedUo(e.target.value); setFormatType(''); }}>
+                    <option value="">Selecione a UO</option>
+                    {[...new Set(machines.map((m: Machine) => m.uo).filter(Boolean))].map((uo: string) => <option key={uo}>{uo}</option>)}
+                  </Select>
+                </div>
                 <div>
                   <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Formato *</label>
                   <Select value={formatType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormatType(e.target.value)}>
                     <option value="">Selecione o formato</option>
-                    {availableFormatTypes.map((f: string) => <option key={f}>{f}</option>)}
+                    {selectedUo ? getFormatTypeOptions(selectedUo, config).map((f: string) => <option key={f}>{f}</option>) : <option value="" disabled>Selecione uma UO primeiro</option>}
                   </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Categoria</label>
+                  <Select value={category} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}>
+                    <option value="">Selecione a categoria</option>
+                    {selectedUo ? (config.uoConfigs?.[selectedUo]?.categorias || config.uoConfigs?.[selectedUo]?.productCategories || []).map((c: string) => <option key={c}>{c}</option>) : []}
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[var(--fg)] mb-1 block">Diâmetro (mm)</label>
+                  <Input type="number" min="1" placeholder="Ex: 35" value={diameter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiameter(e.target.value)} />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2">
@@ -470,19 +413,19 @@ export function FormatosPage() {
                 </div>
               </div>
               <div className="flex justify-between mt-6">
-                <Button variant="ghost" onClick={() => go(1)}>← Produto</Button>
+                <Button variant="ghost" onClick={() => { resetForm(); setTab('list'); }}>Cancelar</Button>
                 <Button variant="primary" onClick={handleConfigNext}>Avançar →</Button>
               </div>
             </Card>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="box" size={16} /></div>
                 <div>
-                  <h3 className="text-sm font-semibold">3. Selecionar Máquina</h3>
-                  <p className="text-xs text-[var(--fg-secondary)]">Escolha a máquina compatível com este formato.</p>
+                  <h3 className="text-sm font-semibold">2. Selecione a máquina</h3>
+                  <p className="text-xs text-[var(--fg-secondary)]">Escolha a máquina e linha para este formato.</p>
                 </div>
               </div>
               <div className="mb-4">
@@ -491,7 +434,7 @@ export function FormatosPage() {
                   <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
                 </div>
                 {machineSearch && (() => {
-                   const filtered = machines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
+                  const filtered = machines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
                   if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
                   return (
                     <div className="border border-[var(--border)] rounded-[6px] mt-2 max-h-60 overflow-y-auto">
@@ -520,32 +463,34 @@ export function FormatosPage() {
                   </div>
                 </div>
               ) : !machineSearch && (
-                <p className="text-[12px] text-[var(--fg-secondary)]">Busque e selecione uma máquina acima.</p>
+                <p className="text-[12px] text-[var(--fg-secondary)] mb-4">Busque e selecione uma máquina acima.</p>
               )}
               {selectedMachine && (
-                <div className="mt-4 p-4 bg-[var(--bg)] border border-[var(--border)] rounded-lg">
+                <div className="border-t border-[var(--border-subtle)] pt-4">
                   <label className="text-[12px] font-medium text-[var(--fg)] mb-2 block">Linha de produção</label>
-                  <Select value={selectedLine} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedLine(e.target.value)}>
-                    <option value="">Selecione a linha...</option>
+                  <div className="flex flex-wrap gap-2">
                     {(selectedMachine.lines || (selectedMachine.line ? [selectedMachine.line] : [])).map((l: string) => (
-                      <option key={l} value={l}>{l}</option>
+                      <button key={l} type="button" onClick={() => { setSelectedLine(l); }}
+                        className={`px-4 py-2.5 rounded-[6px] border text-[13px] font-medium transition-all ${selectedLine === l ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)] hover:text-[var(--fg)]'}`}>
+                        Linha {l}
+                      </button>
                     ))}
-                  </Select>
+                  </div>
                 </div>
               )}
               <div className="flex justify-between mt-6">
-                <Button variant="ghost" onClick={() => go(2)}>← Configuração</Button>
+                <Button variant="ghost" onClick={() => go(1)}>← Configuração</Button>
                 <Button variant="primary" disabled={!selectedMachineId || !selectedLine} onClick={handleMachineNext}>Avançar →</Button>
               </div>
             </Card>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="wrench" size={16} /></div>
                 <div>
-                  <h3 className="text-sm font-semibold">4. Selecionar Peças</h3>
+                  <h3 className="text-sm font-semibold">3. Selecionar Peças</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Selecione as peças necessárias para este formato.</p>
                 </div>
               </div>
@@ -605,18 +550,18 @@ export function FormatosPage() {
                 )}
               </div>
               <div className="flex justify-between mt-6">
-                <Button variant="ghost" onClick={() => go(3)}>← Máquina</Button>
-                <Button variant="primary" onClick={() => { if (selectedPartIds.length === 0) { toast('Selecione pelo menos uma peça principal.', 'warning'); return; } go(5); }}>Avançar →</Button>
+                <Button variant="ghost" onClick={() => go(2)}>← Máquina</Button>
+                <Button variant="primary" onClick={() => { if (selectedPartIds.length === 0) { toast('Selecione pelo menos uma peça principal.', 'warning'); return; } go(4); }}>Avançar →</Button>
               </div>
             </Card>
           )}
 
-          {step === 5 && (
+          {step === 4 && (
             <Card>
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-7 h-7 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)]"><Icon name="grid-3x3" size={16} /></div>
                 <div>
-                  <h3 className="text-sm font-semibold">5. Revisar Formato</h3>
+                  <h3 className="text-sm font-semibold">4. Revisar Formato</h3>
                   <p className="text-xs text-[var(--fg-secondary)]">Confira as informações e defina o nome antes de criar.</p>
                 </div>
               </div>
@@ -624,34 +569,31 @@ export function FormatosPage() {
               <div className="space-y-4">
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Produto</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Configuração</span>
                     <button type="button" onClick={() => go(1)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
                   </div>
-                  <div className="text-sm font-medium">{selectedProduct?.name}</div>
-                  <div className="text-xs text-[var(--fg-secondary)]">{selectedProduct?.code} · {selectedProduct?.vol} {selectedProduct?.unit}</div>
-                </div>
-
-                <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Configuração</span>
-                    <button type="button" onClick={() => go(2)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><div className="text-xs text-[var(--fg-secondary)]">UO</div><div className="font-medium">{selectedUo || '—'}</div></div>
+                    <div><div className="text-xs text-[var(--fg-secondary)]">Formato</div><div className="font-medium">{formatType || '—'}</div></div>
+                    <div><div className="text-xs text-[var(--fg-secondary)]">Categoria</div><div className="font-medium">{category || '—'}</div></div>
+                    <div><div className="text-xs text-[var(--fg-secondary)]">Diâmetro</div><div className="font-medium">{diameter ? `${diameter} mm` : '—'}</div></div>
+                    <div><div className="text-xs text-[var(--fg-secondary)]">Volumetria</div><div className="font-medium">{volumeNum} {volumeUnit}</div></div>
                   </div>
-                  <div className="text-sm">{formatType} · {volumeNum} {volumeUnit}</div>
                 </div>
 
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Máquina</span>
-                    <button type="button" onClick={() => go(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                    <button type="button" onClick={() => go(2)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
                   </div>
                   <div className="text-sm font-medium">{selectedMachine?.name || '—'}</div>
-                  <div className="text-xs text-[var(--fg-secondary)]">UO: {selectedMachine?.uo} · Linhas: {(selectedMachine?.lines || (selectedMachine?.line ? [selectedMachine.line] : [])).join(', ')}</div>
+                  <div className="text-xs text-[var(--fg-secondary)]">UO: {selectedMachine?.uo} · Linha: {selectedLine || '—'} · Linhas: {(selectedMachine?.lines || (selectedMachine?.line ? [selectedMachine.line] : [])).join(', ')}</div>
                 </div>
 
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças</span>
-                    <button type="button" onClick={() => go(4)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                    <button type="button" onClick={() => go(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
                   </div>
                   <div className="space-y-1">
                     {selectedPartIds.map((id: string) => { const p = pieces.find((pc: Piece) => pc.id === id); return p ? <div key={id} className="flex items-center gap-2 text-sm"><Icon name="check-circle" size={14} className="text-[var(--success)]" /><span className="font-medium">{p.name}</span><span className="text-xs text-[var(--fg-secondary)]">Principal</span></div> : null; })}
@@ -681,7 +623,7 @@ export function FormatosPage() {
               </div>
 
               <div className="flex justify-between mt-6">
-                <Button variant="ghost" onClick={() => go(4)}>← Peças</Button>
+                <Button variant="ghost" onClick={() => go(3)}>← Peças</Button>
                 <Button variant="primary" onClick={handleSave}><Icon name="plus" size={16} />{editingId ? 'Salvar Alterações' : 'Criar Formato'}</Button>
               </div>
             </Card>
@@ -695,7 +637,7 @@ export function FormatosPage() {
             </div>
             <h3 className="text-xl font-semibold mb-1">{editingId ? 'Formato atualizado com sucesso!' : 'Formato criado com sucesso!'}</h3>
             <div className="text-base font-medium text-[var(--accent)] mt-2 mb-1">{savedName}</div>
-            <p className="text-sm text-[var(--fg-secondary)] mb-6">{selectedProduct?.name} · {formatType} · {volumeNum}{volumeUnit}</p>
+            <p className="text-sm text-[var(--fg-secondary)] mb-6">{selectedUo} · {formatType} · {volumeNum}{volumeUnit}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="primary" onClick={() => { navigate('/formatos'); }}><Icon name="grid-3x3" size={16} />Ver formatos</Button>
               <Button variant="secondary" onClick={() => { resetForm(); setTab('create'); }}><Icon name="plus" size={16} />Criar novo formato</Button>
