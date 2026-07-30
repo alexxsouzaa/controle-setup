@@ -1,15 +1,5 @@
-// @ts-nocheck
 import * as React from 'react'
 import { Button } from '@/components/Button'
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
 import { Icon } from '@/components/Icon'
 import type { Piece } from '@/types'
 
@@ -23,6 +13,12 @@ interface PieceSelectorProps {
 }
 
 export function PieceSelector({ open, onOpenChange, pieces, selectedId, onSelect, title = 'Selecionar peça' }: PieceSelectorProps) {
+  const [search, setSearch] = React.useState('')
+
+  React.useEffect(() => {
+    if (!open) setSearch('')
+  }, [open])
+
   const grouped = React.useMemo(() => {
     const map = new Map<string, Piece[]>()
     pieces.forEach(p => {
@@ -33,58 +29,97 @@ export function PieceSelector({ open, onOpenChange, pieces, selectedId, onSelect
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
   }, [pieces])
 
+  const filtered = React.useMemo(() => {
+    if (!search) return grouped
+    const q = search.toLowerCase()
+    return grouped
+      .map(([cat, catPieces]) => [
+        cat,
+        catPieces.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
+      ] as [string, Piece[]])
+      .filter(([, catPieces]) => catPieces.length > 0)
+  }, [grouped, search])
+
+  if (!open) return null
+
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <Command>
-        <CommandInput placeholder="Buscar peça por nome ou código..." />
-        <CommandList>
-          <CommandEmpty>
-            <div className="flex flex-col items-center gap-2 py-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" onClick={() => onOpenChange(false)}>
+      <div className="absolute inset-0 bg-[var(--overlay)]" />
+      <div
+        role="dialog"
+        aria-label={title}
+        className="relative bg-[var(--surface)] border border-[var(--border)] rounded-[12px] shadow-xl w-full max-w-lg mx-4 z-10 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-3 pb-0">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none">
+              <Icon name="search" size={14} />
+            </span>
+            <input
+              className="shad-input pl-8 py-1.5 text-[12px]"
+              placeholder="Buscar peça por nome ou código..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+        </div>
+
+        <div className="max-h-80 overflow-y-auto px-3 py-2" style={{ minHeight: 160 }}>
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
               <Icon name="box" size={24} className="text-[var(--fg-muted)]" />
-              <p className="text-sm text-[var(--fg-muted)]">Nenhuma peça encontrada</p>
+              <p className="text-sm text-[var(--fg-muted)] mt-2">Nenhuma peça encontrada</p>
             </div>
-          </CommandEmpty>
-          {grouped.map(([category, catPieces]) => (
-            <CommandGroup key={category} heading={category}>
-              {catPieces.map(piece => {
-                const isSelected = piece.id === selectedId
-                return (
-                  <CommandItem
-                    key={piece.id}
-                    value={`${piece.name} ${piece.code} ${category}`}
-                    onSelect={() => { onSelect(piece); onOpenChange(false) }}
-                    className="gap-3 py-2.5"
-                  >
-                    {piece.image ? (
-                      <img
-                        src={piece.image}
-                        alt={piece.name}
-                        className="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] shrink-0"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
-                        <Icon name="box" size={16} />
+          ) : filtered.map(([category, catPieces]) => (
+            <div key={category} className="mb-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] px-2 py-1.5">
+                {category}
+              </div>
+              <div className="space-y-1">
+                {catPieces.map(piece => {
+                  const isSelected = piece.id === selectedId
+                  return (
+                    <button
+                      key={piece.id}
+                      type="button"
+                      onClick={() => { onSelect(piece); onOpenChange(false) }}
+                      className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-[6px] border text-sm transition-all ${
+                        isSelected
+                          ? 'border-[var(--accent)] bg-[var(--accent-muted)]'
+                          : 'border-[var(--border)] hover:border-[var(--accent)] bg-[var(--surface)]'
+                      }`}
+                    >
+                      {piece.image ? (
+                        <img src={piece.image} alt={piece.name} className="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0">
+                          <Icon name="box" size={16} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{piece.name}</div>
+                        <div className="text-[11px] text-[var(--fg-secondary)]">
+                          <span className="font-mono">{piece.code}</span>
+                          <span className="ml-1.5">Est: {piece.stock} {piece.unit || 'un'}</span>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex flex-1 flex-col min-w-0">
-                      <span className="text-sm font-medium truncate">{piece.name}</span>
-                      <span className="text-[11px] text-[var(--fg-secondary)]">
-                        <span className="font-mono">{piece.code}</span>
-                        <span className="ml-1.5">Est: {piece.stock} {piece.unit || 'un'}</span>
-                      </span>
-                    </div>
-                    <div className="ml-auto shrink-0" data-slot="command-shortcut">
-                      <Button size="sm" variant={isSelected ? 'ghost' : 'primary'} className="pointer-events-auto">
+                      <Button size="sm" variant={isSelected ? 'ghost' : 'primary'} disabled={isSelected}>
                         {isSelected ? 'Selecionado' : 'Selecionar'}
                       </Button>
-                    </div>
-                  </CommandItem>
-                )
-              })}
-            </CommandGroup>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           ))}
-        </CommandList>
-      </Command>
-    </CommandDialog>
+        </div>
+
+        <div className="p-3 pt-2 border-t border-[var(--border)]">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">Fechar</Button>
+        </div>
+      </div>
+    </div>
   )
 }
