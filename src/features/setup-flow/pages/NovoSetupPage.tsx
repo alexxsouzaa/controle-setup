@@ -574,8 +574,8 @@ export function NovoSetupPage() {
                       <div className="p-4 bg-[var(--bg)]">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold ${sel.primary ? 'bg-[var(--success)] text-white' : 'bg-[var(--surface)] text-[var(--fg-secondary)] border border-[var(--border)]'}`}>
-                              {sel.primary ? '✓' : '!'}
+                            <div className={`w-7 h-7 rounded flex items-center justify-center ${sel.primary ? 'bg-[var(--success)] text-white' : 'bg-[var(--surface)] border border-[var(--border)]'}`}>
+                              {sel.primary ? <Icon name="check-circle" size={14} /> : <Icon name="box" size={14} className="text-[var(--fg-muted)]" />}
                             </div>
                             <span className="text-sm font-semibold uppercase tracking-wide">{group}</span>
                           </div>
