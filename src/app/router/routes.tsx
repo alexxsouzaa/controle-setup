@@ -8,6 +8,7 @@ import { NewMachinePage } from '../../features/machines/pages/NewMachinePage';
 import { ProdutosPage } from '../../features/products/pages/ProdutosPage';
 import { PecasPage } from '../../features/pieces/pages/PecasPage';
 import { FormatosPage } from '../../features/formatos/pages/FormatosPage';
+import { FormatoDetailsPage } from '../../features/formatos/pages/FormatoDetailsPage';
 import { ExportPage } from '../../features/import-export/pages/ExportPage';
 import { HistoricoPage } from '../../features/history/pages/HistoricoPage';
 import { ConfigPage } from '../../features/config/pages/ConfigPage';
@@ -26,6 +27,7 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/produtos': 'Produtos',
   '/pecas': 'Peças',
   '/formatos': 'Formatos',
+  '/formatos/:id': 'Detalhes do Formato',
   '/exportar': 'Exportar',
   '/historico': 'Histórico',
   '/configuracoes': 'Configurações',
@@ -48,6 +50,7 @@ export const routeObjects: RouteDef[] = [
   { path: '/produtos', element: <ProdutosPage /> },
   { path: '/pecas', element: <PecasPage /> },
   { path: '/formatos', element: <FormatosPage /> },
+  { path: '/formatos/:id', element: <FormatoDetailsPage /> },
   { path: '/exportar', element: <ExportPage /> },
   { path: '/historico', element: <HistoricoPage /> },
   { path: '/configuracoes', element: <ConfigPage /> },

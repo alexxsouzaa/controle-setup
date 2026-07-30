@@ -324,7 +324,7 @@ export function FormatosPage() {
                     <tr key={fmt.id}
                       className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] cursor-pointer"
                       onClick={() => selectionMode && toggleSelect(fmt.id)}
-                      onDoubleClick={() => { if (!selectionMode) startEdit(fmt); }}>
+                      onDoubleClick={() => { if (!selectionMode) navigate('/formatos/' + fmt.id); }}>
                       {selectionMode && (
                         <td className="px-3.5 py-2.5 text-center">
                           <input type="checkbox" checked={selected.has(fmt.id)} onChange={() => toggleSelect(fmt.id)} className="accent-[var(--fg)] cursor-pointer" />
