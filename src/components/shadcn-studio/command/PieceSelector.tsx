@@ -12,6 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import { Separator } from '@/components/ui/separator'
 import { Icon } from '@/components/Icon'
 import type { Piece } from '@/types'
 
@@ -46,8 +47,10 @@ export function PieceSelector({ open, onOpenChange, pieces, selectedId, onSelect
               <p className="text-sm text-[var(--fg-muted)]">Nenhuma peça encontrada</p>
             </div>
           </CommandEmpty>
-          {grouped.map(([category, catPieces]) => (
-            <CommandGroup key={category} heading={category}>
+          {grouped.map(([category, catPieces], idx) => (
+            <React.Fragment key={category}>
+              {idx > 0 && <Separator />}
+              <CommandGroup heading={category}>
               {catPieces.map(piece => {
                 const isSelected = piece.id === selectedId
                 return (
@@ -84,6 +87,7 @@ export function PieceSelector({ open, onOpenChange, pieces, selectedId, onSelect
                 )
               })}
             </CommandGroup>
+            </React.Fragment>
           ))}
         </CommandList>
       </Command>
