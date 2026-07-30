@@ -8,6 +8,7 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { ImagePreview } from '../../../components/ImagePreview';
+import { PieceSelector } from '../../../components/shadcn-studio/command/command-08';
 import { resolveSetup, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
@@ -95,8 +96,6 @@ export function NovoSetupPage() {
   const [partsWithAlternatives, setPartsWithAlternatives] = useState<PartWithAlt[]>([]);
   const [partSelections, setPartSelections] = useState<Record<string, PartSelection>>({});
   const [modalGroup, setModalGroup] = useState<ModalGroup | null>(null);
-  const [pieceSearch, setPieceSearch] = useState<string>('');
-  const [piecePage, setPiecePage] = useState<number>(1);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -263,8 +262,6 @@ export function NovoSetupPage() {
     setPartSelections(prev => ({ ...prev, [group]: { ...prev[group], alternative: alt.piece.name, alternativeId: alt.piece.id } }));
     setModalGroup(null);
   };
-
-  const piecesForCategory = (category: string) => pieces.filter((p: Piece) => p.category === category);
 
   const handleSave = () => {
     const sameCodeFlows = flows.filter((f: Flow) => f.code === (activeProduct?.code || ''));
@@ -669,96 +666,27 @@ export function NovoSetupPage() {
       )}
 
       {modalGroup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }}>
-          <div className="absolute inset-0 bg-[var(--overlay)]" />
-          <div role="dialog" aria-modal="true" aria-label={`Selecionar peça para ${modalGroup.group}`} className="relative bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg w-full max-w-lg mx-4 p-6 z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold">{modalGroup.group}</h3>
-                <p className="text-xs text-[var(--fg-secondary)] mt-0.5">{modalGroup.type === 'primary' ? 'Selecionar peça principal' : 'Selecionar peça alternativa'}</p>
-                <div className="relative mt-2">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-                  <input className="shad-input pl-8 py-1.5 text-xs" placeholder="Buscar peça..." value={pieceSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setPieceSearch(e.target.value); setPiecePage(1); }} />
-                </div>
-              </div>
-              <button type="button" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)] shrink-0 ml-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <div className="max-h-72 overflow-y-auto -mx-6 px-6" style={{ minHeight: 150 }}>
-              {modalGroup.type === 'alternative' && modalGroup.alternatives ? (
-                modalGroup.alternatives.length === 0 ? (
-                  <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma alternativa encontrada.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {modalGroup.alternatives.filter((a: { piece: Piece; level: string; requiresAdjustment?: boolean }) => !pieceSearch || a.piece.name.toLowerCase().includes(pieceSearch) || (a.piece.code || '').toLowerCase().includes(pieceSearch)).map((a: { piece: Piece; level: string; requiresAdjustment?: boolean }, i: number) => (
-                      <button key={i} type="button" onClick={() => handleSelectAlternative(modalGroup.group, a)}
-                        className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.alternativeId === a.piece.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                        <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="wrench" size={16} /></div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{a.piece.name}</div>
-                          <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                            {a.piece.code && <span className="font-mono">{a.piece.code}</span>}
-                            <span>· Compat: {a.level}</span>
-                            {a.piece.stock != null && <span>· Est: {a.piece.stock}</span>}
-                            {a.requiresAdjustment && <span className="text-[var(--warning)]">· Requer ajuste</span>}
-                          </div>
-                        </div>
-                        {partSelections[modalGroup.group]?.alternativeId === a.piece.id && <Badge variant="success">Selecionado</Badge>}
-                      </button>
-                    ))}
-                  </div>
-                )
-              ) : (
-                (() => {
-                  const catPieces = piecesForCategory(modalGroup.group);
-                  const filtered = pieceSearch ? catPieces.filter((p: Piece) => p.name.toLowerCase().includes(pieceSearch) || p.code.toLowerCase().includes(pieceSearch)) : catPieces;
-                  const perPage = 8;
-                  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-                  const paged = filtered.slice((piecePage - 1) * perPage, piecePage * perPage);
-                  if (catPieces.length === 0) return <div className="flex items-center justify-center h-24 text-center"><p className="text-sm text-[var(--fg-muted)]">Nenhuma peça na categoria "{modalGroup.group}".</p></div>;
-                  if (filtered.length === 0) return <div className="flex items-center justify-center h-24 text-xs text-[var(--fg-muted)]">Nenhuma peça encontrada.</div>;
-                  return (
-                    <>
-                      <div className="space-y-2">
-                        {paged.map((p: Piece) => (
-                          <button key={p.id} type="button" onClick={() => handleSelectPrimary(modalGroup.group, p)}
-                            className={`w-full text-left px-3 py-2.5 rounded-[6px] border text-sm transition-all flex items-center gap-3 ${partSelections[modalGroup.group]?.primaryId === p.id ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                            {p.image ? (
-                              <button type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setPreviewImage(p.image || null); }}>
-                                <img src={p.image} alt={p.name} className="w-9 h-9 rounded-[6px] object-cover border border-[var(--border)] shrink-0 hover:ring-2 hover:ring-[var(--accent)] transition-all cursor-pointer" />
-                              </button>
-                            ) : (
-                              <div className="w-9 h-9 rounded-[6px] bg-[var(--bg)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="box" size={16} /></div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{p.name}</div>
-                              <div className="flex items-center gap-2 text-[11px] text-[var(--fg-secondary)]">
-                                <span className="font-mono">{p.code}</span>
-                                <span>· Est: {p.stock} {p.unit || 'un'}</span>
-                              </div>
-                            </div>
-                            {partSelections[modalGroup.group]?.primaryId === p.id && <Icon name="check-circle" size={16} />}
-                          </button>
-                        ))}
-                      </div>
-                      {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-1 mt-3">
-                          <button type="button" onClick={() => setPiecePage(p => Math.max(1, p - 1))} disabled={piecePage === 1} className={`w-7 h-7 rounded text-[11px] ${piecePage === 1 ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>‹</button>
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg: number) => (
-                            <button key={pg} onClick={() => setPiecePage(pg)} className={`w-7 h-7 rounded text-[11px] ${pg === piecePage ? 'bg-[var(--accent)] text-white' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>{pg}</button>
-                          ))}
-                          <button type="button" onClick={() => setPiecePage(p => Math.min(totalPages, p + 1))} disabled={piecePage === totalPages} className={`w-7 h-7 rounded text-[11px] ${piecePage === totalPages ? 'text-[var(--fg-muted)] opacity-30' : 'text-[var(--fg-secondary)] hover:bg-[var(--bg)]'}`}>›</button>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()
-              )}
-            </div>
-            <div className="mt-3 pt-3 border-t border-[var(--border)]"><Button variant="ghost" onClick={() => { setModalGroup(null); setPieceSearch(''); setPiecePage(1); }} className="w-full">Fechar</Button></div>
-          </div>
-        </div>
+        <PieceSelector
+          open={!!modalGroup}
+          onOpenChange={(open) => { if (!open) setModalGroup(null); }}
+          pieces={modalGroup.type === 'alternative' && modalGroup.alternatives
+            ? modalGroup.alternatives.map(a => a.piece)
+            : pieces.filter(p => p.category === modalGroup.group)
+          }
+          selectedId={modalGroup.type === 'primary'
+            ? partSelections[modalGroup.group]?.primaryId
+            : partSelections[modalGroup.group]?.alternativeId
+          }
+          onSelect={(piece) => {
+            if (modalGroup.type === 'alternative') {
+              const alt = modalGroup.alternatives?.find(a => a.piece.id === piece.id);
+              if (alt) handleSelectAlternative(modalGroup.group, alt);
+            } else {
+              handleSelectPrimary(modalGroup.group, piece);
+            }
+          }}
+          title={modalGroup.type === 'primary' ? `Selecionar peça principal - ${modalGroup.group}` : `Selecionar peça alternativa - ${modalGroup.group}`}
+        />
       )}
 
 
