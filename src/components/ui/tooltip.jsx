@@ -4,6 +4,7 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
 
 import { cn } from "@/lib/utils"
 
+/** @param {any} props */
 function TooltipProvider({
   delay = 0,
   ...props
@@ -11,18 +12,21 @@ function TooltipProvider({
   return (<TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delay} {...props} />);
 }
 
+/** @param {any} props */
 function Tooltip({
   ...props
 }) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 }
 
+/** @param {any} props */
 function TooltipTrigger({
   ...props
 }) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
+/** @param {any} props */
 function TooltipContent({
   className,
   side = "top",

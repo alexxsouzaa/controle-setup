@@ -1,15 +1,15 @@
 import { useQueries } from '@tanstack/react-query';
-import { getStorage } from '../lib/storage';
+import { machinesApi, productsApi, piecesApi, flowsApi, formatosApi } from '../lib/api';
 import type { Stats } from '../types';
 
 export function useStats(): Stats {
   const results = useQueries({
     queries: [
-      { queryKey: ['machines'], queryFn: () => getStorage().machines, staleTime: Infinity },
-      { queryKey: ['products'], queryFn: () => getStorage().products, staleTime: Infinity },
-      { queryKey: ['pieces'], queryFn: () => getStorage().pieces, staleTime: Infinity },
-      { queryKey: ['flows'], queryFn: () => getStorage().flows, staleTime: Infinity },
-      { queryKey: ['formatos'], queryFn: () => getStorage().formatos, staleTime: Infinity },
+      { queryKey: ['machines'], queryFn: () => machinesApi.list(), staleTime: Infinity },
+      { queryKey: ['products'], queryFn: () => productsApi.list(), staleTime: Infinity },
+      { queryKey: ['pieces'], queryFn: () => piecesApi.list(), staleTime: Infinity },
+      { queryKey: ['flows'], queryFn: () => flowsApi.list(), staleTime: Infinity },
+      { queryKey: ['formatos'], queryFn: () => formatosApi.list(), staleTime: Infinity },
     ],
   });
 

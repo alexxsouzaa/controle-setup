@@ -1,3 +1,8 @@
+---
+name: setup-workflow
+description: Use for implementing the Controle de Setup business flows — Novo Fluxo de Setup wizard (contexto, produto, formato, peças, revisão, concluído), product/part registration, automatic naming and versioning, and dependent recalculation.
+---
+
 # Setup Workflow Skill
 
 ## Identidade

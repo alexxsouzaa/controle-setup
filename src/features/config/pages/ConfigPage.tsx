@@ -6,6 +6,7 @@ import { Input } from '../../../components/Input';
 import { useMachines } from '../../../queries';
 import { useConfig, useUpdateConfig } from '../../../queries';
 import { useLogAction } from '../../../queries';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { Config, UoConfig } from '../../../types';
 
 const TABS = [
@@ -85,6 +86,8 @@ export function ConfigPage() {
   });
   const [uoEdit, setUoEdit] = useState<number | null>(null);
   const [newUoName, setNewUoName] = useState<string>('');
+  const [confirmRemoveUo, setConfirmRemoveUo] = useState<number | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const allMachineUos = useMemo(() => [...new Set(machines.map(m => m.uo).filter(Boolean))].sort(), [machines]);
   const setUoValue = (key: string, values: string[]) => setUoConfigs(prev => prev.map((u, i) => i === uoEdit ? { ...u, [key]: values } : u));
@@ -100,10 +103,7 @@ export function ConfigPage() {
   };
 
   const removeUo = (idx: number) => {
-    if (!confirm(`Remover UO "${uoConfigs[idx].uo}"?`)) return;
-    setUoList(prev => prev.filter(u => u !== uoConfigs[idx].uo));
-    setUoConfigs(prev => prev.filter((_, i) => i !== idx));
-    if (uoEdit != null && uoEdit >= idx) setUoEdit(uoEdit === idx ? null : uoEdit - 1);
+    setConfirmRemoveUo(idx);
   };
 
   const handleSave = () => {
@@ -231,15 +231,7 @@ export function ConfigPage() {
                   <div className="text-[13px] font-medium text-[var(--fg)]">Gerenciar dados</div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => window.location.href = '/exportar'} className="px-3 py-1.5 rounded-[6px] border border-[var(--border)] text-[13px] font-medium text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] hover:border-[var(--fg-muted)] transition-all">Exportar dados</button>
-                    <button type="button" onClick={() => {
-                      if (confirm('Resetar todos os dados? Esta ação não pode ser desfeita.')) {
-                        if (confirm('Confirma a exclusão total dos dados do sistema?')) {
-                          localStorage.setItem('controle-setup-data', JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }));
-                          localStorage.removeItem('cs-theme');
-                          window.location.href = window.location.pathname + '?reset=' + Date.now();
-                        }
-                      }
-                    }} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[13px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-all">Resetar dados</button>
+                    <button type="button" onClick={() => setConfirmReset(true)} className="px-3 py-1.5 rounded-[6px] border border-[var(--danger)] text-[13px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-all">Resetar dados</button>
                   </div>
                 </div>
               </div>
@@ -313,6 +305,32 @@ export function ConfigPage() {
         }}>Descartar</Button>
         <Button variant="primary" onClick={handleSave}><Icon name="check-circle" size={15} />Salvar alterações</Button>
       </div>
+
+      <ConfirmDialog
+        open={confirmRemoveUo !== null}
+        onOpenChange={(o) => { if (!o) setConfirmRemoveUo(null); }}
+        title={confirmRemoveUo !== null ? `Remover UO "${uoConfigs[confirmRemoveUo]?.uo}"?` : 'Remover UO?'}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          if (confirmRemoveUo === null) return;
+          const idx = confirmRemoveUo;
+          setUoList(prev => prev.filter(u => u !== uoConfigs[idx].uo));
+          setUoConfigs(prev => prev.filter((_, i) => i !== idx));
+          if (uoEdit != null && uoEdit >= idx) setUoEdit(uoEdit === idx ? null : uoEdit - 1);
+        }}
+      />
+      <ConfirmDialog
+        open={confirmReset}
+        onOpenChange={setConfirmReset}
+        title="Resetar todos os dados?"
+        description="Confirma a exclusão total dos dados do sistema? Esta ação não pode ser desfeita."
+        confirmLabel="Resetar"
+        onConfirm={() => {
+          localStorage.setItem('controle-setup-data', JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }));
+          localStorage.removeItem('cs-theme');
+          window.location.href = window.location.pathname + '?reset=' + Date.now();
+        }}
+      />
     </div>
   );
 }

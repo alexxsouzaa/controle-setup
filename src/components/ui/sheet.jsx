@@ -5,30 +5,35 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
+/** @param {any} props */
 function Sheet({
   ...props
 }) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }
 
+/** @param {any} props */
 function SheetTrigger({
   ...props
 }) {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
+/** @param {any} props */
 function SheetClose({
   ...props
 }) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
+/** @param {any} props */
 function SheetPortal({
   ...props
 }) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
+/** @param {any} props */
 function SheetOverlay({
   className,
   ...props
@@ -44,6 +49,7 @@ function SheetOverlay({
   );
 }
 
+/** @param {any} props */
 function SheetContent({
   className,
   children,
@@ -78,6 +84,7 @@ function SheetContent({
   );
 }
 
+/** @param {any} props */
 function SheetHeader({
   className,
   ...props
@@ -90,6 +97,7 @@ function SheetHeader({
   );
 }
 
+/** @param {any} props */
 function SheetFooter({
   className,
   ...props
@@ -102,6 +110,7 @@ function SheetFooter({
   );
 }
 
+/** @param {any} props */
 function SheetTitle({
   className,
   ...props
@@ -114,6 +123,7 @@ function SheetTitle({
   );
 }
 
+/** @param {any} props */
 function SheetDescription({
   className,
   ...props

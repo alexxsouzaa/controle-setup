@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/input-group"
 import { SearchIcon, CheckIcon } from "lucide-react"
 
+/** @param {any} props */
 function Command({
   className,
   ...props
@@ -30,6 +31,7 @@ function Command({
   );
 }
 
+/** @param {any} props */
 function CommandDialog({
   title = "Command Palette",
   description = "Search for a command to run...",
@@ -53,6 +55,7 @@ function CommandDialog({
   );
 }
 
+/** @param {any} props */
 function CommandInput({
   className,
   ...props
@@ -75,6 +78,7 @@ function CommandInput({
   );
 }
 
+/** @param {any} props */
 function CommandList({
   className,
   ...props
@@ -90,6 +94,7 @@ function CommandList({
   );
 }
 
+/** @param {any} props */
 function CommandEmpty({
   className,
   ...props
@@ -102,6 +107,7 @@ function CommandEmpty({
   );
 }
 
+/** @param {any} props */
 function CommandGroup({
   className,
   ...props
@@ -117,6 +123,7 @@ function CommandGroup({
   );
 }
 
+/** @param {any} props */
 function CommandSeparator({
   className,
   ...props
@@ -129,6 +136,7 @@ function CommandSeparator({
   );
 }
 
+/** @param {any} props */
 function CommandItem({
   className,
   children,
@@ -149,6 +157,7 @@ function CommandItem({
   );
 }
 
+/** @param {any} props */
 function CommandShortcut({
   className,
   ...props

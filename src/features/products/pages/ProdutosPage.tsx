@@ -6,6 +6,9 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useDeleteProducts, useLogAction } from '../../../queries';
+import { processImageFile } from '../../../lib/image';
+import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { Product } from '../../../types';
 
 const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
@@ -35,20 +38,11 @@ export function ProdutosPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
+  const [confirmTarget, setConfirmTarget] = useState<{ kind: 'bulk' | 'single' } | null>(null);
   const perPage = 10;
   const [form, setForm] = useState<ProductForm>({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' });
   const [imageError, setImageError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const MAX_IMAGE_SIZE = 500 * 1024;
-
-  const readFileAsDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-      reader.readAsDataURL(file);
-    });
-  };
 
   const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' }); setEditingId(null); setImageError(''); };
 
@@ -56,11 +50,13 @@ export function ProdutosPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
-    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
-    setImageError('');
-    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
-    catch { setImageError('Erro ao processar a imagem.'); }
+    try {
+      const dataURL = await processImageFile(file);
+      setForm(prev => ({ ...prev, image: dataURL }));
+      setImageError('');
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : 'Erro ao processar a imagem.');
+    }
   };
 
   const handleSave = () => {
@@ -74,7 +70,7 @@ export function ProdutosPage() {
   };
 
   const startEdit = (p: Product) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.image || '', image: p.image || '' });
+    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '', image: p.image || '' });
     setEditingId(p.id);
     setTab('create');
   };
@@ -95,12 +91,10 @@ export function ProdutosPage() {
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
-    if (!confirm(`Excluir ${selectedCount} produto${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
-    deleteProducts(Array.from(selected));
-    logAction({ type: 'delete', entity: 'Produto', detail: `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
-    toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
-    clearSelection();
+    setConfirmTarget({ kind: 'bulk' });
   };
+
+  const drawerRef = useDialogAccessibility(!!drawerItem, () => setDrawerItem(null));
 
 
   return (
@@ -112,7 +106,7 @@ export function ProdutosPage() {
               { label: 'Produtos', value: products.length, icon: 'grid-3x3' },
               { label: 'Categorias', value: CATEGORIES.length, icon: 'box' },
               { label: 'Com Código', value: products.filter((p: Product) => p.code).length, icon: 'file' },
-              { label: 'Com Formato', value: products.filter((p: Product) => p.image).length, icon: 'settings' },
+              { label: 'Com Formato', value: products.filter((p: Product) => p.formato).length, icon: 'settings' },
             ].map((s, i) => (
               <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
@@ -322,9 +316,9 @@ export function ProdutosPage() {
       )}
       {drawerItem && (
         <>
-          <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setDrawerItem(null)} />
-          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(420px, 90vw)' }}
-            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col">
+          <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} />
+          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} ref={drawerRef} tabIndex={-1} style={{ width: 'min(420px, 90vw)' }}
+            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col outline-none">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-[4px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-muted)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
@@ -336,6 +330,11 @@ export function ProdutosPage() {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               <div className="space-y-3">
+                {drawerItem.image && (
+                  <div className="flex items-center gap-3">
+                    <img src={drawerItem.image} alt={drawerItem.name} className="w-16 h-16 rounded-[6px] object-cover border border-[var(--border)]" />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Código</div>
@@ -352,7 +351,7 @@ export function ProdutosPage() {
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Formato</div>
-                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.image || '—'}</div>
+                  <div className="text-[13px] text-[var(--fg)] mt-0.5">{drawerItem.formato || '—'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">Criado em</div>
@@ -362,12 +361,33 @@ export function ProdutosPage() {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deleteProduct(drawerItem.id); logAction({ type: 'delete', entity: 'Produto', detail: `${drawerItem.name} excluído` }); toast('Produto excluído com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => setConfirmTarget({ kind: 'single' })}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>
         </>
       )}
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        onOpenChange={(o) => { if (!o) setConfirmTarget(null); }}
+        title={confirmTarget?.kind === 'bulk'
+          ? `Excluir ${selectedCount} produto${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`
+          : drawerItem ? `Excluir ${drawerItem.name}?` : 'Excluir?'}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          if (confirmTarget?.kind === 'bulk') {
+            deleteProducts(Array.from(selected));
+            logAction({ type: 'delete', entity: 'Produto', detail: `${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
+            toast(`${selectedCount} produto${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+            clearSelection();
+          } else if (drawerItem) {
+            deleteProduct(drawerItem.id);
+            logAction({ type: 'delete', entity: 'Produto', detail: `${drawerItem.name} excluído` });
+            toast('Produto excluído com sucesso!');
+            setDrawerItem(null);
+          }
+        }}
+      />
     </div>
   );
 }

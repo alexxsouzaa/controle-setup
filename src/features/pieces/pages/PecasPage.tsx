@@ -9,9 +9,11 @@ import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces
 import { useMachines } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
 import { Piece, Machine } from '../../../types';
+import { processImageFile } from '../../../lib/image';
+import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 
 const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
-const MAX_IMAGE_SIZE = 500 * 1024;
 
 interface PieceForm {
   name: string;
@@ -24,15 +26,6 @@ interface PieceForm {
   image: string;
   createdBy: string;
   createdAt: string;
-}
-
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-    reader.readAsDataURL(file);
-  });
 }
 
 const CATEGORY_STRATEGIES: Record<string, string> = {
@@ -75,12 +68,13 @@ export function PecasPage() {
   const [search, setSearch] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [drawerItem, setDrawerItem] = useState<Piece | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ kind: 'bulk' | 'single' } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const perPage = 10;
-  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
   const [imageError, setImageError] = useState<string>('');
   const [machineDropdownOpen, setMachineDropdownOpen] = useState<boolean>(false);
   const [machineSearch, setMachineSearch] = useState<string>('');
@@ -93,6 +87,8 @@ export function PecasPage() {
     setEditingId(null); setImageError(''); setMachineSearch('');
   };
 
+  const drawerRef = useDialogAccessibility(!!drawerItem, () => setDrawerItem(null));
+
   const toggleMachine = (id: string) => setForm(prev => {
     const ids = prev.compatibleMachineIds.includes(id) ? prev.compatibleMachineIds.filter((mid: string) => mid !== id) : [...prev.compatibleMachineIds, id];
     return { ...prev, compatibleMachineIds: ids };
@@ -102,11 +98,13 @@ export function PecasPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
-    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
-    setImageError('');
-    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
-    catch { setImageError('Erro ao processar a imagem.'); }
+    try {
+      const dataURL = await processImageFile(file);
+      setForm(prev => ({ ...prev, image: dataURL }));
+      setImageError('');
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : 'Erro ao processar a imagem.');
+    }
   };
 
   const handleSave = () => {
@@ -154,11 +152,7 @@ export function PecasPage() {
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
-    if (!confirm(`Excluir ${selectedCount} peça${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
-    deletePieces(Array.from(selected));
-    logAction({ type: 'delete', entity: 'Peça', detail: `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
-    toast(`${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
-    clearSelection();
+    setConfirmTarget({ kind: 'bulk' });
   };
 
   const compNames = (p: Piece): string[] => {
@@ -466,9 +460,9 @@ export function PecasPage() {
       )}
       {drawerItem && (
         <>
-          <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && setDrawerItem(null)} />
-          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} style={{ width: 'min(420px, 90vw)' }}
-            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col">
+          <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={() => setDrawerItem(null)} />
+          <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${drawerItem.name}`} ref={drawerRef} tabIndex={-1} style={{ width: 'min(420px, 90vw)' }}
+            className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--bg)] border-l border-[var(--border)] shadow-lg flex flex-col outline-none">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
               <div className="flex items-center gap-3 min-w-0">
                 {drawerItem.image ? (
@@ -508,13 +502,34 @@ export function PecasPage() {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--border)] shrink-0">
               <Button variant="ghost" size="sm" onClick={() => { const p = drawerItem; setDrawerItem(null); startEdit(p); }}>Editar</Button>
-              <button type="button" onClick={() => { if (confirm(`Excluir ${drawerItem.name}?`)) { deletePiece(drawerItem.id); logAction({ type: 'delete', entity: 'Peça', detail: `${drawerItem.name} excluída` }); toast('Peça excluída com sucesso!'); setDrawerItem(null); } }}
+              <button type="button" onClick={() => setConfirmTarget({ kind: 'single' })}
                 className="px-3 py-1.5 rounded-[4px] border border-[var(--danger)] text-[11px] font-medium text-[var(--danger)] hover:bg-[var(--danger-muted)] transition-colors">Excluir</button>
             </div>
           </div>
         </>
       )}
       {previewImage && <ImagePreview src={previewImage} alt="Foto da peça" onClose={() => setPreviewImage(null)} />}
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        onOpenChange={(o) => { if (!o) setConfirmTarget(null); }}
+        title={confirmTarget?.kind === 'bulk'
+          ? `Excluir ${selectedCount} peça${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`
+          : drawerItem ? `Excluir ${drawerItem.name}?` : 'Excluir?'}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          if (confirmTarget?.kind === 'bulk') {
+            deletePieces(Array.from(selected));
+            logAction({ type: 'delete', entity: 'Peça', detail: `${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
+            toast(`${selectedCount} peça${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+            clearSelection();
+          } else if (drawerItem) {
+            deletePiece(drawerItem.id);
+            logAction({ type: 'delete', entity: 'Peça', detail: `${drawerItem.name} excluída` });
+            toast('Peça excluída com sucesso!');
+            setDrawerItem(null);
+          }
+        }}
+      />
     </div>
   );
 }

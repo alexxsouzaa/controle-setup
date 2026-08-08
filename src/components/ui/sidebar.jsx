@@ -41,6 +41,7 @@ function useSidebar() {
   return context
 }
 
+/** @param {any} props */
 function SidebarProvider({
   defaultOpen = true,
   open: openProp,
@@ -126,6 +127,7 @@ function SidebarProvider({
   );
 }
 
+/** @param {any} props */
 function Sidebar({
   side = "left",
   variant = "sidebar",
@@ -218,6 +220,7 @@ function Sidebar({
   );
 }
 
+/** @param {any} props */
 function SidebarTrigger({
   className,
   onClick,
@@ -243,6 +246,7 @@ function SidebarTrigger({
   );
 }
 
+/** @param {any} props */
 function SidebarRail({
   className,
   ...props
@@ -270,6 +274,7 @@ function SidebarRail({
   );
 }
 
+/** @param {any} props */
 function SidebarInset({
   className,
   ...props
@@ -285,6 +290,7 @@ function SidebarInset({
   );
 }
 
+/** @param {any} props */
 function SidebarInput({
   className,
   ...props
@@ -298,6 +304,7 @@ function SidebarInput({
   );
 }
 
+/** @param {any} props */
 function SidebarHeader({
   className,
   ...props
@@ -311,6 +318,7 @@ function SidebarHeader({
   );
 }
 
+/** @param {any} props */
 function SidebarFooter({
   className,
   ...props
@@ -324,6 +332,7 @@ function SidebarFooter({
   );
 }
 
+/** @param {any} props */
 function SidebarSeparator({
   className,
   ...props
@@ -337,6 +346,7 @@ function SidebarSeparator({
   );
 }
 
+/** @param {any} props */
 function SidebarContent({
   className,
   ...props
@@ -353,6 +363,7 @@ function SidebarContent({
   );
 }
 
+/** @param {any} props */
 function SidebarGroup({
   className,
   ...props
@@ -366,6 +377,7 @@ function SidebarGroup({
   );
 }
 
+/** @param {any} props */
 function SidebarGroupLabel({
   className,
   render,
@@ -387,6 +399,7 @@ function SidebarGroupLabel({
   });
 }
 
+/** @param {any} props */
 function SidebarGroupAction({
   className,
   render,
@@ -408,6 +421,7 @@ function SidebarGroupAction({
   });
 }
 
+/** @param {any} props */
 function SidebarGroupContent({
   className,
   ...props
@@ -421,6 +435,7 @@ function SidebarGroupContent({
   );
 }
 
+/** @param {any} props */
 function SidebarMenu({
   className,
   ...props
@@ -434,6 +449,7 @@ function SidebarMenu({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuItem({
   className,
   ...props
@@ -469,6 +485,7 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
+/** @param {any} props */
 function SidebarMenuButton({
   render,
   isActive = false,
@@ -515,6 +532,7 @@ function SidebarMenuButton({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuAction({
   className,
   render,
@@ -539,6 +557,7 @@ function SidebarMenuAction({
   });
 }
 
+/** @param {any} props */
 function SidebarMenuBadge({
   className,
   ...props
@@ -555,6 +574,7 @@ function SidebarMenuBadge({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuSkeleton({
   className,
   showIcon = false,
@@ -586,6 +606,7 @@ function SidebarMenuSkeleton({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuSub({
   className,
   ...props
@@ -602,6 +623,7 @@ function SidebarMenuSub({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuSubItem({
   className,
   ...props
@@ -615,6 +637,7 @@ function SidebarMenuSubItem({
   );
 }
 
+/** @param {any} props */
 function SidebarMenuSubButton({
   render,
   size = "md",

@@ -6,24 +6,28 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
+/** @param {any} props */
 function DropdownMenu({
   ...props
 }) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
+/** @param {any} props */
 function DropdownMenuPortal({
   ...props
 }) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
 }
 
+/** @param {any} props */
 function DropdownMenuTrigger({
   ...props
 }) {
   return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+/** @param {any} props */
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
@@ -52,12 +56,14 @@ function DropdownMenuContent({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuGroup({
   ...props
 }) {
   return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
 
+/** @param {any} props */
 function DropdownMenuLabel({
   className,
   inset,
@@ -72,9 +78,10 @@ function DropdownMenuLabel({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuItem({
-  className,
-  inset,
+  className = "",
+  inset = false,
   variant = "default",
   ...props
 }) {
@@ -91,12 +98,14 @@ function DropdownMenuItem({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuSub({
   ...props
 }) {
   return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />;
 }
 
+/** @param {any} props */
 function DropdownMenuSubTrigger({
   className,
   inset,
@@ -118,6 +127,7 @@ function DropdownMenuSubTrigger({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuSubContent({
   align = "start",
   alignOffset = -3,
@@ -141,6 +151,7 @@ function DropdownMenuSubContent({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuCheckboxItem({
   className,
   children,
@@ -170,12 +181,14 @@ function DropdownMenuCheckboxItem({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuRadioGroup({
   ...props
 }) {
   return (<MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />);
 }
 
+/** @param {any} props */
 function DropdownMenuRadioItem({
   className,
   children,
@@ -203,6 +216,7 @@ function DropdownMenuRadioItem({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuSeparator({
   className,
   ...props
@@ -215,6 +229,7 @@ function DropdownMenuSeparator({
   );
 }
 
+/** @param {any} props */
 function DropdownMenuShortcut({
   className,
   ...props

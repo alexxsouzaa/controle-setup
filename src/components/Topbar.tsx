@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '@/contexts/ThemeContext';

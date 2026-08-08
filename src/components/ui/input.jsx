@@ -3,6 +3,7 @@ import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { cn } from "@/lib/utils"
 
+/** @param {any} props */
 function Input({
   className,
   type,

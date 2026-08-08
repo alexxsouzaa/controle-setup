@@ -4,24 +4,28 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
+/** @param {any} props */
 function AlertDialog({
   ...props
 }) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
 }
 
+/** @param {any} props */
 function AlertDialogTrigger({
   ...props
 }) {
   return (<AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />);
 }
 
+/** @param {any} props */
 function AlertDialogPortal({
   ...props
 }) {
   return (<AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />);
 }
 
+/** @param {any} props */
 function AlertDialogOverlay({
   className,
   ...props
@@ -37,6 +41,7 @@ function AlertDialogOverlay({
   );
 }
 
+/** @param {any} props */
 function AlertDialogContent({
   className,
   size = "default",
@@ -57,6 +62,7 @@ function AlertDialogContent({
   );
 }
 
+/** @param {any} props */
 function AlertDialogHeader({
   className,
   ...props
@@ -72,6 +78,7 @@ function AlertDialogHeader({
   );
 }
 
+/** @param {any} props */
 function AlertDialogFooter({
   className,
   ...props
@@ -87,6 +94,7 @@ function AlertDialogFooter({
   );
 }
 
+/** @param {any} props */
 function AlertDialogMedia({
   className,
   ...props
@@ -102,6 +110,7 @@ function AlertDialogMedia({
   );
 }
 
+/** @param {any} props */
 function AlertDialogTitle({
   className,
   ...props
@@ -117,6 +126,7 @@ function AlertDialogTitle({
   );
 }
 
+/** @param {any} props */
 function AlertDialogDescription({
   className,
   ...props
@@ -132,6 +142,7 @@ function AlertDialogDescription({
   );
 }
 
+/** @param {any} props */
 function AlertDialogAction({
   className,
   ...props
@@ -139,6 +150,7 @@ function AlertDialogAction({
   return (<Button data-slot="alert-dialog-action" className={cn(className)} {...props} />);
 }
 
+/** @param {any} props */
 function AlertDialogCancel({
   className,
   variant = "outline",

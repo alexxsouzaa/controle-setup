@@ -1,3 +1,8 @@
+---
+name: setup-domain
+description: Use for any feature development in the Controle de Setup project — domain entities (Máquina, Linha, Produto, Formato, Peça, Regras de Compatibilidade, Fluxo de Setup), volumetria, the recommend-and-validate principle, flow versioning and audit fields. Trigger whenever building features, schemas, or domain logic.
+---
+
 # Setup Domain Skill
 
 ## Identidade

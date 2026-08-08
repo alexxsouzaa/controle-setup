@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMachines, useDeleteMachine, useLogAction } from '../../../queries';
 import { useFlows } from '../../../queries/useFlows';
@@ -13,8 +12,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { TriangleAlertIcon } from 'lucide-react';
 import { Separator } from '../../../components/ui/separator';
 import { useMemo, useState } from 'react';
+import { Machine } from '../../../types';
 
-const getLines = (m) => m.lines || (m.line ? [m.line] : []);
+const getLines = (m: Machine) => m.lines || (m.line ? [m.line] : []);
 
 export function MachineDetailsPage() {
   const { id } = useParams();
@@ -26,7 +26,7 @@ export function MachineDetailsPage() {
   const { mutate: logAction } = useLogAction();
   const { toast } = useToast();
   const currentUser = useAppStore(s => s.currentUser);
-  const [previewImage, setPreviewImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const machine = machines.find((m) => m.id === id);
 
@@ -77,7 +77,7 @@ export function MachineDetailsPage() {
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-6">
         <div className="flex items-start gap-4">
           {machine.image ? (
-            <button type="button" onClick={() => setPreviewImage(machine.image)} className="shrink-0 cursor-pointer">
+            <button type="button" onClick={() => machine.image && setPreviewImage(machine.image)} className="shrink-0 cursor-pointer">
               <img src={machine.image} alt={machine.name} className="w-16 h-16 rounded-[8px] object-cover border border-[var(--border)]" />
             </button>
           ) : (

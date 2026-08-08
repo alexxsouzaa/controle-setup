@@ -3,6 +3,7 @@ import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area"
 
 import { cn } from "@/lib/utils"
 
+/** @param {any} props */
 function ScrollArea({
   className,
   children,
@@ -21,6 +22,7 @@ function ScrollArea({
   );
 }
 
+/** @param {any} props */
 function ScrollBar({
   className,
   orientation = "vertical",

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as React from "react"
 import { useLocation } from 'react-router-dom'
 import { useAppStore } from '@/stores/appStore'
