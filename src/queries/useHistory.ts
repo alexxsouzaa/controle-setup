@@ -32,3 +32,11 @@ export function useClearHistory() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [HISTORY_KEY] }),
   });
 }
+
+export function useRestoreHistory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entries: HistoryEntry[]) => { updateStorageEntity(HISTORY_KEY, () => entries.slice(0, 200)); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: [HISTORY_KEY] }),
+  });
+}
