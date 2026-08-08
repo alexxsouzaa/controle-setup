@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Outlet } from 'react-router-dom';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { SidebarProvider } from '../components/ui/sidebar';

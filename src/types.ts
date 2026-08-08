@@ -31,6 +31,7 @@ export interface Product {
   photo?: string;
   image?: string;
   formatType?: string;
+  formato?: string;
   notes?: string;
   created?: string;
   createdAt?: string;

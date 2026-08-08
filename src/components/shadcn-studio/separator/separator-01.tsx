@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Separator } from '@/components/ui/separator'
 
 const SeparatorDemo = () => {

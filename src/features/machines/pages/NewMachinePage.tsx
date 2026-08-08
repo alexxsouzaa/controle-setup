@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
@@ -8,11 +7,11 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { getToolingOptions } from '../../compatibility';
+import { processImageFile } from '../../../lib/image';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { useMachines, useAddMachine, useUpdateMachine, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
 import { Machine, Config } from '../../../types';
-
-const MAX_IMAGE_SIZE = 500 * 1024;
 
 interface MachineForm {
   name: string;
@@ -21,15 +20,6 @@ interface MachineForm {
   image: string;
   createdBy: string;
   toolingCategories: string[];
-}
-
-function readFileAsDataURL(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-    reader.readAsDataURL(file);
-  });
 }
 
 export function NewMachinePage() {
@@ -52,6 +42,7 @@ export function NewMachinePage() {
   const [toolingSearch, setToolingSearch] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState<boolean>(false);
+  const [confirmDiscard, setConfirmDiscard] = useState<boolean>(false);
 
   const editingId = editId || null;
   const isEdit = !!editId;
@@ -104,11 +95,13 @@ export function NewMachinePage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setImageError('Formato de imagem não suportado.'); return; }
-    if (file.size > MAX_IMAGE_SIZE) { setImageError(`Imagem muito grande (máx. ${Math.round(MAX_IMAGE_SIZE / 1024)} KB).`); return; }
-    setImageError('');
-    try { const dataURL = await readFileAsDataURL(file); setForm(prev => ({ ...prev, image: dataURL })); }
-    catch { setImageError('Erro ao processar a imagem.'); }
+    try {
+      const dataURL = await processImageFile(file);
+      setForm(prev => ({ ...prev, image: dataURL }));
+      setImageError('');
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : 'Erro ao processar a imagem.');
+    }
   };
 
   const handleSave = () => {
@@ -132,7 +125,7 @@ export function NewMachinePage() {
 
   const handleBack = () => {
     if (form.name || form.lines.length > 0 || form.uo || form.image) {
-      if (confirm('Descartar alterações?')) navigate('/maquinas');
+      setConfirmDiscard(true);
     } else {
       navigate('/maquinas');
     }
@@ -147,7 +140,7 @@ export function NewMachinePage() {
               <Icon name="check-circle" size={28} />
             </div>
             <h3 className="text-[16px] font-semibold mb-1">{editingId ? 'Máquina atualizada!' : 'Máquina criada!'}</h3>
-            <p className="text-[14px] font-medium text-[var(--accent)] mt-1 mb-1">{form.name}</p>
+            <p className="text-[14px] font-medium text-[var(--accent-fg)] mt-1 mb-1">{form.name}</p>
             <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
             <div className="flex gap-3 justify-center">
               <Button variant="primary" size="sm" onClick={() => navigate('/maquinas')}><Icon name="box" size={14} />Ver máquinas</Button>
@@ -315,6 +308,14 @@ export function NewMachinePage() {
         </div>
       </div>
       )}
+      <ConfirmDialog
+        open={confirmDiscard}
+        onOpenChange={setConfirmDiscard}
+        title="Descartar alterações?"
+        description="Os dados informados serão perdidos."
+        confirmLabel="Descartar"
+        onConfirm={() => navigate('/maquinas')}
+      />
     </div>
   );
 }

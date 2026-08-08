@@ -10,6 +10,8 @@ import { getMachineTooling, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../../../queries';
 import { useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
+import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { Formato, Piece, Machine, Config } from '../../../types';
 
 const STEPS = ['Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
@@ -61,6 +63,7 @@ export function FormatosPage() {
   const [step, setStep] = useState<number>(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [page, setPage] = useState<number>(1);
   const perPage = 10;
   const [savedName, setSavedName] = useState<string>('');
@@ -68,6 +71,8 @@ export function FormatosPage() {
   const [selectedUo, setSelectedUo] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [diameter, setDiameter] = useState<string>('');
+
+  const previewRef = useDialogAccessibility(!!previewImage, () => setPreviewImage(null));
 
   const [formatType, setFormatType] = useState<string>('');
   const [volume, setVolume] = useState<string>('');
@@ -237,11 +242,7 @@ export function FormatosPage() {
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
-    if (!confirm(`Excluir ${selectedCount} formato${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
-    deleteFormatos(Array.from(selected));
-    logAction({ type: 'delete', entity: 'Formato', detail: `${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
-    toast(`${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
-    clearSelection();
+    setConfirmBulkDelete(true);
   };
 
   return (
@@ -557,7 +558,7 @@ export function FormatosPage() {
                             const isAlt = selectedAltPartIds.includes(p.id);
                             const disabled = Boolean(!isPrimary && !isAlt && primaryInCat && altInCat);
                             return (
-                              <div key={p.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isPrimary ? 'border-[var(--accent)] bg-[var(--accent-muted)]' : isAlt ? 'border-[var(--warning)] bg-[var(--warning-muted)]' : 'border-[var(--border)] bg-[var(--surface)]'} ${disabled ? 'opacity-40' : ''}`}>
+                              <div key={p.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isPrimary ? 'border-[var(--fg)] bg-[var(--accent-muted)]' : isAlt ? 'border-[var(--warning)] bg-[var(--warning-muted)]' : 'border-[var(--border)] bg-[var(--surface)]'} ${disabled ? 'opacity-40' : ''}`}>
                                 <div className="flex items-center gap-2 min-w-0">
                                   {p.image ? (
                                     <img src={p.image} alt={p.name} className="w-8 h-8 rounded object-cover border border-[var(--border)] shrink-0 cursor-pointer" onClick={() => setPreviewImage(p.image || null)} />
@@ -572,12 +573,12 @@ export function FormatosPage() {
                                 <div className="flex items-center gap-1 shrink-0">
                                   <button type="button" onClick={() => togglePart(p.id, group.category)}
                                     disabled={disabled && !isPrimary}
-                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isPrimary ? 'bg-[var(--accent)] text-white' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
+                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isPrimary ? 'bg-[var(--fg)] text-[var(--bg)]' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)]'}`}>
                                     Principal
                                   </button>
                                   <button type="button" onClick={() => toggleAltPart(p.id, group.category)}
                                     disabled={disabled && !isAlt}
-                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isAlt ? 'bg-[var(--warning)] text-white' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--accent)]'}`}>
+                                    className={`px-2 py-1 rounded text-[10px] font-medium transition-colors ${isAlt ? 'bg-[var(--warning)] text-[var(--bg)]' : disabled ? 'opacity-30 cursor-not-allowed' : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--fg-secondary)] hover:border-[var(--fg-muted)]'}`}>
                                     Alternativa
                                   </button>
                                 </div>
@@ -618,7 +619,7 @@ export function FormatosPage() {
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Configuração</span>
-                    <button type="button" onClick={() => go(1)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                    <button type="button" onClick={() => go(1)} className="text-xs text-[var(--accent-fg)] hover:underline">Editar</button>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div><div className="text-xs text-[var(--fg-secondary)]">UO</div><div className="font-medium">{selectedUo || '—'}</div></div>
@@ -632,7 +633,7 @@ export function FormatosPage() {
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Máquina</span>
-                    <button type="button" onClick={() => go(2)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                    <button type="button" onClick={() => go(2)} className="text-xs text-[var(--accent-fg)] hover:underline">Editar</button>
                   </div>
                   <div className="text-sm font-medium">{selectedMachine?.name || '—'}</div>
                   <div className="text-xs text-[var(--fg-secondary)]">UO: {selectedMachine?.uo} · Linha: {selectedLine || '—'} · Linhas: {(selectedMachine?.lines || (selectedMachine?.line ? [selectedMachine.line] : [])).join(', ')}</div>
@@ -641,7 +642,7 @@ export function FormatosPage() {
                 <div className="p-4 bg-[var(--bg)] rounded-lg border border-[var(--border)]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg-secondary)]">Peças</span>
-                    <button type="button" onClick={() => go(3)} className="text-xs text-[var(--accent)] hover:underline">Editar</button>
+                    <button type="button" onClick={() => go(3)} className="text-xs text-[var(--accent-fg)] hover:underline">Editar</button>
                   </div>
                   <div className="space-y-1">
                     {selectedPartIds.map((id: string) => { const p = pieces.find((pc: Piece) => pc.id === id); return p ? <div key={id} className="flex items-center gap-2 text-sm"><Icon name="check-circle" size={14} className="text-[var(--success)]" /><span className="font-medium">{p.name}</span><span className="text-xs text-[var(--fg-secondary)]">Principal</span></div> : null; })}
@@ -684,7 +685,7 @@ export function FormatosPage() {
               <Icon name="check-circle" size={32} />
             </div>
             <h3 className="text-xl font-semibold mb-1">{editingId ? 'Formato atualizado com sucesso!' : 'Formato criado com sucesso!'}</h3>
-            <div className="text-base font-medium text-[var(--accent)] mt-2 mb-1">{savedName}</div>
+            <div className="text-base font-medium text-[var(--accent-fg)] mt-2 mb-1">{savedName}</div>
             <p className="text-sm text-[var(--fg-secondary)] mb-6">{selectedUo} · {formatType} · {volumeNum}{volumeUnit}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="primary" onClick={() => { navigate('/formatos'); }}><Icon name="grid-3x3" size={16} />Ver formatos</Button>
@@ -697,9 +698,24 @@ export function FormatosPage() {
       {previewImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setPreviewImage(null)}>
           <div className="absolute inset-0 bg-[var(--overlay)]" />
-          <img src={previewImage} alt="Peça" className="relative max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg" onClick={(e: React.MouseEvent) => e.stopPropagation()} />
+          <div ref={previewRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Visualizar peça" className="relative outline-none">
+            <img src={previewImage} alt="Peça" className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-lg" onClick={(e: React.MouseEvent) => e.stopPropagation()} />
+          </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onOpenChange={setConfirmBulkDelete}
+        title={`Excluir ${selectedCount} formato${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          deleteFormatos(Array.from(selected));
+          logAction({ type: 'delete', entity: 'Formato', detail: `${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} em massa` });
+          toast(`${selectedCount} formato${selectedCount !== 1 ? 's' : ''} excluído${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+          clearSelection();
+        }}
+      />
     </div>
   );
 }

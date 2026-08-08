@@ -3,6 +3,7 @@ import { ToastContext } from '../../../contexts/ToastContext';
 import { Icon } from '../../../components/Icon';
 import { Button } from '../../../components/Button';
 import { EmptyState } from '../../../components/shared/EmptyState';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { useHistory, useClearHistory } from '../../../queries';
 
 const TYPE_ICONS = { create: 'check-circle', update: 'wrench', delete: 'alert', import: 'upload', export: 'download', duplicate: 'file' } as const;
@@ -22,6 +23,7 @@ export function HistoricoPage() {
   const { toast } = useContext(ToastContext) as { toast: (msg: string) => void };
   const [filter, setFilter] = useState<string>('');
   const [search, setSearch] = useState<string>('');
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const filtered = useMemo(() => {
     let items = history;
@@ -31,10 +33,8 @@ export function HistoricoPage() {
   }, [history, filter, search]);
 
   const handleClear = () => {
-    if (confirm('Limpar todo o histórico?')) {
-      clearHistory();
-      toast('Histórico limpo com sucesso!');
-    }
+    clearHistory();
+    toast('Histórico limpo com sucesso!');
   };
 
   return (
@@ -56,7 +56,7 @@ export function HistoricoPage() {
             <input className="shad-input pl-8 py-1.5 text-[12px] w-52" placeholder="Buscar..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} aria-label="Buscar no histórico" />
           </div>
           {history.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={handleClear}><Icon name="alert" size={14} />Limpar</Button>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmClear(true)}><Icon name="alert" size={14} />Limpar</Button>
           )}
         </div>
       </div>
@@ -103,6 +103,14 @@ export function HistoricoPage() {
       <div className="flex items-center justify-between mt-3">
         <span className="text-[11px] text-[var(--fg-muted)]">{filtered.length} de {history.length} registro{history.length !== 1 ? 's' : ''}</span>
       </div>
+      <ConfirmDialog
+        open={confirmClear}
+        onOpenChange={setConfirmClear}
+        title="Limpar todo o histórico?"
+        description="Esta ação não pode ser desfeita."
+        confirmLabel="Limpar"
+        onConfirm={handleClear}
+      />
     </div>
   );
 }

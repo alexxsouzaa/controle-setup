@@ -5,6 +5,7 @@ import { useRender } from "@base-ui/react/use-render"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
 
+/** @param {any} props */
 function Breadcrumb({
   className,
   ...props
@@ -18,6 +19,7 @@ function Breadcrumb({
   );
 }
 
+/** @param {any} props */
 function BreadcrumbList({
   className,
   ...props
@@ -33,6 +35,7 @@ function BreadcrumbList({
   );
 }
 
+/** @param {any} props */
 function BreadcrumbItem({
   className,
   ...props
@@ -45,6 +48,7 @@ function BreadcrumbItem({
   );
 }
 
+/** @param {any} props */
 function BreadcrumbLink({
   className,
   render,
@@ -62,6 +66,7 @@ function BreadcrumbLink({
   });
 }
 
+/** @param {any} props */
 function BreadcrumbPage({
   className,
   ...props
@@ -77,6 +82,7 @@ function BreadcrumbPage({
   );
 }
 
+/** @param {any} props */
 function BreadcrumbSeparator({
   children,
   className,
@@ -96,6 +102,7 @@ function BreadcrumbSeparator({
   );
 }
 
+/** @param {any} props */
 function BreadcrumbEllipsis({
   className,
   ...props

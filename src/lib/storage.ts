@@ -96,7 +96,11 @@ export function getStorage(): StorageData {
 }
 
 export function setStorage(data: StorageData): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* quota */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {
+    throw new Error('Não foi possível salvar: o armazenamento local está cheio. Reduza as imagens ou exclua registros.');
+  }
 }
 
 export function updateStorageEntity<K extends keyof StorageData>(key: K, updater: (prev: StorageData[K]) => StorageData[K]): StorageData {

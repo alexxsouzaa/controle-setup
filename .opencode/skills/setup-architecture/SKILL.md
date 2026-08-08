@@ -1,3 +1,8 @@
+---
+name: setup-architecture
+description: Use when structuring or refactoring the Controle de Setup codebase — feature-first organization under src/features, separation of UI from business rules, hooks/services/schemas/types layering, barrel exports, and avoiding overengineering.
+---
+
 # Setup Architecture Skill
 
 ## Identidade

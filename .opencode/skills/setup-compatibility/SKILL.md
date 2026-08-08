@@ -1,3 +1,8 @@
+---
+name: setup-compatibility
+description: Use for implementing or testing the Controle de Setup compatibility engine — CompatibilityContext, hard/soft constraints, scoring, format and part recommendations, alternatives, rule specificity and explainability.
+---
+
 # Setup Compatibility Skill
 
 ## Identidade

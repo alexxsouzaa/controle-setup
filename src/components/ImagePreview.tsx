@@ -1,3 +1,5 @@
+import { useDialogAccessibility } from './shared/useDialogAccessibility';
+
 interface ImagePreviewProps {
   src: string | null | undefined;
   alt?: string;
@@ -5,12 +7,13 @@ interface ImagePreviewProps {
 }
 
 export function ImagePreview({ src, alt, onClose }: ImagePreviewProps) {
+  const dialogRef = useDialogAccessibility(!!src, onClose);
   if (!src) return null;
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-[var(--overlay)]" onClick={onClose} onKeyDown={e => e.key === 'Escape' && onClose()} />
+      <div className="fixed inset-0 z-50 bg-[var(--overlay)]" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none" onClick={onClose}>
-        <div className="pointer-events-auto max-w-2xl max-h-[85vh] bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={alt || 'Foto'} className="pointer-events-auto max-w-2xl max-h-[85vh] bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-lg overflow-hidden outline-none" onClick={e => e.stopPropagation()}>
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)]">
             <span className="text-sm font-medium truncate">{alt || 'Foto'}</span>
             <button type="button" onClick={onClose} aria-label="Fechar" className="p-1 rounded hover:bg-[var(--bg)] text-[var(--fg-secondary)]">

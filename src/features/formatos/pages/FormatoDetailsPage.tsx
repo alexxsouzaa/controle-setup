@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFormatos, useDeleteFormato, useLogAction } from '../../../queries';
 import { useFlows } from '../../../queries/useFlows';

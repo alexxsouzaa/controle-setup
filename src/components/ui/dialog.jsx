@@ -5,30 +5,35 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
+/** @param {any} props */
 function Dialog({
   ...props
 }) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
+/** @param {any} props */
 function DialogTrigger({
   ...props
 }) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
+/** @param {any} props */
 function DialogPortal({
   ...props
 }) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
+/** @param {any} props */
 function DialogClose({
   ...props
 }) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
+/** @param {any} props */
 function DialogOverlay({
   className,
   ...props
@@ -44,6 +49,7 @@ function DialogOverlay({
   );
 }
 
+/** @param {any} props */
 function DialogContent({
   className,
   children,
@@ -76,6 +82,7 @@ function DialogContent({
   );
 }
 
+/** @param {any} props */
 function DialogHeader({
   className,
   ...props
@@ -88,6 +95,7 @@ function DialogHeader({
   );
 }
 
+/** @param {any} props */
 function DialogFooter({
   className,
   showCloseButton = false,
@@ -109,6 +117,7 @@ function DialogFooter({
   );
 }
 
+/** @param {any} props */
 function DialogTitle({
   className,
   ...props
@@ -121,6 +130,7 @@ function DialogTitle({
   );
 }
 
+/** @param {any} props */
 function DialogDescription({
   className,
   ...props

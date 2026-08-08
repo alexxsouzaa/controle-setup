@@ -7,6 +7,8 @@ import { Badge } from '../../../components/Badge';
 import { Icon } from '../../../components/Icon';
 import { printPDF } from '../../import-export/pages/pdf';
 import type { PDFBlock } from '../../import-export/pages/pdf';
+import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { Flow } from '../../../types';
 import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction, useExport } from '../../../queries';
 
@@ -32,8 +34,10 @@ interface FlowDrawerProps {
 
 function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logAction, toast, handleExportPDF }: FlowDrawerProps) {
   const navigate = useNavigate();
+  const drawerRef = useDialogAccessibility(true, onClose);
   const status = flow.status || 'Concluído';
   const [localStatus, setLocalStatus] = useState<string>(status);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateStatus = (newStatus: string) => {
     setLocalStatus(newStatus);
@@ -44,9 +48,9 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={onClose} onKeyDown={(e: React.KeyboardEvent) => e.key === 'Escape' && onClose()} />
-      <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${flow.name}`} style={{ width: 'min(520px, 90vw)' }}
-        className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col">
+      <div className="fixed inset-0 z-40 bg-[var(--overlay)]" onClick={onClose} />
+      <div role="dialog" aria-modal="true" aria-label={`Detalhes: ${flow.name}`} ref={drawerRef} tabIndex={-1} style={{ width: 'min(520px, 90vw)' }}
+        className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--surface)] border-l border-[var(--border)] shadow-lg flex flex-col outline-none">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="file" size={18} /></div>
@@ -55,7 +59,7 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Badge variant={(statusVariant[localStatus] || 'secondary') as 'success' | 'warning' | 'info' | 'danger' | 'secondary'}>{localStatus}</Badge>
                 <select value={localStatus} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateStatus(e.target.value)}
-                  className="text-[10px] bg-transparent border border-[var(--border)] rounded px-1 py-0.5 text-[var(--fg-secondary)] cursor-pointer hover:border-[var(--accent)] outline-none"
+                  className="text-[10px] bg-transparent border border-[var(--border)] rounded px-1 py-0.5 text-[var(--fg-secondary)] cursor-pointer hover:border-[var(--fg-muted)] outline-none"
                   aria-label="Alterar status">
                   {STATUSES.map((s: string) => (<option key={s} value={s}>{s}</option>))}
                 </select>
@@ -116,10 +120,22 @@ function FlowDrawer({ flow, onClose, updateFlow, deleteFlow, duplicateFlow, logA
           }}><Icon name="download" size={14} />Exportar</Button>
           <button type="button" onClick={() => { handleExportPDF(flow); }} className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--bg)] transition-colors">PDF</button>
           <Button variant="ghost" size="sm" onClick={() => { duplicateFlow(flow.id); logAction({ type: 'duplicate', entity: 'Fluxo', detail: `${flow.name} duplicado` }); toast('Fluxo duplicado com sucesso!'); onClose(); }}>Duplicar</Button>
-          <button type="button" onClick={() => { if (confirm('Excluir este fluxo?')) { deleteFlow(flow.id); logAction({ type: 'delete', entity: 'Fluxo', detail: `${flow.name} excluído` }); toast('Fluxo excluído com sucesso!'); onClose(); } }}
+          <button type="button" onClick={() => setConfirmDelete(true)}
             className="px-3 py-1.5 rounded text-xs font-medium bg-[var(--danger-muted)] text-[var(--danger)] hover:opacity-80 transition-colors">Excluir</button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={`Excluir ${flow.name}?`}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          deleteFlow(flow.id);
+          logAction({ type: 'delete', entity: 'Fluxo', detail: `${flow.name} excluído` });
+          toast('Fluxo excluído com sucesso!');
+          onClose();
+        }}
+      />
     </>
   );
 }
@@ -141,6 +157,7 @@ export function FluxosPage() {
   const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [drawerFlow, setDrawerFlow] = useState<Flow | null>(null);
   const perPage = 10;
 
@@ -197,12 +214,7 @@ export function FluxosPage() {
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
-    if (!confirm(`Excluir ${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`)) return;
-    const ids = Array.from(selected);
-    clearSelection();
-    deleteFlows(ids);
-    logAction({ type: 'delete', entity: 'Fluxo', detail: `${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} em massa` });
-    toast(`${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} com sucesso!`);
+    setConfirmBulkDelete(true);
   };
 
   const handleExportPDF = (flow: Flow) => {
@@ -394,6 +406,19 @@ export function FluxosPage() {
       )}
 
       {drawerFlow && <FlowDrawer flow={drawerFlow} onClose={() => setDrawerFlow(null)} {...drawerActions} />}
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onOpenChange={setConfirmBulkDelete}
+        title={`Excluir ${selectedCount} fluxo${selectedCount !== 1 ? 's' : ''} selecionado${selectedCount !== 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          const ids = Array.from(selected);
+          clearSelection();
+          deleteFlows(ids);
+          logAction({ type: 'delete', entity: 'Fluxo', detail: `${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} em massa` });
+          toast(`${ids.length} fluxo${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''} com sucesso!`);
+        }}
+      />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
@@ -7,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
 import { useMachines, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
+import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { Machine, Config } from '../../../types';
 
 interface StatCard {
@@ -30,6 +30,7 @@ export function MaquinasPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const perPage = 10;
 
   const allUos = useMemo(() => {
@@ -58,11 +59,7 @@ export function MaquinasPage() {
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
-    if (!confirm(`Excluir ${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`)) return;
-    deleteMachines(Array.from(selected));
-    logAction({ type: 'delete', entity: 'Máquina', detail: `${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
-    toast(`${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
-    clearSelection();
+    setConfirmBulkDelete(true);
   };
 
   const UO_FILTERS: { id: string; label: string }[] = [{ id: '', label: 'Todas' }, ...allUos.map((u: string) => ({ id: u, label: u }))];
@@ -244,6 +241,18 @@ export function MaquinasPage() {
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        onOpenChange={setConfirmBulkDelete}
+        title={`Excluir ${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} selecionada${selectedCount !== 1 ? 's' : ''}?`}
+        description="Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          deleteMachines(Array.from(selected));
+          logAction({ type: 'delete', entity: 'Máquina', detail: `${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} em massa` });
+          toast(`${selectedCount} máquina${selectedCount !== 1 ? 's' : ''} excluída${selectedCount !== 1 ? 's' : ''} com sucesso!`);
+          clearSelection();
+        }}
+      />
     </div>
   );
 }

@@ -1,3 +1,8 @@
+---
+name: setup-shadcn
+description: Use for frontend UI work in Controle de Setup — shadcn/ui components, React Hook Form + Zod forms, wizard layout, compatibility badges, empty/loading/error states and a consistent industrial interface.
+---
+
 # Setup Shadcn Skill
 
 ## Identidade
