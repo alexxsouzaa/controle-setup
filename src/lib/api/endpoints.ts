@@ -1,4 +1,6 @@
 import { getStorage, updateStorageEntity, type StorageData } from '../storage';
+import { useFirestore } from '../firebase';
+import { fsList, fsGet, fsCreate, fsUpdate, fsRemove, fsRemoveMany, fsReplaceAll, fsGetConfig, fsUpdateConfig } from './firestore';
 import {
   isApiEnabled,
   apiRequest,
@@ -41,11 +43,13 @@ import type { Machine, Product, Piece, Flow, Formato, Config } from '../../types
 
 export const machinesApi = {
   async list(): Promise<Machine[]> {
+    if (useFirestore) return fsList<Machine>('machines');
     if (isApiEnabled()) return (await apiRequest<MachineRow[]>('maquinas', 'list')).map(rowToMachine);
     return localList('machines') as Machine[];
   },
 
   async get(id: string): Promise<Machine> {
+    if (useFirestore) return fsGet<Machine>('machines', id);
     if (isApiEnabled()) return rowToMachine(await apiRequest<MachineRow>('maquinas', 'get', { id }));
     return localGet('machines', id) as Machine;
   },
@@ -61,6 +65,7 @@ export const machinesApi = {
       createdAt: input.createdAt ?? nowDate(),
       createdBy: input.createdBy ?? getUser(),
     } as Machine;
+    if (useFirestore) return fsCreate<Machine>('machines', machine);
     if (isApiEnabled()) {
       const row = await apiRequest<MachineRow>('maquinas', 'create', { body: machineToRow({ ...machine, id: undefined }) });
       return rowToMachine(row);
@@ -69,6 +74,10 @@ export const machinesApi = {
   },
 
   async update(id: string, updates: Partial<Machine>): Promise<Machine> {
+    if (useFirestore) {
+      await fsUpdate('machines', id, { ...updates, updatedAt: nowDate() });
+      return fsGet<Machine>('machines', id);
+    }
     if (isApiEnabled()) {
       const row = await apiRequest<MachineRow>('maquinas', 'update', { id, body: machineToRow(updates) });
       return rowToMachine(row);
@@ -78,11 +87,13 @@ export const machinesApi = {
   },
 
   async remove(id: string): Promise<void> {
+    if (useFirestore) { await fsRemove('machines', id); return; }
     if (isApiEnabled()) { await apiRequest('maquinas', 'delete', { id }); return; }
     localRemove('machines', id);
   },
 
   async removeMany(ids: string[]): Promise<void> {
+    if (useFirestore) { await fsRemoveMany('machines', ids); return; }
     if (isApiEnabled()) { await Promise.all(ids.map((id) => apiRequest('maquinas', 'delete', { id }))); return; }
     localRemoveMany('machines', ids);
   },
@@ -94,11 +105,13 @@ export const machinesApi = {
 
 export const productsApi = {
   async list(): Promise<Product[]> {
+    if (useFirestore) return fsList<Product>('products');
     if (isApiEnabled()) return (await apiRequest<ProductRow[]>('produtos', 'list')).map(rowToProduct);
     return localList('products') as Product[];
   },
 
   async get(id: string): Promise<Product> {
+    if (useFirestore) return fsGet<Product>('products', id);
     if (isApiEnabled()) return rowToProduct(await apiRequest<ProductRow>('produtos', 'get', { id }));
     return localGet('products', id) as Product;
   },
@@ -108,6 +121,7 @@ export const productsApi = {
       ...input,
       createdAt: input.createdAt ?? nowDate(),
     } as Product;
+    if (useFirestore) return fsCreate<Product>('products', product);
     if (isApiEnabled()) {
       const row = await apiRequest<ProductRow>('produtos', 'create', { body: productToRow({ ...product, id: undefined }) });
       return rowToProduct(row);
@@ -116,6 +130,10 @@ export const productsApi = {
   },
 
   async update(id: string, updates: Partial<Product>): Promise<Product> {
+    if (useFirestore) {
+      await fsUpdate('products', id, updates);
+      return fsGet<Product>('products', id);
+    }
     if (isApiEnabled()) {
       const row = await apiRequest<ProductRow>('produtos', 'update', { id, body: productToRow(updates) });
       return rowToProduct(row);
@@ -125,11 +143,13 @@ export const productsApi = {
   },
 
   async remove(id: string): Promise<void> {
+    if (useFirestore) { await fsRemove('products', id); return; }
     if (isApiEnabled()) { await apiRequest('produtos', 'delete', { id }); return; }
     localRemove('products', id);
   },
 
   async removeMany(ids: string[]): Promise<void> {
+    if (useFirestore) { await fsRemoveMany('products', ids); return; }
     if (isApiEnabled()) { await Promise.all(ids.map((id) => apiRequest('produtos', 'delete', { id }))); return; }
     localRemoveMany('products', ids);
   },
@@ -146,11 +166,13 @@ async function resolvePieceCompat(ids: string[]): Promise<string> {
 
 export const piecesApi = {
   async list(): Promise<Piece[]> {
+    if (useFirestore) return fsList<Piece>('pieces');
     if (isApiEnabled()) return (await apiRequest<PieceRow[]>('pecas', 'list')).map(rowToPiece);
     return localList('pieces') as Piece[];
   },
 
   async get(id: string): Promise<Piece> {
+    if (useFirestore) return fsGet<Piece>('pieces', id);
     if (isApiEnabled()) return rowToPiece(await apiRequest<PieceRow>('pecas', 'get', { id }));
     return localGet('pieces', id) as Piece;
   },
@@ -168,6 +190,7 @@ export const piecesApi = {
       compat,
       compatibleMachineIds,
     } as Piece;
+    if (useFirestore) return fsCreate<Piece>('pieces', piece);
     if (isApiEnabled()) {
       const row = await apiRequest<PieceRow>('pecas', 'create', { body: pieceToRow({ ...piece, id: undefined }) });
       return rowToPiece(row);
@@ -180,6 +203,10 @@ export const piecesApi = {
     if (updates.compatibleMachineIds) {
       merged = { ...updates, compat: await resolvePieceCompat(updates.compatibleMachineIds) };
     }
+    if (useFirestore) {
+      await fsUpdate('pieces', id, merged);
+      return fsGet<Piece>('pieces', id);
+    }
     if (isApiEnabled()) {
       const row = await apiRequest<PieceRow>('pecas', 'update', { id, body: pieceToRow(merged) });
       return rowToPiece(row);
@@ -189,11 +216,13 @@ export const piecesApi = {
   },
 
   async remove(id: string): Promise<void> {
+    if (useFirestore) { await fsRemove('pieces', id); return; }
     if (isApiEnabled()) { await apiRequest('pecas', 'delete', { id }); return; }
     localRemove('pieces', id);
   },
 
   async removeMany(ids: string[]): Promise<void> {
+    if (useFirestore) { await fsRemoveMany('pieces', ids); return; }
     if (isApiEnabled()) { await Promise.all(ids.map((id) => apiRequest('pecas', 'delete', { id }))); return; }
     localRemoveMany('pieces', ids);
   },
@@ -205,11 +234,13 @@ export const piecesApi = {
 
 export const flowsApi = {
   async list(): Promise<Flow[]> {
+    if (useFirestore) return fsList<Flow>('flows');
     if (isApiEnabled()) return (await apiRequest<FlowRow[]>('fluxos', 'list')).map(rowToFlow);
     return localList('flows') as Flow[];
   },
 
   async get(id: string): Promise<Flow> {
+    if (useFirestore) return fsGet<Flow>('flows', id);
     if (isApiEnabled()) return rowToFlow(await apiRequest<FlowRow>('fluxos', 'get', { id }));
     return localGet('flows', id) as Flow;
   },
@@ -226,6 +257,7 @@ export const flowsApi = {
       updatedBy: getUser(),
       updatedAt: nowISO(),
     } as Flow;
+    if (useFirestore) return fsCreate<Flow>('flows', flow);
     if (isApiEnabled()) {
       const row = await apiRequest<FlowRow>('fluxos', 'create', { body: flowToRow({ ...flow, id: undefined }) });
       return rowToFlow(row);
@@ -246,6 +278,10 @@ export const flowsApi = {
   },
 
   async update(id: string, updates: Partial<Flow>): Promise<Flow> {
+    if (useFirestore) {
+      await fsUpdate('flows', id, { ...updates, updatedBy: getUser(), updatedAt: nowISO() });
+      return fsGet<Flow>('flows', id);
+    }
     if (isApiEnabled()) {
       const row = await apiRequest<FlowRow>('fluxos', 'update', { id, body: flowToRow({ ...updates, updatedBy: getUser(), updatedAt: nowISO() }) });
       return rowToFlow(row);
@@ -255,11 +291,13 @@ export const flowsApi = {
   },
 
   async remove(id: string): Promise<void> {
+    if (useFirestore) { await fsRemove('flows', id); return; }
     if (isApiEnabled()) { await apiRequest('fluxos', 'delete', { id }); return; }
     localRemove('flows', id);
   },
 
   async removeMany(ids: string[]): Promise<void> {
+    if (useFirestore) { await fsRemoveMany('flows', ids); return; }
     if (isApiEnabled()) { await Promise.all(ids.map((id) => apiRequest('fluxos', 'delete', { id }))); return; }
     localRemoveMany('flows', ids);
   },
@@ -271,11 +309,13 @@ export const flowsApi = {
 
 export const formatosApi = {
   async list(): Promise<Formato[]> {
+    if (useFirestore) return fsList<Formato>('formatos');
     if (isApiEnabled()) return (await apiRequest<FormatoRow[]>('formatos', 'list')).map(rowToFormato);
     return localList('formatos') as Formato[];
   },
 
   async get(id: string): Promise<Formato> {
+    if (useFirestore) return fsGet<Formato>('formatos', id);
     if (isApiEnabled()) return rowToFormato(await apiRequest<FormatoRow>('formatos', 'get', { id }));
     return localGet('formatos', id) as Formato;
   },
@@ -286,6 +326,7 @@ export const formatosApi = {
       createdAt: input.createdAt ?? nowDate(),
       createdBy: input.createdBy ?? getUser(),
     } as Formato;
+    if (useFirestore) return fsCreate<Formato>('formatos', formato);
     if (isApiEnabled()) {
       const row = await apiRequest<FormatoRow>('formatos', 'create', { body: formatoToRow({ ...formato, id: undefined }) });
       return rowToFormato(row);
@@ -294,6 +335,10 @@ export const formatosApi = {
   },
 
   async update(id: string, updates: Partial<Formato>): Promise<Formato> {
+    if (useFirestore) {
+      await fsUpdate('formatos', id, { ...updates, updatedBy: getUser(), updatedAt: nowISO() });
+      return fsGet<Formato>('formatos', id);
+    }
     if (isApiEnabled()) {
       const row = await apiRequest<FormatoRow>('formatos', 'update', { id, body: formatoToRow({ ...updates, updatedBy: getUser(), updatedAt: nowISO() }) });
       return rowToFormato(row);
@@ -303,11 +348,13 @@ export const formatosApi = {
   },
 
   async remove(id: string): Promise<void> {
+    if (useFirestore) { await fsRemove('formatos', id); return; }
     if (isApiEnabled()) { await apiRequest('formatos', 'delete', { id }); return; }
     localRemove('formatos', id);
   },
 
   async removeMany(ids: string[]): Promise<void> {
+    if (useFirestore) { await fsRemoveMany('formatos', ids); return; }
     if (isApiEnabled()) { await Promise.all(ids.map((id) => apiRequest('formatos', 'delete', { id }))); return; }
     localRemoveMany('formatos', ids);
   },
@@ -328,6 +375,7 @@ const CONFIG_ROW_KEY = 'app_config';
 
 export const configApi = {
   async get(): Promise<Config> {
+    if (useFirestore) return fsGetConfig();
     if (isApiEnabled()) {
       const rows = await apiRequest<ConfiguracoesRow[]>('configuracoes', 'list');
       const row = rows.find((r) => r.chave === CONFIG_ROW_KEY);
@@ -342,6 +390,7 @@ export const configApi = {
   },
 
   async update(updates: Partial<Config>): Promise<Config> {
+    if (useFirestore) return fsUpdateConfig(updates);
     if (isApiEnabled()) {
       const current = await configApi.get();
       const next: Config = { ...current, ...updates };
@@ -373,7 +422,7 @@ const EXPORT_ENTITIES: Array<{ entity: DbEntityName; key: StorageDataKey; api: {
 
 export const exportApi = {
   async exportAll(): Promise<StorageData> {
-    if (isApiEnabled()) {
+    if (useFirestore || isApiEnabled()) {
       const entries = await Promise.all(
         EXPORT_ENTITIES.map(async (e) => [e.key, await e.api.list()] as const),
       );
@@ -386,6 +435,18 @@ export const exportApi = {
   async importAll(imported: unknown): Promise<number> {
     const data = imported as Record<string, unknown>;
     let total = 0;
+
+    if (useFirestore) {
+      for (const e of EXPORT_ENTITIES) {
+        const items = data[e.key];
+        if (!Array.isArray(items)) continue;
+        total += await fsReplaceAll(e.key, items);
+      }
+      if (data.config && typeof data.config === 'object') {
+        await fsUpdateConfig(data.config as Partial<Config>);
+      }
+      return total;
+    }
 
     if (isApiEnabled()) {
       for (const e of EXPORT_ENTITIES) {
