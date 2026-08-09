@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useAppStore } from '@/stores/appStore'
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { SetFlowLogo } from "@/components/SetFlowLogo"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon } from "lucide-react"
 
@@ -37,9 +37,6 @@ const data = {
       ],
     },
   ],
-  teams: [
-    { name: "CS Setup", logo: <BoxIcon />, plan: "Setup Industrial" },
-  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -49,8 +46,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+      <SidebarHeader className="border-b border-[var(--border)]">
+        <div className="group-data-[collapsible=icon]:hidden flex h-9 items-center justify-center">
+          <SetFlowLogo className="h-5 w-auto" />
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:flex h-9 items-center justify-center">
+          <span className="flex aspect-square size-6 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-[11px] font-bold">SF</span>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} pathname={location.pathname} />
