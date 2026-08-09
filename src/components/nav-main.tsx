@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom'
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { Link, useLocation } from 'react-router-dom'
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 
 interface NavSubItem {
   title: string;
@@ -15,11 +15,14 @@ interface NavItem {
 
 interface NavMainProps {
   items: NavItem[];
-  pathname: string;
 }
 
-export function NavMain({ items, pathname }: NavMainProps) {
-  const navigate = useNavigate();
+export function NavMain({ items }: NavMainProps) {
+  const location = useLocation()
+  const { isMobile, setOpenMobile } = useSidebar() as { isMobile: boolean; setOpenMobile: (open: boolean) => void }
+
+  const isPathActive = (url: string) =>
+    location.pathname === url || location.pathname.startsWith(url + '/')
 
   return (
     <>
@@ -30,9 +33,14 @@ export function NavMain({ items, pathname }: NavMainProps) {
             {item.items.map((subItem) => (
               <SidebarMenuItem key={subItem.title}>
                 <SidebarMenuButton
-                  isActive={pathname === subItem.url}
-                  onClick={() => navigate(subItem.url)}
-                  tooltip={subItem.title}>
+                  isActive={isPathActive(subItem.url)}
+                  tooltip={subItem.title}
+                  render={
+                    <Link
+                      to={subItem.url}
+                      onClick={() => { if (isMobile) setOpenMobile(false) }}
+                    />
+                  }>
                   {subItem.icon}
                   <span>{subItem.title}</span>
                 </SidebarMenuButton>

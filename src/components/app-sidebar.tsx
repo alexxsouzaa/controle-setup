@@ -1,5 +1,4 @@
 import * as React from "react"
-import { useLocation } from 'react-router-dom'
 import { useAppStore } from '@/stores/appStore'
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -40,7 +39,6 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const location = useLocation()
   const currentUser = useAppStore(s => s.currentUser)
   const user = { name: currentUser, email: "", avatar: "" }
 
@@ -55,7 +53,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} pathname={location.pathname} />
+        <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
+import { useAppStore } from '@/stores/appStore'
 
 interface NavUserProps {
   user: { name: string; email: string; avatar: string; };
@@ -9,6 +10,13 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar()
+  const setCurrentUser = useAppStore(s => s.setCurrentUser)
+
+  const handleLogout = () => {
+    try { localStorage.removeItem('cs-user'); } catch { }
+    setCurrentUser('Operador')
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -20,7 +28,7 @@ export function NavUser({ user }: NavUserProps) {
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.name}</span>
-              <span className="truncate text-xs">{user.email}</span>
+              {user.email && <span className="truncate text-xs">{user.email}</span>}
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4" />
           </DropdownMenuTrigger>
@@ -34,14 +42,14 @@ export function NavUser({ user }: NavUserProps) {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    {user.email && <span className="truncate text-xs">{user.email}</span>}
                   </div>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOutIcon />
                 Sair
               </DropdownMenuItem>
