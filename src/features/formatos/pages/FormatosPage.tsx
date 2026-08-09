@@ -304,49 +304,46 @@ export function FormatosPage() {
             </div>
           ) : (
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-                    {selectionMode && (
-                      <th className="w-10 px-3.5 py-2.5 text-center">
-                        <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[var(--fg)] cursor-pointer" />
-                      </th>
-                    )}
-                    <th className="px-3.5 py-2.5 text-left">Formato</th>
-                    <th className="px-3.5 py-2.5 text-left">Tipo</th>
-                    <th className="px-3.5 py-2.5 text-left">UO</th>
-                    <th className="px-3.5 py-2.5 text-left">Peças</th>
-                    <th className="px-3.5 py-2.5 text-left hidden md:table-cell">Criado em</th>
-                    <th className="px-3.5 py-2.5 text-left hidden lg:table-cell">Criado por</th>
-                    <th className="px-3.5 py-2.5 text-left">Status</th>
+              <table className="w-full text-[13px] border-collapse">
+                <thead className="bg-[var(--bg-secondary)]">
+                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
+                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
+                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Formato</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden sm:table-cell">Tipo</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">UO</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden lg:table-cell">Peças</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden lg:table-cell">Criado em</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden xl:table-cell">Criado por</th>
+                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Status</th>
+                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paged.length ? paged.map((fmt: Formato) => (
-                    <tr key={fmt.id}
-                      className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border-subtle)] cursor-pointer"
-                      onClick={() => selectionMode && toggleSelect(fmt.id)}
-                      onDoubleClick={() => { if (!selectionMode) navigate('/formatos/' + fmt.id); }}>
-                      {selectionMode && (
-                        <td className="px-3.5 py-2.5 text-center">
-                          <input type="checkbox" checked={selected.has(fmt.id)} onChange={() => toggleSelect(fmt.id)} className="accent-[var(--fg)] cursor-pointer" />
-                        </td>
-                      )}
-                      <td className="px-3.5 py-2.5">
-                        <div className="font-medium text-[var(--fg)] truncate max-w-[300px]">{fmt.name}</div>
+                  {paged.map((fmt: Formato, idx: number) => {
+                    const last = idx === paged.length - 1;
+                    return (
+                    <tr key={fmt.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(fmt.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(fmt.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
+                        <input type="checkbox" checked={selected.has(fmt.id)} onChange={() => toggleSelect(fmt.id)} aria-label={`Selecionar ${fmt.name}`} className="accent-[var(--fg)] cursor-pointer" />
                       </td>
-                      <td className="px-3.5 py-2.5">
+                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
+                        <button type="button" onClick={() => navigate('/formatos/' + fmt.id)} className="text-left w-full">
+                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{fmt.name}</div>
+                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{fmt.formatType || fmt.tipo || '—'}</div>
+                        </button>
+                      </td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden sm:table-cell`}>
                         <span className="text-[12px] font-mono text-[var(--fg-muted)]">{fmt.formatType || fmt.tipo || '—'}</span>
                       </td>
-                      <td className="px-3.5 py-2.5">
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell`}>
                         <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{fmt.uo || '—'}</span>
                       </td>
-                      <td className="px-3.5 py-2.5">
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden lg:table-cell`}>
                         <span className="text-[12px] font-mono text-[var(--fg-muted)]">{(fmt.pieces || []).length}</span>
                       </td>
-                      <td className="px-3.5 py-2.5 hidden md:table-cell text-[12px] font-mono text-[var(--fg-muted)]">{fmt.createdAt || '—'}</td>
-                      <td className="px-3.5 py-2.5 hidden lg:table-cell text-[12px] text-[var(--fg-muted)]">{fmt.createdBy || '—'}</td>
-                      <td className="px-3.5 py-2.5">
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden lg:table-cell text-[12px] font-mono text-[var(--fg-muted)]`}>{fmt.createdAt || '—'}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden xl:table-cell text-[12px] text-[var(--fg-muted)]`}>{fmt.createdBy || '—'}</td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell`}>
                         {(() => {
                           if (!fmt.updatedAt) return <span className="text-[12px] text-[var(--fg-muted)]">—</span>;
                           const days = Math.floor((Date.now() - new Date(fmt.updatedAt).getTime()) / 86400000);
@@ -355,12 +352,19 @@ export function FormatosPage() {
                           return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--danger-muted)] text-[var(--danger)]">Parado</span>;
                         })()}
                       </td>
+                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button type="button" onClick={() => navigate('/formatos/' + fmt.id)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                          </button>
+                          <button type="button" onClick={() => startEdit(fmt)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={selectionMode ? 8 : 7} className="px-4 py-8 text-center text-[13px] text-[var(--fg-muted)]">Nenhum resultado.</td>
-                    </tr>
-                  )}
+                    );
+                  })}
                 </tbody>
               </table>
               {totalPages > 1 && (
