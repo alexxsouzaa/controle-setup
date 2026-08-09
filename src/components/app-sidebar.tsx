@@ -15,7 +15,6 @@ const data = {
         { title: "Novo Fluxo", url: "/novo-fluxo", icon: <WrenchIcon /> },
         { title: "Fluxos de Setup", url: "/fluxos", icon: <FileIcon /> },
       ],
-      isActive: true,
     },
     {
       title: "Catálogo",

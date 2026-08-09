@@ -10,7 +10,6 @@ interface NavSubItem {
 interface NavItem {
   title: string;
   items: NavSubItem[];
-  isActive?: boolean;
 }
 
 interface NavMainProps {
