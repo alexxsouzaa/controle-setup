@@ -8,7 +8,10 @@
     "@/*": "./src/*"
   },
   "scripts": {
+    "version": "node scripts/version.mjs",
+    "predev": "npm run version",
     "dev": "vite",
+    "prebuild": "npm run version",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",

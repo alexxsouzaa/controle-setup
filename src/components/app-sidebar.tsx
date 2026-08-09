@@ -5,6 +5,7 @@ import { NavUser } from "@/components/nav-user"
 import { SetFlowLogo } from "@/components/SetFlowLogo"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon } from "lucide-react"
+import { APP_VERSION } from "@/version"
 
 const data = {
   navMain: [
@@ -44,8 +45,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="border-b border-[var(--border)]">
-        <div className="group-data-[collapsible=icon]:hidden flex h-9 items-center justify-center">
-          <SetFlowLogo className="h-5 w-auto" />
+        <div className="group-data-[collapsible=icon]:hidden flex h-9 items-center justify-center gap-3">
+          <SetFlowLogo className="h-[0.7875rem] w-auto" />
+          <span className="text-xs font-medium text-[var(--muted-foreground)]">v{APP_VERSION}</span>
         </div>
         <div className="hidden group-data-[collapsible=icon]:flex h-9 items-center justify-center">
           <span className="flex aspect-square size-6 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-[11px] font-bold">SF</span>
