@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useToast } from '../../../contexts/ToastContext';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
-import { useExport } from '../../../queries';
-import { useMachines, useProducts, usePieces, useFlows, useFormatos, useHistory } from '../../../queries';
-import { useStats } from '../../../queries';
-import { useAppStore } from '../../../stores/appStore';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos } from '../../../queries';
 import { PageHeader } from '../../../components/shared/PageHeader';
 
 type ExportKey = 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
@@ -37,10 +34,6 @@ export function ExportPage() {
   const { data: pieces = [] } = usePieces();
   const { data: flows = [] } = useFlows();
   const { data: formatos = [] } = useFormatos();
-  const { data: history = [] } = useHistory();
-  const exportAll = useExport();
-  const stats = useStats();
-  const currentUser = useAppStore(s => s.currentUser);
   const data: Record<ExportKey, unknown[]> = { machines, products, pieces, flows, formatos };
   const counts = {} as Record<ExportKey, number>;
   ENTITIES.forEach(e => { counts[e.key] = data[e.key].length; });

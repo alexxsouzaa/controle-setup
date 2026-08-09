@@ -89,8 +89,6 @@ export function FormatosPage() {
   const [selectedPartIds, setSelectedPartIds] = useState<string[]>([]);
   const [selectedAltPartIds, setSelectedAltPartIds] = useState<string[]>([]);
   const [partsWithAlternatives, setPartsWithAlternatives] = useState<FormatoGroup[]>([]);
-  const [pieceSearch, setPieceSearch] = useState<string>('');
-  const [piecePage, setPiecePage] = useState<number>(1);
 
   const [formatName, setFormatName] = useState<string>('');
   const [createdBy, setCreatedBy] = useState<string>(currentUser);
@@ -170,7 +168,6 @@ export function FormatosPage() {
       return [...withoutCurrent, id];
     });
   };
-  const piecesForCategory = (cat: string) => pieces.filter((p: Piece) => p.category === cat);
 
   const handleSave = () => {
     if (!formatName.trim()) { toast('Defina o nome do formato.', 'warning'); return; }

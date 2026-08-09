@@ -83,7 +83,7 @@ export function resolveSetup(
   // 3. Resolve combined categories (sealing + diameter + machine)
   for (const rule of (rulesByStrategy.combined ?? [])) {
     const candidates = machineCompatible.filter(p => p.category === rule.category);
-    const result = matchCombined(candidates, characteristics, machine);
+    const result = matchCombined(candidates, characteristics);
     if (result) {
       parts.push({
         piece: result.piece,
@@ -174,7 +174,7 @@ function matchByDiameter(candidates: Piece[], tubeDiameter: number): MatchResult
   return { piece: candidates[0], confidence: 'fallback' };
 }
 
-function matchCombined(candidates: Piece[], characteristics: ProductCharacteristics, machine: Machine): MatchResult | null {
+function matchCombined(candidates: Piece[], characteristics: ProductCharacteristics): MatchResult | null {
   if (candidates.length === 0) return null;
 
   const normalizedSealing = characteristics.sealingType.toLowerCase().trim();

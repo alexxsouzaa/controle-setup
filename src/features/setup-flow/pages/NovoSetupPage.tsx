@@ -138,11 +138,11 @@ export function NovoSetupPage() {
       }
       setStep(5);
       sessionStorage.removeItem('cs-edit-flow');
-    } catch (e) {
+    } catch {
       toast('Erro ao carregar dados do fluxo para edição.', 'warning');
       sessionStorage.removeItem('cs-edit-flow');
     }
-  }, []);
+  }, [toast, products, machines, flows]);
 
   const activeProduct = useMemo(() =>
     selectedProduct || (newProduct.name && newProduct.code && newProduct.vol ? { ...newProduct, vol: Number(newProduct.vol), id: newProduct.code } as unknown as Product : null),
@@ -248,6 +248,7 @@ export function NovoSetupPage() {
     if (setupResolution && partsWithAlternatives.length === 0) {
       handleSuggestSetup();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setupResolution]);
 
   const handleSelectPrimary = (group: string, piece: Piece) => {

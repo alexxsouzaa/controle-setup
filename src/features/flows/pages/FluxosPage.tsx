@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../../contexts/ToastContext';
 import { useSortable } from '../../../hooks/useSortable';
@@ -13,7 +13,7 @@ import { SearchInput } from '../../../components/shared/SearchInput';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
 import { Flow } from '../../../types';
-import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction, useExport } from '../../../queries';
+import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction } from '../../../queries';
 
 const statusVariant: Record<string, string> = {
   'Concluído': 'success',
@@ -151,7 +151,6 @@ export function FluxosPage() {
   const { mutate: deleteFlows } = useDeleteFlows();
   const { mutate: duplicateFlow } = useDuplicateFlow();
   const { mutate: logAction } = useLogAction();
-  const exportAll = useExport();
   const { toast } = useToast();
   const { sorted } = useSortable(flows as unknown as Record<string, string>[], 'date');
   const [search, setSearch] = useState<string>('');
@@ -170,7 +169,7 @@ export function FluxosPage() {
       try {
         const names = JSON.parse(raw);
         if (Array.isArray(names) && names.length > 0) setImportedNotify(names);
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
       sessionStorage.removeItem('cs-imported-flows');
     }
   }, []);
@@ -199,21 +198,6 @@ export function FluxosPage() {
     }
   };
   const clearSelection = () => { setSelected(new Set()); setSelectionMode(false); };
-
-  const handleExport = (selectedOnly = false) => {
-    const selectedFlows = flows.filter((f: Flow) => selected.has(f.id));
-    const json = selectedOnly ? JSON.stringify({ flows: selectedFlows }, null, 2) : exportAll();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const name = selectedOnly && selectedFlows.length === 1
-      ? selectedFlows[0].name.replace(/[<>:"/\\|?*]+/g, '_')
-      : `setflow-fluxos-${new Date().toISOString().slice(0, 10)}`;
-    a.download = `${name}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const handleBulkDelete = () => {
     if (selectedCount === 0) return;
@@ -251,7 +235,7 @@ export function FluxosPage() {
 
   const allSelected = paged.length > 0 && paged.every((s: Record<string, unknown>) => selected.has(s.id as string));
 
-  const drawerActions = useMemo(() => ({ updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF }), [updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF]);
+  const drawerActions = { updateFlow, deleteFlow, duplicateFlow, logAction, toast, navigate, handleExportPDF };
 
   return (
     <div className="p-6 pb-16">

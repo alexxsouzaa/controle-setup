@@ -5,7 +5,7 @@ import { Button } from '../../../components/Button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
-import { useMachines, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
+import { useMachines, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { SearchInput } from '../../../components/shared/SearchInput';
 import { PageHeader } from '../../../components/shared/PageHeader';

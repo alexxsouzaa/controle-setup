@@ -3,7 +3,6 @@ import { useMachines, useDeleteMachine, useLogAction } from '../../../queries';
 import { useFlows } from '../../../queries/useFlows';
 import { useFormatos } from '../../../queries/useFormatos';
 import { useToast } from '../../../contexts/ToastContext';
-import { useAppStore } from '../../../stores/appStore';
 import { Button } from '../../../components/Button';
 import { Badge } from '../../../components/Badge';
 import { Icon } from '../../../components/Icon';
@@ -25,7 +24,6 @@ export function MachineDetailsPage() {
   const { mutate: deleteMachine } = useDeleteMachine();
   const { mutate: logAction } = useLogAction();
   const { toast } = useToast();
-  const currentUser = useAppStore(s => s.currentUser);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const machine = machines.find((m) => m.id === id);
