@@ -11,7 +11,7 @@ import { useDialogAccessibility } from '../../../components/shared/useDialogAcce
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { SearchInput } from '../../../components/shared/SearchInput';
 import { PageHeader } from '../../../components/shared/PageHeader';
-import { Pagination } from '../../../components/shared/Pagination';
+import { DataTable } from '../../../components/shared/DataTable';
 import { Flow } from '../../../types';
 import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction, useExport } from '../../../queries';
 
@@ -329,58 +329,42 @@ export function FluxosPage() {
           {flows.length === 0 && <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}><Icon name="plus" size={14} />Novo Fluxo</Button>}
         </div>
       ) : (
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
-          <table className="w-full text-[13px] border-collapse">
-            <thead className="bg-[var(--bg-secondary)]">
-              <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
-                <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Fluxo</th>
-                <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden md:table-cell">Máquina</th>
-                <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] hidden lg:table-cell">Status</th>
-                <th className="text-right px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Data</th>
-                <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paged.map((s: Record<string, unknown>, idx: number) => {
-                const last = idx === paged.length - 1;
-                return (
-                <tr key={s.id as string} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(s.id as string) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(s.id as string)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
-                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
-                    <input type="checkbox" checked={selected.has(s.id as string)} onChange={() => toggleSelect(s.id as string)} aria-label={`Selecionar ${s.name as string}`} className="accent-[var(--fg)] cursor-pointer" />
-                  </td>
-                  <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
-                    <button type="button" onClick={() => setDrawerFlow(s as unknown as Flow)} className="text-left w-full">
-                      <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{s.name as string}</div>
-                      <div className="text-[12px] font-mono text-[var(--fg-muted)]">{s.product as string} · {s.code as string}</div>
-                    </button>
-                  </td>
-                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden md:table-cell text-[var(--fg-secondary)]`}>{s.machine as string}</td>
-                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} hidden lg:table-cell`}>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono ${
-                      s.status === 'Concluído' ? 'bg-[var(--success-muted)] text-[var(--success)]' : s.status === 'Em andamento' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' : s.status === 'Cancelado' ? 'bg-[var(--danger-muted)] text-[var(--danger)]' : 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]'
-                    }`}>{s.status as string || '—'}</span>
-                  </td>
-                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell`}>{s.date as string}</td>
-                  <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
-                    <div className="flex items-center justify-end gap-0.5">
-                      <button type="button" onClick={() => setDrawerFlow(s as unknown as Flow)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </button>
-                      <button type="button" onClick={() => { sessionStorage.setItem('cs-edit-flow', JSON.stringify(s)); navigate('/novo-fluxo'); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={perPage} />
-          )}
-        </div>
+        <DataTable
+          columns={[
+            { key: 'name', header: 'Fluxo', first: true, render: (s: Record<string, unknown>) => (
+              <button type="button" onClick={() => setDrawerFlow(s as unknown as Flow)} className="text-left w-full">
+                <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{s.name as string}</div>
+                <div className="text-[12px] font-mono text-[var(--fg-muted)]">{s.product as string} · {s.code as string}</div>
+              </button>
+            ) },
+            { key: 'machine', header: 'Máquina', headerClassName: 'hidden md:table-cell', cellClassName: 'hidden md:table-cell text-[var(--fg-secondary)]', render: (s: Record<string, unknown>) => s.machine as string },
+            { key: 'status', header: 'Status', headerClassName: 'hidden lg:table-cell', cellClassName: 'hidden lg:table-cell', render: (s: Record<string, unknown>) => (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono ${
+                s.status === 'Concluído' ? 'bg-[var(--success-muted)] text-[var(--success)]' : s.status === 'Em andamento' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' : s.status === 'Cancelado' ? 'bg-[var(--danger-muted)] text-[var(--danger)]' : 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]'
+              }`}>{s.status as string || '—'}</span>
+            ) },
+            { key: 'date', header: 'Data', headerClassName: 'text-right w-24 hidden sm:table-cell', cellClassName: 'text-[12px] font-mono text-[var(--fg-muted)] text-right hidden sm:table-cell', render: (s: Record<string, unknown>) => s.date as string },
+            { key: 'actions', header: '', headerClassName: 'w-20 text-right', cellClassName: 'text-right', render: (s: Record<string, unknown>) => (
+              <div className="flex items-center justify-end gap-0.5">
+                <button type="button" onClick={() => setDrawerFlow(s as unknown as Flow)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button type="button" onClick={() => { sessionStorage.setItem('cs-edit-flow', JSON.stringify(s)); navigate('/novo-fluxo'); }} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              </div>
+            ) },
+          ]}
+          rows={paged}
+          rowKey={(s: Record<string, unknown>) => s.id as string}
+          selectionMode={selectionMode}
+          selected={selected}
+          allSelected={allSelected}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
+          getRowAriaLabel={(s: Record<string, unknown>) => `Selecionar ${s.name as string}`}
+          pagination={{ page, totalPages, onPageChange: setPage, total: filtered.length, perPage }}
+        />
       )}
 
       {drawerFlow && <FlowDrawer flow={drawerFlow} onClose={() => setDrawerFlow(null)} {...drawerActions} />}

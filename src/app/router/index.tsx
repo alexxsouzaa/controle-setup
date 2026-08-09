@@ -1,17 +1,17 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { AppLayout } from '../../layouts/AppLayout';
 import { routeObjects } from './routes';
 
+const router = createHashRouter([
+  {
+    element: <AppLayout />,
+    children: routeObjects.map((route) => ({
+      path: route.path,
+      element: route.element,
+    })),
+  },
+]);
+
 export function AppRouter() {
-  return (
-    <HashRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          {routeObjects.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-        </Route>
-      </Routes>
-    </HashRouter>
-  );
+  return <RouterProvider router={router} />;
 }

@@ -11,7 +11,7 @@ import { processImageFile } from '../../../lib/image';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
-import { Pagination } from '../../../components/shared/Pagination';
+import { DataTable } from '../../../components/shared/DataTable';
 import { Product } from '../../../types';
 
 const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
@@ -155,52 +155,39 @@ export function ProdutosPage() {
               {products.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Produto</Button>}
             </div>
           ) : (
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
-              <table className="w-full text-[13px] border-collapse">
-                <thead className="bg-[var(--bg-secondary)]">
-                  <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
-                    <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}><input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" /></th>
-                    <th className="text-left px-4 py-2.5 border-b border-[var(--border)]">Produto</th>
-                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-20">Volume</th>
-                    <th className="text-left px-3.5 py-2.5 border-b border-[var(--border)] w-24 hidden sm:table-cell">Criado em</th>
-                    <th className="w-20 px-3.5 py-2.5 border-b border-[var(--border)] text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paged.map((p: Product, idx: number) => {
-                    const last = idx === paged.length - 1;
-                    return (
-                    <tr key={p.id} className={`hover:bg-[var(--surface-hover)] transition-colors ${selected.has(p.id) ? 'bg-[var(--accent-muted)]' : ''}`} onClick={() => selectionMode && toggleSelect(p.id)} style={{ cursor: selectionMode ? 'pointer' : undefined }}>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} ${selectionMode ? '' : 'hidden'}`}>
-                        <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} aria-label={`Selecionar ${p.name}`} className="accent-[var(--fg)] cursor-pointer" />
-                      </td>
-                      <td className={`px-4 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''}`}>
-                        <button type="button" onClick={() => setDrawerItem(p)} className="text-left w-full">
-                          <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{p.name}</div>
-                          <div className="text-[12px] font-mono text-[var(--fg-muted)]">{p.code}</div>
-                        </button>
-                      </td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] font-mono text-[var(--fg-secondary)]`}>{p.vol} {p.unit}</td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-[12px] text-[var(--fg-muted)] font-mono hidden sm:table-cell`}>{p.created}</td>
-                      <td className={`px-3.5 py-2.5 border-b border-[var(--border-subtle)] ${last ? 'border-b-0' : ''} text-right`}>
-                        <div className="flex items-center justify-end gap-0.5">
-                          <button type="button" onClick={() => setDrawerItem(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                          </button>
-                          <button type="button" onClick={() => startEdit(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {totalPages > 1 && (
-                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={perPage} />
-              )}
-            </div>
+            <DataTable
+              columns={[
+                { key: 'name', header: 'Produto', first: true, render: (p: Product) => (
+                  <button type="button" onClick={() => setDrawerItem(p)} className="text-left w-full">
+                    <div className="font-medium text-[var(--fg)] truncate max-w-[360px]">{p.name}</div>
+                    <div className="text-[12px] font-mono text-[var(--fg-muted)]">{p.code}</div>
+                  </button>
+                ) },
+                { key: 'volume', header: 'Volume', headerClassName: 'w-20', render: (p: Product) => (
+                  <span className="text-[12px] font-mono text-[var(--fg-secondary)]">{p.vol} {p.unit}</span>
+                ) },
+                { key: 'created', header: 'Criado em', headerClassName: 'w-24 hidden sm:table-cell', cellClassName: 'text-[12px] text-[var(--fg-muted)] font-mono hidden sm:table-cell', render: (p: Product) => p.created },
+                { key: 'actions', header: '', headerClassName: 'w-20 text-right', cellClassName: 'text-right', render: (p: Product) => (
+                  <div className="flex items-center justify-end gap-0.5">
+                    <button type="button" onClick={() => setDrawerItem(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button type="button" onClick={() => startEdit(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Editar">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                  </div>
+                ) },
+              ]}
+              rows={paged}
+              rowKey={(p: Product) => p.id}
+              selectionMode={selectionMode}
+              selected={selected}
+              allSelected={allSelected}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+              getRowAriaLabel={(p: Product) => `Selecionar ${p.name}`}
+              pagination={{ page, totalPages, onPageChange: setPage, total: filtered.length, perPage }}
+            />
           )}
         </>
       ) : (
