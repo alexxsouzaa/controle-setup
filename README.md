@@ -1,4 +1,4 @@
-# Controle de Setup
+# SetFlow
 
 Sistema de gestão de setups industriais desenvolvido para padronizar, documentar e agilizar o processo de troca de formato em máquinas de produção.
 
@@ -8,7 +8,7 @@ O projeto tem como objetivo reduzir o tempo de setup, minimizar erros operaciona
 
 # Objetivos
 
-O Controle de Setup foi criado para resolver problemas comuns encontrados durante a troca de formato em linhas de produção, como:
+O SetFlow foi criado para resolver problemas comuns encontrados durante a troca de formato em linhas de produção, como:
 
 * Dificuldade em identificar quais peças devem ser utilizadas.
 * Dependência do conhecimento de operadores mais experientes.

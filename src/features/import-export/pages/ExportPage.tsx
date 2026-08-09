@@ -66,7 +66,7 @@ export function ExportPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `controle-setup-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    a.download = `setflow-${new Date().toISOString().slice(0, 10)}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
     toast('Arquivo exportado com sucesso!');

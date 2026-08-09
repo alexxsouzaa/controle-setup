@@ -1,6 +1,6 @@
-# Controle de Setup — Backend Google Apps Script
+# SetFlow — Backend Google Apps Script
 
-Banco de dados do **Controle de Setup** implementado sobre **Google Planilhas**, exposto como API REST através do **Google Apps Script**.
+Banco de dados do **SetFlow** implementado sobre **Google Planilhas**, exposto como API REST através do **Google Apps Script**.
 
 O frontend **não acessa as planilhas diretamente**. Toda comunicação passa pela API do Apps Script.
 

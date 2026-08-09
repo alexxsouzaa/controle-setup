@@ -206,7 +206,7 @@ export function FluxosPage() {
     a.href = url;
     const name = selectedOnly && selectedFlows.length === 1
       ? selectedFlows[0].name.replace(/[<>:"/\\|?*]+/g, '_')
-      : `controle-setup-fluxos-${new Date().toISOString().slice(0, 10)}`;
+      : `setflow-fluxos-${new Date().toISOString().slice(0, 10)}`;
     a.download = `${name}.json`;
     a.click();
     URL.revokeObjectURL(url);

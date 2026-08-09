@@ -132,7 +132,7 @@ export function buildPDF(title: string, blocks: PDFBlock[]): string {
   <h1>${title}</h1>
   <div class="meta">Gerado em ${date}</div>
   ${body}
-  <div class="footer">Controle de Setup — Documento gerado automaticamente</div>
+  <div class="footer">SetFlow — Documento gerado automaticamente</div>
   <script>window.print();</script>
 </body>
 </html>`;

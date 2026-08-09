@@ -1,6 +1,6 @@
 // Database.gs — Esquema das abas, criação do banco e dados iniciais.
 
-var DATABASE_NAME = 'Controle de Setup - Banco de Dados';
+var DATABASE_NAME = 'SetFlow - Banco de Dados';
 var DATABASE_KEY = 'CS_DATABASE_ID';
 var DATABASE_VERSION = 2;
 
