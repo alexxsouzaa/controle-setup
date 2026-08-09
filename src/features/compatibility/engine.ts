@@ -7,7 +7,6 @@ import type { FlowPart, Flow } from '../flows/types/flow.types';
 import type {
   FormatCompatResult,
   CompatLevel,
-  UOConfigData,
   CompatibilityGroup,
   ProductCharacteristics,
   SetupPart,

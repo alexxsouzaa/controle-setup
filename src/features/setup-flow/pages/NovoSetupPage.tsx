@@ -1,13 +1,14 @@
 import * as React from 'react';
-import { useState, useContext, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ToastContext } from '../../../contexts/ToastContext';
+import { useToast } from '../../../contexts/ToastContext';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
 import { Badge } from '../../../components/Badge';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
+import { SearchInput } from '../../../components/shared/SearchInput';
 import { ImagePreview } from '../../../components/ImagePreview';
 import { PieceSelector } from '../../../components/shadcn-studio/command/PieceSelector';
 import { Separator } from '../../../components/ui/separator';
@@ -77,7 +78,7 @@ export function NovoSetupPage() {
   const { mutate: updateFlow } = useUpdateFlow();
   const { mutate: logAction } = useLogAction();
   const currentUser = useAppStore(s => s.currentUser);
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
+  const { toast } = useToast();
 
   const [step, setStep] = useState<number>(1);
   const [createdFlowName, setCreatedFlowName] = useState<string>('');
@@ -370,10 +371,7 @@ export function NovoSetupPage() {
             </div>
           </div>
           <div className="mb-4">
-            <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
-            </div>
+            <SearchInput placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
             {machineSearch && (() => {
               const filtered = machines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
               if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
@@ -452,10 +450,7 @@ export function NovoSetupPage() {
           </div>
 
           <div className="mb-4">
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg-secondary)] pointer-events-none"><Icon name="search" size={16} /></span>
-              <input className="shad-input pl-9" placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setProductSearch(e.target.value.toLowerCase()); setSelectedProduct(null); }} aria-label="Buscar produtos" />
-            </div>
+            <SearchInput placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setProductSearch(e.target.value.toLowerCase()); setSelectedProduct(null); }} aria-label="Buscar produtos" />
             {productSearch && productFiltered.length > 0 && (
               <div className="border border-[var(--border)] rounded-[6px] mt-2 overflow-hidden max-h-60 overflow-y-auto">
                 {productFiltered.map((p: Product) => (
@@ -816,7 +811,7 @@ export function NovoSetupPage() {
               <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
                 <Icon name="check-circle" size={28} />
               </div>
-              <h3 className="text-[16px] font-semibold mb-1">{isEditing ? 'Fluxo atualizado!' : 'Fluxo criado!'}</h3>
+              <h3 className="text-lg font-semibold mb-1">{isEditing ? 'Fluxo atualizado!' : 'Fluxo criado!'}</h3>
               <div className="text-[14px] font-medium text-[var(--fg)] mt-1 mb-1">{createdFlowName}</div>
               <p className="text-[12px] text-[var(--fg-secondary)] mb-6">{isEditing ? 'Disponível para utilização.' : 'O fluxo foi salvo e está disponível.'}</p>
               <div className="flex gap-3 justify-center">

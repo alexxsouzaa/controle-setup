@@ -1,11 +1,12 @@
-import { useState, useContext } from 'react';
-import { ToastContext } from '../../../contexts/ToastContext';
+import { useState } from 'react';
+import { useToast } from '../../../contexts/ToastContext';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { useExport } from '../../../queries';
 import { useMachines, useProducts, usePieces, useFlows, useFormatos, useHistory } from '../../../queries';
 import { useStats } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
+import { PageHeader } from '../../../components/shared/PageHeader';
 
 type ExportKey = 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
 
@@ -30,7 +31,7 @@ function jsonToXML(obj: Record<string, unknown>, root = 'data'): string {
 }
 
 export function ExportPage() {
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => number };
+  const { toast } = useToast();
   const { data: machines = [] } = useMachines();
   const { data: products = [] } = useProducts();
   const { data: pieces = [] } = usePieces();
@@ -74,6 +75,7 @@ export function ExportPage() {
 
   return (
     <div className="p-6 pb-16">
+      <PageHeader title="Exportar" description="Exporte os dados do sistema para backup ou migração." />
       <div className="border border-[var(--border)] rounded-[8px] overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-between">
           <h3 className="text-[13px] font-semibold text-[var(--fg)]">Entidades</h3>

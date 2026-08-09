@@ -139,7 +139,7 @@ export function NewMachinePage() {
             <div className="w-14 h-14 rounded-full bg-[var(--success-muted)] flex items-center justify-center mx-auto mb-4">
               <Icon name="check-circle" size={28} />
             </div>
-            <h3 className="text-[16px] font-semibold mb-1">{editingId ? 'Máquina atualizada!' : 'Máquina criada!'}</h3>
+            <h3 className="text-lg font-semibold mb-1">{editingId ? 'Máquina atualizada!' : 'Máquina criada!'}</h3>
             <p className="text-[14px] font-medium text-[var(--accent-fg)] mt-1 mb-1">{form.name}</p>
             <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
             <div className="flex gap-3 justify-center">

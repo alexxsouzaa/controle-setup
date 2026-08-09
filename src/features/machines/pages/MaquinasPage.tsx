@@ -7,6 +7,9 @@ import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
 import { useMachines, useDeleteMachine, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { SearchInput } from '../../../components/shared/SearchInput';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { Pagination } from '../../../components/shared/Pagination';
 import { Machine, Config } from '../../../types';
 
 interface StatCard {
@@ -66,6 +69,7 @@ export function MaquinasPage() {
 
   return (
     <div className="p-6 pb-16">
+      <PageHeader title="Máquinas" description="Gerencie as máquinas, UOs e ferramentais de produção." />
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
         {([
           { label: 'Total', value: machines.length, icon: 'box', variant: 'total' },
@@ -91,10 +95,7 @@ export function MaquinasPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-xs">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-          <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
-        </div>
+        <SearchInput className="flex-1 max-w-xs" placeholder="Buscar máquina ou linha..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar máquinas" />
 
         <div className="flex items-center gap-2 flex-1 flex-wrap">
           <DropdownMenu>
@@ -147,7 +148,7 @@ export function MaquinasPage() {
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] border-b border-[var(--border)]">
+              <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)] border-b border-[var(--border)] bg-[var(--bg-secondary)]">
                 {selectionMode && (
                   <th className="w-10 px-3.5 py-2.5 text-center">
                     <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[var(--fg)] cursor-pointer" />
@@ -157,8 +158,8 @@ export function MaquinasPage() {
                 <th className="px-3.5 py-2.5 text-left">Máquina</th>
                 <th className="px-3.5 py-2.5 text-left">Linha</th>
                 <th className="px-3.5 py-2.5 text-left">UO</th>
-                <th className="px-3.5 py-2.5 text-left">Criado em</th>
-                <th className="px-3.5 py-2.5 text-left">Criado por</th>
+                <th className="px-3.5 py-2.5 text-left hidden md:table-cell">Criado em</th>
+                <th className="px-3.5 py-2.5 text-left hidden lg:table-cell">Criado por</th>
                 <th className="px-3.5 py-2.5 text-left">Status</th>
               </tr>
             </thead>
@@ -194,8 +195,8 @@ export function MaquinasPage() {
                   <td className="px-3.5 py-2.5">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
                   </td>
-                  <td className="px-3.5 py-2.5 text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
-                  <td className="px-3.5 py-2.5 text-[12px] text-[var(--fg-muted)]">{m.createdBy || '—'}</td>
+                  <td className="px-3.5 py-2.5 hidden md:table-cell text-[12px] font-mono text-[var(--fg-muted)]">{m.createdAt}</td>
+                  <td className="px-3.5 py-2.5 hidden lg:table-cell text-[12px] text-[var(--fg-muted)]">{m.createdBy || '—'}</td>
                   <td className="px-3.5 py-2.5">
                     {(() => {
                       if (!m.updatedAt) return <span className="text-[12px] text-[var(--fg-muted)]">—</span>;
@@ -214,30 +215,7 @@ export function MaquinasPage() {
             </tbody>
           </table>
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
-              <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
-              <div className="flex gap-1">
-                <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                  const pg = start + i;
-                  if (pg > totalPages) return null;
-                  return (
-                    <button key={pg} type="button" onClick={() => setPage(pg)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                        pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                      }`}>{pg}</button>
-                  );
-                })}
-                <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-              </div>
-            </div>
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={perPage} />
           )}
         </div>
       )}

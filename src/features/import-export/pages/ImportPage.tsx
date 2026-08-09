@@ -4,6 +4,7 @@ import { Icon } from '../../../components/Icon';
 import { Button } from '../../../components/Button';
 import { Input } from '../../../components/Input';
 import { useFlows, useImportData, useLogAction } from '../../../queries';
+import { PageHeader } from '../../../components/shared/PageHeader';
 
 const ENTITY_INFO = [
   { key: 'machines', label: 'Máquinas', icon: 'box' },
@@ -135,6 +136,7 @@ export function ImportPage() {
 
   return (
     <div className="p-6 pb-16">
+      <PageHeader title="Importar" description="Importe dados de máquinas, produtos, peças, fluxos e formatos." />
       <div className="">
         <div
           role="button"

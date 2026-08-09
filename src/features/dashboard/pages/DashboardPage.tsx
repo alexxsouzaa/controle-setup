@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../../../components/Icon';
 import { Button } from '../../../components/Button';
+import { PageHeader } from '../../../components/shared/PageHeader';
 import type { Flow, Machine } from '../../../types';
 import { useMachines, useFlows, useStats } from '../../../queries';
 
@@ -23,22 +24,20 @@ export function DashboardPage() {
 
   return (
     <div className="p-6 pb-16">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[16px] font-semibold text-[var(--fg)]">Dashboard</h1>
-          <p className="text-[12px] text-[var(--fg-muted)] mt-0.5 font-mono">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => navigate('/fluxos')}>
-            <Icon name="file" size={14} />Fluxos
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}>
-            <Icon name="plus" size={14} />Novo Fluxo
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/fluxos')}>
+              <Icon name="file" size={14} />Fluxos
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => navigate('/novo-fluxo')}>
+              <Icon name="plus" size={14} />Novo Fluxo
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-6">
         {[

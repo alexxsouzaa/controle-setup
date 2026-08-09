@@ -1,9 +1,10 @@
-import { useState, useContext, useRef, useMemo } from 'react';
-import { ToastContext } from '../../../contexts/ToastContext';
+import { useState, useRef, useMemo } from 'react';
+import { useToast } from '../../../contexts/ToastContext';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
+import { SearchInput } from '../../../components/shared/SearchInput';
 import { ImagePreview } from '../../../components/ImagePreview';
 import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction } from '../../../queries';
 import { useMachines } from '../../../queries';
@@ -12,6 +13,8 @@ import { Piece, Machine } from '../../../types';
 import { processImageFile } from '../../../lib/image';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { Pagination } from '../../../components/shared/Pagination';
 
 const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
 
@@ -63,7 +66,7 @@ export function PecasPage() {
   const { mutate: deletePieces } = useDeletePieces();
   const { mutate: logAction } = useLogAction();
   const currentUser = useAppStore(s => s.currentUser);
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
+  const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -167,7 +170,8 @@ export function PecasPage() {
     <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
-          <div className="grid lg:grid-cols-4 gap-3 mb-5">
+          <PageHeader title="Peças" description="Cadastre e gerencie as peças utilizadas nos setups." />
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
             {[
               { label: 'Peças', value: pieces.length, icon: 'box' },
               { label: 'Categorias', value: ALL_CATEGORIES.length, icon: 'settings' },
@@ -186,11 +190,8 @@ export function PecasPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-xs">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar peça..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar peças" />
-            </div>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <SearchInput className="flex-1 max-w-xs" placeholder="Buscar peça..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar peças" />
             <div className="flex-1" />
             <div className="flex items-center gap-2 shrink-0">
               <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
@@ -220,7 +221,7 @@ export function PecasPage() {
               {pieces.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Peça</Button>}
             </div>
           ) : (
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
@@ -272,30 +273,7 @@ export function PecasPage() {
                 </tbody>
               </table>
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
-                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                      const pg = start + i;
-                      if (pg > totalPages) return null;
-                      return (
-                        <button key={pg} type="button" onClick={() => setPage(pg)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                          }`}>{pg}</button>
-                      );
-                    })}
-                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={perPage} />
               )}
             </div>
           )}

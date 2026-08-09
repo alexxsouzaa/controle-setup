@@ -1,14 +1,17 @@
-import { useState, useContext, useRef, useMemo } from 'react';
-import { ToastContext } from '../../../contexts/ToastContext';
+import { useState, useRef, useMemo } from 'react';
+import { useToast } from '../../../contexts/ToastContext';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
+import { SearchInput } from '../../../components/shared/SearchInput';
 import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useDeleteProducts, useLogAction } from '../../../queries';
 import { processImageFile } from '../../../lib/image';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { Pagination } from '../../../components/shared/Pagination';
 import { Product } from '../../../types';
 
 const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
@@ -30,7 +33,7 @@ export function ProdutosPage() {
   const { mutate: deleteProduct } = useDeleteProduct();
   const { mutate: deleteProducts } = useDeleteProducts();
   const { mutate: logAction } = useLogAction();
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => void };
+  const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -101,7 +104,8 @@ export function ProdutosPage() {
     <div className="p-6 pb-16">
       {tab === 'list' ? (
         <>
-          <div className="grid lg:grid-cols-4 gap-3 mb-5">
+          <PageHeader title="Produtos" description="Cadastre e gerencie os produtos do portfólio." />
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
             {[
               { label: 'Produtos', value: products.length, icon: 'grid-3x3' },
               { label: 'Categorias', value: CATEGORIES.length, icon: 'box' },
@@ -120,11 +124,8 @@ export function ProdutosPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative max-w-xs">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-              <input className="shad-input pl-8 py-1.5 text-[12px]" placeholder="Buscar por nome ou código..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
-            </div>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <SearchInput className="max-w-xs" placeholder="Buscar por nome ou código..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value.toLowerCase()); setPage(1); clearSelection(); }} aria-label="Buscar produtos" />
             <div className="flex-1" />
             <div className="flex items-center gap-2 shrink-0">
               <button type="button" onClick={() => { if (selectionMode) clearSelection(); else setSelectionMode(true); }}
@@ -154,7 +155,7 @@ export function ProdutosPage() {
               {products.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Novo Produto</Button>}
             </div>
           ) : (
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto">
               <table className="w-full text-[13px] border-collapse">
                 <thead className="bg-[var(--bg-secondary)]">
                   <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
@@ -197,30 +198,7 @@ export function ProdutosPage() {
                 </tbody>
               </table>
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)]">
-                  <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * perPage}–{Math.min(page * perPage, filtered.length)} de {filtered.length}</span>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                      const pg = start + i;
-                      if (pg > totalPages) return null;
-                      return (
-                        <button key={pg} type="button" onClick={() => setPage(pg)}
-                          className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                            pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                          }`}>{pg}</button>
-                      );
-                    })}
-                    <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                      className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
+                <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={perPage} />
               )}
             </div>
           )}

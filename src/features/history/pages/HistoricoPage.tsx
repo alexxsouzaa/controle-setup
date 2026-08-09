@@ -1,9 +1,12 @@
-import React, { useContext, useState, useMemo, useEffect } from 'react';
-import { ToastContext } from '../../../contexts/ToastContext';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useToast } from '../../../contexts/ToastContext';
 import { Icon } from '../../../components/Icon';
 import { Button } from '../../../components/Button';
 import { EmptyState, Loading } from '../../../components/shared/EmptyState';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { SearchInput } from '../../../components/shared/SearchInput';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { Pagination } from '../../../components/shared/Pagination';
 import { useHistory, useClearHistory, useRestoreHistory } from '../../../queries';
 import type { HistoryEntry } from '../../../types';
 
@@ -31,7 +34,7 @@ export function HistoricoPage() {
   const { data: history = [], isLoading, isError, refetch } = useHistory();
   const { mutate: clearHistory } = useClearHistory();
   const { mutate: restoreHistory } = useRestoreHistory();
-  const { toast } = useContext(ToastContext) as { toast: (msg: string) => void };
+  const { toast } = useToast();
   const [filter, setFilter] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
@@ -108,6 +111,7 @@ export function HistoricoPage() {
 
   return (
     <div className="p-6 pb-16">
+      <PageHeader title="Histórico" description="Registro de todas as ações realizadas no sistema." />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap items-center gap-2">
           {filters.map(f => (
@@ -125,10 +129,7 @@ export function HistoricoPage() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--fg-muted)] pointer-events-none"><Icon name="search" size={14} /></span>
-            <input className="shad-input pl-8 py-1.5 text-[12px] w-full sm:w-52" placeholder="Buscar..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} aria-label="Buscar no histórico" />
-          </div>
+          <SearchInput className="w-full sm:w-52" placeholder="Buscar..." value={search} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} aria-label="Buscar no histórico" />
           {history.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setConfirmClear(true)}><Icon name="trash" size={14} />Limpar</Button>
           )}
@@ -198,30 +199,7 @@ export function HistoricoPage() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-4 py-3 border border-[var(--border)] rounded-[8px]">
-          <span className="text-[12px] text-[var(--fg-muted)]">Mostrando {1 + (page - 1) * PER_PAGE}–{Math.min(page * PER_PAGE, filtered.length)} de {filtered.length}</span>
-          <div className="flex gap-1">
-            <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-              const pg = start + i;
-              if (pg > totalPages) return null;
-              return (
-                <button key={pg} type="button" onClick={() => setPage(pg)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border transition-all ${
-                    pg === page ? 'bg-[var(--fg)] text-[var(--bg)] border-[var(--fg)]' : 'border-[var(--border)] text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
-                  }`}>{pg}</button>
-              );
-            })}
-            <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-medium border border-[var(--border)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-[var(--fg)] text-[var(--fg-secondary)]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
-        </div>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} total={filtered.length} perPage={PER_PAGE} bordered />
       )}
 
       <ConfirmDialog

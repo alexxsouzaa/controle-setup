@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useBlocker } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ToastContext } from '../../../contexts/ToastContext';
+import { useToast } from '../../../contexts/ToastContext';
 import { ThemeContext } from '../../../contexts/ThemeContext';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
@@ -10,6 +10,7 @@ import { useMachines } from '../../../queries';
 import { useConfig, useUpdateConfig } from '../../../queries';
 import { useLogAction } from '../../../queries';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { PageHeader } from '../../../components/shared/PageHeader';
 import { EmptyState, Loading } from '../../../components/shared/EmptyState';
 import { UoConfig } from '../../../types';
 import { useFirestore } from '../../../lib/firebase';
@@ -123,7 +124,7 @@ export function ConfigPage() {
   const { data: config, isLoading: configLoading, isError: configError, refetch: refetchConfig } = useConfig();
   const { mutate: updateConfig } = useUpdateConfig();
   const { mutate: logAction } = useLogAction();
-  const { toast } = useContext(ToastContext) as { toast: (msg: string, type?: string) => number };
+  const { toast } = useToast();
   const { theme, toggle } = useContext(ThemeContext);
 
   const [tab, setTab] = useState<string>('uos');
@@ -236,8 +237,11 @@ export function ConfigPage() {
 
   return (
     <div className="p-0 h-full flex flex-col">
-      <div className="flex-1 flex min-h-0">
-        <nav role="tablist" aria-label="Seções de configuração" className="w-[200px] flex-shrink-0 bg-[var(--bg-secondary)] border-r border-[var(--border)] p-4 overflow-y-auto">
+      <div className="px-4 pt-6 pb-0 sm:px-6 lg:px-8">
+        <PageHeader title="Configurações" description="Gerencie UOs, aparência e preferências do sistema." />
+      </div>
+      <div className="flex-1 flex min-h-0 flex-col lg:flex-row">
+        <nav role="tablist" aria-label="Seções de configuração" className="w-full lg:w-[200px] flex-shrink-0 lg:bg-[var(--bg-secondary)] lg:border-r lg:border-[var(--border)] lg:p-4 overflow-x-auto lg:overflow-y-auto flex lg:flex-col gap-0.5 px-4 pt-3 lg:px-0 lg:pt-4 border-b lg:border-b-0 border-[var(--border)]">
           {TABS.map(t => {
             const active = tab === t.id;
             return (
@@ -249,7 +253,7 @@ export function ConfigPage() {
                 aria-controls={`cfg-panel-${t.id}`}
                 tabIndex={active ? 0 : -1}
                 onClick={() => { setTab(t.id); setUoEdit(null); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-medium transition-all text-left mb-0.5 ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-[6px] text-[13px] font-medium transition-all text-left mb-0.5 shrink-0 lg:w-full lg:mb-0.5 ${
                   active ? 'bg-[var(--surface-hover)] text-[var(--fg)] font-semibold' : 'text-[var(--fg-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--fg)]'
                 }`}
               >
@@ -260,7 +264,7 @@ export function ConfigPage() {
           })}
         </nav>
 
-        <div role="tabpanel" id={`cfg-panel-${tab}`} aria-labelledby={`cfg-tab-${tab}`} className="flex-1 overflow-y-auto py-6 px-8">
+        <div role="tabpanel" id={`cfg-panel-${tab}`} aria-labelledby={`cfg-tab-${tab}`} className="flex-1 overflow-y-auto py-6 px-4 sm:px-6 lg:px-8">
           {configLoading ? (
             <Loading />
           ) : configError ? (
@@ -417,7 +421,7 @@ export function ConfigPage() {
       </div>
 
       {tab === 'uos' && !configLoading && !configError && (
-        <div className="sticky bottom-0 bg-[var(--bg)] flex items-center justify-end gap-3 px-8 py-4 border-t border-[var(--border)] shrink-0">
+        <div className="sticky bottom-0 bg-[var(--bg)] flex items-center justify-end gap-3 px-4 sm:px-6 lg:px-8 py-4 border-t border-[var(--border)] shrink-0 flex-wrap">
           <span className="text-[12px] text-[var(--fg-muted)] mr-auto">
             {totalCount} itens configurados
             {dirty && <span className="text-[var(--danger)] font-medium ml-2">· alterações não salvas</span>}
