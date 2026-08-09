@@ -31,7 +31,7 @@ export function Topbar() {
                 type="button"
                 onClick={() => navigate('/dashboard')}
                 className="text-[11px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors leading-none">
-                CS Setup
+                SetFlow
               </button>
             </BreadcrumbLink>
           </BreadcrumbItem>
