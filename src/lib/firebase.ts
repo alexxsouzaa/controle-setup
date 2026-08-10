@@ -1,4 +1,4 @@
-import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { initializeApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Configuração lida de variáveis de ambiente (nunca versionar as chaves).
@@ -13,13 +13,7 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-export const hasFirebaseConfig: boolean = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
-
 const cleanConfig = Object.fromEntries(Object.entries(firebaseConfig).filter(([, v]) => Boolean(v)));
 
-export const app: FirebaseApp | undefined = hasFirebaseConfig ? initializeApp(cleanConfig) : undefined;
-export const db: Firestore | undefined = app ? getFirestore(app) : undefined;
-
-// Quando habilitado (padrão), os dados são persistidos no Firestore.
-// Desative em dev com VITE_FIRESTORE=false para usar o localStorage.
-export const useFirestore: boolean = hasFirebaseConfig && (import.meta.env.VITE_FIRESTORE ?? 'true') !== 'false';
+export const app = initializeApp(cleanConfig);
+export const db: Firestore = getFirestore(app);

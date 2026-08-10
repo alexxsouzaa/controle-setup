@@ -13,7 +13,6 @@ import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { EmptyState, Loading } from '../../../components/shared/EmptyState';
 import { UoConfig } from '../../../types';
-import { useFirestore } from '../../../lib/firebase';
 import { fsClearAll } from '../../../lib/api/firestore';
 
 const TABS = [
@@ -37,8 +36,7 @@ const NOTIF_OPTIONS = [
 ];
 const DEFAULT_NOTIF: Record<string, boolean> = { email: true, sistema: true, sonoro: false };
 const NOTIF_KEY = 'setflow-notifications';
-const STORAGE_KEY = 'controle-setup-data';
-const RESET_COLLECTIONS = ['machines', 'products', 'pieces', 'flows', 'formatos', 'config'];
+const RESET_COLLECTIONS = ['machines', 'products', 'pieces', 'flows', 'formatos', 'history', 'config'];
 
 interface UoConfigItem {
   uo: string;
@@ -213,8 +211,7 @@ export function ConfigPage() {
 
   const handleReset = async () => {
     try {
-      if (useFirestore) await fsClearAll(RESET_COLLECTIONS);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ machines: [], products: [], pieces: [], flows: [], formatos: [], history: [] }));
+      await fsClearAll(RESET_COLLECTIONS);
       localStorage.removeItem('cs-theme');
       localStorage.removeItem(NOTIF_KEY);
       setNotifPrefs({ ...DEFAULT_NOTIF });

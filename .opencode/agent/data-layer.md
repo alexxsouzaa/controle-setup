@@ -1,11 +1,11 @@
 ---
-description: Specialized agent for the Controle de Setup data layer — persistence, API client, mappers, Apps Script/Google Sheets backend, and future backend work. Use for anything touching data storage or the API.
+description: Specialized agent for the Controle de Setup data layer — persistence, API client, Firestore, and backend work. Use for anything touching data storage or the API.
 mode: subagent
 ---
 
 Você é um agente especializado na **camada de dados** do Controle de Setup.
 
-Escopo: persistência, abstração de acesso a dados, clientes de API, mappers e o backend.
+Escopo: persistência, abstração de acesso a dados, clientes de API e o backend.
 
 Regras de arquitetura (skill `setup-architecture`):
 
@@ -16,9 +16,10 @@ Regras de arquitetura (skill `setup-architecture`):
 
 Contexto atual do projeto:
 
-- O backend é um Apps Script que opera sobre o Google Sheets (pasta `backend/apps-script/`): `Code.gs` (doGet/doPost), `Api.gs`, `Database.gs`, `Entities.gs`, `SheetsService.gs`, `Crud.gs`.
-- O frontend consome via `src/lib/api/` (`client.ts`, `mappers.ts`, `endpoints.ts`, `index.ts`), com fallback para `localStorage` quando `VITE_APPS_SCRIPT_URL` não está definida.
-- Acesso anônimo do navegador ao Apps Script está bloqueado pelo SSO corporativo (`grupoboticario.com.br`); há uma proposta de migração para Sheets API + OAuth (Google Sign-In) e uma decisão em aberto entre Firebase e um backend SQLite (schema relacional já desenhado pelo usuário).
-- Requisições POST ao Apps Script exigem `Content-Type: text/plain;charset=utf-8` e `redirect: "follow"`.
+- A única camada de persistência de dados é o **Firebase Firestore** (projeto `setflow-boti`), inicializado em `src/lib/firebase.ts` a partir das variáveis `VITE_FIREBASE_*`.
+- O frontend consome via `src/lib/api/` (`client.ts`, `endpoints.ts`, `firestore.ts`), consumidos pelos hooks em `src/queries/`.
+- Coleções usadas: `machines`, `products`, `pieces`, `flows`, `formatos`, `history` e `config` (documento único `app_config`).
+- O `localStorage` é usado apenas para preferências de interface (tema `cs-theme`, notificações `setflow-notifications`, usuário corrente `cs-user`).
+- Backends anteriores (Google Apps Script/Google Sheets e fallback `localStorage`) foram removidos.
 
 Antes de escrever código, verifique se a estratégia de dados já foi definida; se não, sinalize a decisão em aberto em vez de assumir um caminho.

@@ -1,16 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateStorageEntity } from '../lib/storage';
+import { fsList, fsCreate, fsRemoveMany, fsClearAll, fsReplaceAll } from '../lib/api/firestore';
+import { uid } from '../lib/api/client';
 import type { HistoryEntry } from '../types';
 
 const HISTORY_KEY = 'history' as const;
-
-let $id = 0;
-const uid = (prefix: string) => { $id++; return `${prefix}-${Date.now()}-${$id}`; };
+const HISTORY_COLLECTION = 'history' as const;
+const MAX_HISTORY = 200;
 
 export function useHistory() {
   return useQuery({
     queryKey: [HISTORY_KEY],
-    queryFn: () => import('../lib/storage').then(m => m.getStorage().history),
+    queryFn: async () => {
+      const entries = await fsList<HistoryEntry>(HISTORY_COLLECTION);
+      return entries.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+    },
   });
 }
 
@@ -19,7 +22,15 @@ export function useLogAction() {
   return useMutation({
     mutationFn: async ({ type, entity, detail }: { type: string; entity: string; detail: string }) => {
       const entry: HistoryEntry = { id: uid('log'), type, entity, detail, date: new Date().toISOString() };
-      updateStorageEntity(HISTORY_KEY, h => [entry, ...h].slice(0, 200));
+      await fsCreate<HistoryEntry>(HISTORY_COLLECTION, entry);
+      const all = await fsList<HistoryEntry>(HISTORY_COLLECTION);
+      if (all.length > MAX_HISTORY) {
+        const stale = all
+          .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
+          .slice(0, all.length - MAX_HISTORY)
+          .map((h) => h.id);
+        await fsRemoveMany(HISTORY_COLLECTION, stale);
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [HISTORY_KEY] }),
   });
@@ -28,7 +39,7 @@ export function useLogAction() {
 export function useClearHistory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => { updateStorageEntity(HISTORY_KEY, () => []); },
+    mutationFn: () => fsClearAll([HISTORY_COLLECTION]),
     onSuccess: () => qc.invalidateQueries({ queryKey: [HISTORY_KEY] }),
   });
 }
@@ -36,7 +47,7 @@ export function useClearHistory() {
 export function useRestoreHistory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (entries: HistoryEntry[]) => { updateStorageEntity(HISTORY_KEY, () => entries.slice(0, 200)); },
+    mutationFn: (entries: HistoryEntry[]) => fsReplaceAll(HISTORY_COLLECTION, entries.slice(0, MAX_HISTORY)),
     onSuccess: () => qc.invalidateQueries({ queryKey: [HISTORY_KEY] }),
   });
 }
