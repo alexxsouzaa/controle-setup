@@ -1,11 +1,21 @@
+import { lazy, Suspense } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { AppLayout } from '../../layouts/AppLayout';
 import { RequireAuth } from '../../components/RequireAuth';
-import { LoginPage } from '../../features/auth/pages/LoginPage';
+import { Loading } from '../../components/shared/EmptyState';
 import { routeObjects } from './routes';
 
+const LoginPage = lazy(() => import('../../features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })));
+
 const router = createHashRouter([
-  { path: '/login', element: <LoginPage /> },
+  {
+    path: '/login',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <LoginPage />
+      </Suspense>
+    ),
+  },
   {
     element: (
       <RequireAuth>

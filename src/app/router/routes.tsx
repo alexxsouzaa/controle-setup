@@ -1,21 +1,24 @@
-import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
-import { FluxosPage } from '../../features/flows/pages/FluxosPage';
-import { NovoSetupPage } from '../../features/setup-flow/pages/NovoSetupPage';
-import { ImportPage } from '../../features/import-export/pages/ImportPage';
-import { MaquinasPage } from '../../features/machines/pages/MaquinasPage';
-import { MachineDetailsPage } from '../../features/machines/pages/MachineDetailsPage';
-import { NewMachinePage } from '../../features/machines/pages/NewMachinePage';
-import { ProdutosPage } from '../../features/products/pages/ProdutosPage';
-import { PecasPage } from '../../features/pieces/pages/PecasPage';
-import { FormatosPage } from '../../features/formatos/pages/FormatosPage';
-import { FormatoDetailsPage } from '../../features/formatos/pages/FormatoDetailsPage';
-import { ExportPage } from '../../features/import-export/pages/ExportPage';
-import { HistoricoPage } from '../../features/history/pages/HistoricoPage';
-import { ConfigPage } from '../../features/config/pages/ConfigPage';
-import { UnitsPage } from '../../features/units/pages/UnitsPage';
-import { NewUnitPage } from '../../features/units/pages/NewUnitPage';
-import { LinesPage } from '../../features/lines/pages/LinesPage';
-import { NewLinePage } from '../../features/lines/pages/NewLinePage';
+import { lazy, Suspense, type ReactNode } from 'react';
+import { Loading } from '../../components/shared/EmptyState';
+
+const DashboardPage = lazy(() => import('../../features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const FluxosPage = lazy(() => import('../../features/flows/pages/FluxosPage').then((m) => ({ default: m.FluxosPage })));
+const NovoSetupPage = lazy(() => import('../../features/setup-flow/pages/NovoSetupPage').then((m) => ({ default: m.NovoSetupPage })));
+const ImportPage = lazy(() => import('../../features/import-export/pages/ImportPage').then((m) => ({ default: m.ImportPage })));
+const MaquinasPage = lazy(() => import('../../features/machines/pages/MaquinasPage').then((m) => ({ default: m.MaquinasPage })));
+const MachineDetailsPage = lazy(() => import('../../features/machines/pages/MachineDetailsPage').then((m) => ({ default: m.MachineDetailsPage })));
+const NewMachinePage = lazy(() => import('../../features/machines/pages/NewMachinePage').then((m) => ({ default: m.NewMachinePage })));
+const ProdutosPage = lazy(() => import('../../features/products/pages/ProdutosPage').then((m) => ({ default: m.ProdutosPage })));
+const PecasPage = lazy(() => import('../../features/pieces/pages/PecasPage').then((m) => ({ default: m.PecasPage })));
+const FormatosPage = lazy(() => import('../../features/formatos/pages/FormatosPage').then((m) => ({ default: m.FormatosPage })));
+const FormatoDetailsPage = lazy(() => import('../../features/formatos/pages/FormatoDetailsPage').then((m) => ({ default: m.FormatoDetailsPage })));
+const ExportPage = lazy(() => import('../../features/import-export/pages/ExportPage').then((m) => ({ default: m.ExportPage })));
+const HistoricoPage = lazy(() => import('../../features/history/pages/HistoricoPage').then((m) => ({ default: m.HistoricoPage })));
+const ConfigPage = lazy(() => import('../../features/config/pages/ConfigPage').then((m) => ({ default: m.ConfigPage })));
+const UnitsPage = lazy(() => import('../../features/units/pages/UnitsPage').then((m) => ({ default: m.UnitsPage })));
+const NewUnitPage = lazy(() => import('../../features/units/pages/NewUnitPage').then((m) => ({ default: m.NewUnitPage })));
+const LinesPage = lazy(() => import('../../features/lines/pages/LinesPage').then((m) => ({ default: m.LinesPage })));
+const NewLinePage = lazy(() => import('../../features/lines/pages/NewLinePage').then((m) => ({ default: m.NewLinePage })));
 
 export const ALLOW_NEW_PATHS = new Set(['/dashboard', '/fluxos', '/maquinas', '/produtos', '/pecas', '/formatos']);
 
@@ -44,33 +47,37 @@ export const ROUTE_TITLES: Record<string, string> = {
   '/configuracoes': 'Configurações',
 };
 
+function withSuspense(element: ReactNode): ReactNode {
+  return <Suspense fallback={<Loading />}>{element}</Suspense>;
+}
+
 interface RouteDef {
   path: string;
-  element: React.ReactNode;
+  element: ReactNode;
 }
 
 export const routeObjects: RouteDef[] = [
-  { path: '/dashboard', element: <DashboardPage /> },
-  { path: '/fluxos', element: <FluxosPage /> },
-  { path: '/novo-fluxo', element: <NovoSetupPage /> },
-  { path: '/importar', element: <ImportPage /> },
-  { path: '/maquinas', element: <MaquinasPage /> },
-  { path: '/maquinas/new', element: <NewMachinePage /> },
-  { path: '/maquinas/:id/edit', element: <NewMachinePage /> },
-  { path: '/maquinas/:id', element: <MachineDetailsPage /> },
-  { path: '/produtos', element: <ProdutosPage /> },
-  { path: '/pecas', element: <PecasPage /> },
-  { path: '/formatos', element: <FormatosPage /> },
-  { path: '/formatos/:id', element: <FormatoDetailsPage /> },
-  { path: '/unidades', element: <UnitsPage /> },
-  { path: '/unidades/new', element: <NewUnitPage /> },
-  { path: '/unidades/:id/edit', element: <NewUnitPage /> },
-  { path: '/linhas', element: <LinesPage /> },
-  { path: '/linhas/new', element: <NewLinePage /> },
-  { path: '/linhas/:id/edit', element: <NewLinePage /> },
-  { path: '/exportar', element: <ExportPage /> },
-  { path: '/historico', element: <HistoricoPage /> },
-  { path: '/configuracoes', element: <ConfigPage /> },
-  { path: '/', element: <DashboardPage /> },
-  { path: '*', element: <DashboardPage /> },
+  { path: '/dashboard', element: withSuspense(<DashboardPage />) },
+  { path: '/fluxos', element: withSuspense(<FluxosPage />) },
+  { path: '/novo-fluxo', element: withSuspense(<NovoSetupPage />) },
+  { path: '/importar', element: withSuspense(<ImportPage />) },
+  { path: '/maquinas', element: withSuspense(<MaquinasPage />) },
+  { path: '/maquinas/new', element: withSuspense(<NewMachinePage />) },
+  { path: '/maquinas/:id/edit', element: withSuspense(<NewMachinePage />) },
+  { path: '/maquinas/:id', element: withSuspense(<MachineDetailsPage />) },
+  { path: '/produtos', element: withSuspense(<ProdutosPage />) },
+  { path: '/pecas', element: withSuspense(<PecasPage />) },
+  { path: '/formatos', element: withSuspense(<FormatosPage />) },
+  { path: '/formatos/:id', element: withSuspense(<FormatoDetailsPage />) },
+  { path: '/unidades', element: withSuspense(<UnitsPage />) },
+  { path: '/unidades/new', element: withSuspense(<NewUnitPage />) },
+  { path: '/unidades/:id/edit', element: withSuspense(<NewUnitPage />) },
+  { path: '/linhas', element: withSuspense(<LinesPage />) },
+  { path: '/linhas/new', element: withSuspense(<NewLinePage />) },
+  { path: '/linhas/:id/edit', element: withSuspense(<NewLinePage />) },
+  { path: '/exportar', element: withSuspense(<ExportPage />) },
+  { path: '/historico', element: withSuspense(<HistoricoPage />) },
+  { path: '/configuracoes', element: withSuspense(<ConfigPage />) },
+  { path: '/', element: withSuspense(<DashboardPage />) },
+  { path: '*', element: withSuspense(<DashboardPage />) },
 ];

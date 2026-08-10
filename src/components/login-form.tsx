@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type HTMLAttributes } from "react"
-import { CheckCircle2Icon, EyeIcon, EyeOffIcon } from "lucide-react"
+import { CheckCircle2Icon, EyeIcon, EyeOffIcon, Loader2Icon, BoxIcon, Building2Icon, WorkflowIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -47,7 +47,7 @@ export function LoginForm({
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form className="p-6 md:p-8" onSubmit={onSubmit}>
-            <FieldGroup>
+            <FieldGroup className="gap-6">
               <div className="flex flex-col items-center gap-2 text-center">
                 <SetFlowLogo className="h-5 w-auto md:hidden" />
                 <h1 className="font-heading text-2xl font-bold">Bem-vindo de volta</h1>
@@ -81,6 +81,7 @@ export function LoginForm({
                   onChange={(event) => onEmailChange(event.target.value)}
                   autoComplete="email"
                   required
+                  autoFocus
                   aria-invalid={error ? true : undefined}
                   aria-describedby={error ? "login-error" : undefined} />
               </Field>
@@ -118,16 +119,38 @@ export function LoginForm({
               </Field>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={submitting}>
+                  {submitting && <Loader2Icon className="animate-spin" />}
                   {submitting ? "Entrando..." : "Entrar"}
                 </Button>
+                <span aria-live="polite" className="sr-only">
+                  {submitting ? "Autenticando, aguarde..." : ""}
+                </span>
               </div>
             </FieldGroup>
           </form>
           <div className="relative hidden flex-col items-center justify-center gap-6 bg-foreground p-8 text-background md:flex">
-            <SetFlowLogo className="h-5 w-auto" />
-            <p className="text-center text-sm text-balance opacity-80">
-              Controle de setup de máquinas — fluxos, produtos, peças e formatos em um só lugar.
-            </p>
+            <div className="flex max-w-xs flex-col items-center gap-4 text-center">
+              <SetFlowLogo className="h-6 w-auto" />
+              <h2 className="font-heading text-xl font-semibold">Setup sem papel, sem erro</h2>
+              <p className="text-sm text-balance opacity-80">
+                Controle de setup de máquinas — fluxos, produtos, peças e formatos em um só lugar.
+              </p>
+              <div className="my-1 h-px w-16 bg-background/25" />
+              <ul className="flex flex-col gap-3 text-left text-sm text-background/90">
+                <li className="flex items-center gap-2">
+                  <WorkflowIcon className="size-4 shrink-0 opacity-70" />
+                  Fluxos de setup guiados passo a passo
+                </li>
+                <li className="flex items-center gap-2">
+                  <BoxIcon className="size-4 shrink-0 opacity-70" />
+                  Máquinas, peças e formatos centralizados
+                </li>
+                <li className="flex items-center gap-2">
+                  <Building2Icon className="size-4 shrink-0 opacity-70" />
+                  UOs e linhas com escopo por unidade
+                </li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>

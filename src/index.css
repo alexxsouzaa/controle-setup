@@ -4,6 +4,7 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/manrope";
 @import "@fontsource-variable/nunito-sans";
+@import "@fontsource-variable/jetbrains-mono";
 
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
@@ -19,7 +20,7 @@
   --color-danger: #f87171;
   --color-danger-muted: rgba(248, 113, 113, 0.12);
   --color-overlay: rgba(0, 0, 0, 0.5);
-  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-mono: 'JetBrains Mono Variable', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 }
 
 :root {

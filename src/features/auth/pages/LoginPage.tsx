@@ -83,7 +83,7 @@ export function LoginPage() {
     } catch (err) {
       const code = (err as { code?: string })?.code || '';
       if (code === 'auth/user-not-found') {
-        setError('Não encontramos uma conta com esse e-mail.');
+        setError('Se o e-mail estiver cadastrado, você receberá o link de redefinição.');
       } else if (code === 'auth/invalid-email') {
         setError('Informe um e-mail válido.');
       } else if (code === 'auth/network-request-failed') {
@@ -97,7 +97,7 @@ export function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+    <main className="relative flex h-dvh overflow-y-auto bg-background px-4 py-8">
       <button
         type="button"
         onClick={toggle}
@@ -108,7 +108,7 @@ export function LoginPage() {
       </button>
 
       <LoginForm
-        className="w-full max-w-3xl"
+        className="m-auto w-full max-w-3xl"
         email={email}
         password={password}
         onEmailChange={setEmail}
