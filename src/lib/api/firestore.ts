@@ -37,6 +37,15 @@ export async function fsUpdate(col: string, id: string, updates: Record<string, 
   await setDoc(doc(db, col, id), clean(updates), { merge: true });
 }
 
+// Aplica atualizações em lote (merge) em vários documentos de uma coleção.
+export async function fsUpdateMany(col: string, items: Array<{ id: string; updates: Record<string, unknown> }>): Promise<void> {
+  for (let i = 0; i < items.length; i += 500) {
+    const batch = writeBatch(db);
+    items.slice(i, i + 500).forEach(({ id, updates }) => batch.set(doc(db, col, id), clean(updates), { merge: true }));
+    await batch.commit();
+  }
+}
+
 export async function fsRemove(col: string, id: string): Promise<void> {
   await deleteDoc(doc(db, col, id));
 }

@@ -6,14 +6,17 @@ import { ThemeContext } from '../../../contexts/ThemeContext';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
-import { useMachines } from '../../../queries';
+import { useMachines, useProducts, usePieces, useUnits } from '../../../queries';
 import { useConfig, useUpdateConfig } from '../../../queries';
 import { useLogAction } from '../../../queries';
+import { useSeedDemo, useMigrateLegacy, useAssignOrphaned } from '../../../queries';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { EmptyState, Loading } from '../../../components/shared/EmptyState';
 import { UoConfig } from '../../../types';
 import { fsClearAll } from '../../../lib/api/firestore';
+import type { SeedReport } from '../../../lib/seed';
+import type { MigrationReport, OrphanReport } from '../../../lib/migrate';
 
 const TABS = [
   { id: 'uos', label: 'UOs', icon: 'grid-3x3' },
@@ -119,9 +122,15 @@ export function ConfigPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: machines = [] } = useMachines();
+  const { data: products = [] } = useProducts();
+  const { data: pieces = [] } = usePieces();
+  const { data: units = [] } = useUnits();
   const { data: config, isLoading: configLoading, isError: configError, refetch: refetchConfig } = useConfig();
   const { mutate: updateConfig } = useUpdateConfig();
   const { mutate: logAction } = useLogAction();
+  const { mutate: seedDemo } = useSeedDemo();
+  const { mutate: migrateLegacy } = useMigrateLegacy();
+  const { mutate: assignOrphaned } = useAssignOrphaned();
   const { toast } = useToast();
   const { theme, toggle } = useContext(ThemeContext);
 
@@ -133,6 +142,15 @@ export function ConfigPage() {
   const [uoSearch, setUoSearch] = useState<string>('');
   const [confirmRemoveUo, setConfirmRemoveUo] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmSeed, setConfirmSeed] = useState(false);
+  const [confirmMigrate, setConfirmMigrate] = useState(false);
+  const [confirmAssign, setConfirmAssign] = useState(false);
+  const [seedResult, setSeedResult] = useState<SeedReport | null>(null);
+  const [migrateResult, setMigrateResult] = useState<MigrationReport | null>(null);
+  const [assignResult, setAssignResult] = useState<OrphanReport | null>(null);
+  const [assignUnitId, setAssignUnitId] = useState<string>('');
+  const [assignProducts, setAssignProducts] = useState<boolean>(true);
+  const [assignPieces, setAssignPieces] = useState<boolean>(true);
   const [notifPrefs, setNotifPrefs] = useState<Record<string, boolean>>(() => {
     try {
       const raw = localStorage.getItem(NOTIF_KEY);
@@ -169,6 +187,38 @@ export function ConfigPage() {
     return q ? uoConfigs.filter(u => u.uo.toLowerCase().includes(q)) : uoConfigs;
   }, [uoConfigs, uoSearch]);
   const totalCount = uoConfigs.reduce((acc, u) => acc + u.toolingCategories.length + u.formatTypes.length + u.productCategories.length + u.lines.length, 0);
+
+  const orphanedProducts = products.filter(p => !p.unitId && p.scope !== 'global').length;
+  const orphanedPieces = pieces.filter(p => !p.unitId && p.scope !== 'global').length;
+  const orphanTotal = orphanedProducts + orphanedPieces;
+
+  const handleSeed = () => {
+    setConfirmSeed(false);
+    setSeedResult(null);
+    seedDemo(undefined, {
+      onSuccess: (r) => { setSeedResult(r); toast('Dados de exemplo carregados com sucesso!'); logAction({ type: 'seed', entity: 'Dados', detail: 'Dados de exemplo carregados' }); },
+      onError: () => toast('Não foi possível carregar os dados de exemplo.', 'error'),
+    });
+  };
+
+  const handleMigrate = () => {
+    setConfirmMigrate(false);
+    setMigrateResult(null);
+    migrateLegacy(undefined, {
+      onSuccess: (r) => { setMigrateResult(r); toast('Migração concluída com sucesso!'); logAction({ type: 'migrate', entity: 'Dados', detail: 'Migração de dados legados executada' }); },
+      onError: () => toast('Não foi possível executar a migração.', 'error'),
+    });
+  };
+
+  const handleAssign = () => {
+    if (!assignUnitId) { toast('Selecione a UO de destino.', 'warning'); return; }
+    setConfirmAssign(false);
+    setAssignResult(null);
+    assignOrphaned({ unitId: assignUnitId, options: { products: assignProducts, pieces: assignPieces } }, {
+      onSuccess: (r) => { setAssignResult(r); toast('Recursos atribuídos com sucesso!'); logAction({ type: 'assign', entity: 'UO', detail: 'Recursos órfãos atribuídos em massa' }); },
+      onError: () => toast('Não foi possível atribuir os recursos.', 'error'),
+    });
+  };
 
   const setUoValue = (key: string, values: string[]) => {
     setUoConfigs(prev => prev.map(u => u.uo === uoEdit ? { ...u, [key]: values } : u));
@@ -374,6 +424,56 @@ export function ConfigPage() {
                       </div>
                     </div>
                   </div>
+                  <hr className="border-[var(--border)]" />
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[13px] font-medium text-[var(--fg)]">Ferramentas de dados</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => setConfirmSeed(true)}>Carregar dados de exemplo</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setConfirmMigrate(true)}>Migrar dados legados</Button>
+                    </div>
+                    <p className="text-[12px] text-[var(--fg-muted)]">O seed cria UOs, linhas, máquinas, produtos, peças, formatos e fluxos de demonstração. A migração vincula os dados legados às UOs criadas.</p>
+                    {seedResult && (
+                      <div className="rounded-[6px] border border-[var(--border)] bg-[var(--surface)] p-3 text-[12px] text-[var(--fg-secondary)] space-y-1">
+                        <div className="font-medium text-[var(--fg)]">Dados de exemplo carregados</div>
+                        <div className="font-mono">UOs: {seedResult.units} · Linhas: {seedResult.lines} · Máquinas: {seedResult.machines}</div>
+                        <div className="font-mono">Produtos: {seedResult.products} · Peças: {seedResult.pieces} · Formatos: {seedResult.formatos} · Fluxos: {seedResult.flows}</div>
+                      </div>
+                    )}
+                    {migrateResult && (
+                      <div className="rounded-[6px] border border-[var(--border)] bg-[var(--surface)] p-3 text-[12px] text-[var(--fg-secondary)] space-y-1">
+                        <div className="font-medium text-[var(--fg)]">Migração concluída</div>
+                        {migrateResult.unitsCreated.length > 0 && <div className="font-mono">UOs criadas: {migrateResult.unitsCreated.join(', ')}</div>}
+                        <div className="font-mono">Máquinas atualizadas: {migrateResult.machinesUpdated} · Formatos: {migrateResult.formatosUpdated} · Fluxos: {migrateResult.flowsUpdated}</div>
+                      </div>
+                    )}
+                  </div>
+                  <hr className="border-[var(--border)]" />
+                  <div className="flex flex-col gap-3">
+                    <div className="text-[13px] font-medium text-[var(--fg)]">Atribuir recursos órfãos</div>
+                    <div className="text-[12px] text-[var(--fg-muted)]">
+                      {orphanTotal > 0
+                        ? `${orphanedProducts} produto${orphanedProducts !== 1 ? 's' : ''} e ${orphanedPieces} peça${orphanedPieces !== 1 ? 's' : ''} ainda não possuem UO e ficam ocultos quando uma UO está selecionada.`
+                        : 'Nenhum recurso órfão encontrado.'}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <select className="shad-select w-full text-[13px]" value={assignUnitId} onChange={(e) => setAssignUnitId(e.target.value)} aria-label="UO de destino">
+                        <option value="">Selecione a UO de destino...</option>
+                        {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                      <div className="flex gap-4 text-[12px] text-[var(--fg-secondary)]">
+                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={assignProducts} onChange={(e) => setAssignProducts(e.target.checked)} /> Produtos</label>
+                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={assignPieces} onChange={(e) => setAssignPieces(e.target.checked)} /> Peças</label>
+                      </div>
+                      <div>
+                        <Button variant="secondary" size="sm" onClick={() => setConfirmAssign(true)} disabled={!assignUnitId || orphanTotal === 0 || (!assignProducts && !assignPieces)}>Atribuir à UO</Button>
+                        {assignResult && (
+                          <div className="rounded-[6px] border border-[var(--border)] bg-[var(--surface)] p-3 mt-2 text-[12px] text-[var(--fg-secondary)] font-mono">
+                            Produtos atribuídos: {assignResult.productsAssigned} · Peças atribuídas: {assignResult.piecesAssigned}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -447,6 +547,30 @@ export function ConfigPage() {
         description="Confirma a exclusão total dos dados do sistema (máquinas, produtos, peças, fluxos, formatos e configurações)? Esta ação não pode ser desfeita."
         confirmLabel="Resetar"
         onConfirm={handleReset}
+      />
+      <ConfirmDialog
+        open={confirmSeed}
+        onOpenChange={setConfirmSeed}
+        title="Carregar dados de exemplo?"
+        description="Serão criadas UOs, linhas, máquinas, produtos, peças, formatos e fluxos de demonstração. Registros que já existirem não serão duplicados."
+        confirmLabel="Carregar"
+        onConfirm={handleSeed}
+      />
+      <ConfirmDialog
+        open={confirmMigrate}
+        onOpenChange={setConfirmMigrate}
+        title="Executar migração de dados legados?"
+        description="Serão criadas UOs a partir das UOs legadas e atribuídos unitId às máquinas, formatos e fluxos correspondentes. Produtos e peças não são afetados aqui."
+        confirmLabel="Migrar"
+        onConfirm={handleMigrate}
+      />
+      <ConfirmDialog
+        open={confirmAssign}
+        onOpenChange={setConfirmAssign}
+        title="Atribuir recursos órfãos à UO selecionada?"
+        description="Produtos e peças sem UO passarão a pertencer à UO escolhida e ficarão visíveis no contexto dela."
+        confirmLabel="Atribuir"
+        onConfirm={handleAssign}
       />
       <ConfirmDialog
         open={leavingBlocked}
