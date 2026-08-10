@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
 @import "@fontsource-variable/manrope";
 @import "@fontsource-variable/nunito-sans";
 @import "@fontsource-variable/jetbrains-mono";
@@ -9,17 +8,6 @@
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  --color-accent: #fafafa;
-  --color-accent-hover: #e4e4e7;
-  --color-accent-light: rgba(250, 250, 250, 0.08);
-  --color-accent-muted: rgba(250, 250, 250, 0.08);
-  --color-success: #4ade80;
-  --color-success-muted: rgba(74, 222, 128, 0.12);
-  --color-warning: #facc15;
-  --color-warning-muted: rgba(250, 204, 21, 0.12);
-  --color-danger: #f87171;
-  --color-danger-muted: rgba(248, 113, 113, 0.12);
-  --color-overlay: rgba(0, 0, 0, 0.5);
   --font-mono: 'JetBrains Mono Variable', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 }
 
