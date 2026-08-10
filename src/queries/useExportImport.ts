@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { exportApi } from '../lib/api';
 
-const ENTITY_KEYS = ['flows', 'machines', 'products', 'pieces', 'formatos'] as const;
+const ENTITY_KEYS = ['units', 'lines', 'flows', 'machines', 'products', 'pieces', 'formatos'] as const;
 
 export function useExport() {
   const qc = useQueryClient();
@@ -11,6 +11,8 @@ export function useExport() {
       return Array.isArray(data) ? data : [];
     };
     const data: Record<string, unknown> = {
+      units: pick('units'),
+      lines: pick('lines'),
       machines: pick('machines'),
       products: pick('products'),
       pieces: pick('pieces'),

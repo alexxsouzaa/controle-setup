@@ -17,6 +17,8 @@ import { ChevronDown } from 'lucide-react';
 import { resolveSetup, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, useProducts, usePieces, useFlows, useAddProduct, useAddFlow, useUpdateFlow, useLogAction, useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
+import { useUoStore } from '../../../stores/uoStore';
+import { filterByUnitScope } from '../../../lib/unitScope';
 import { Machine, Product, Piece, Flow, FlowPart, Config } from '../../../types';
 
 const STEPS = [
@@ -78,6 +80,10 @@ export function NovoSetupPage() {
   const { mutate: updateFlow } = useUpdateFlow();
   const { mutate: logAction } = useLogAction();
   const currentUser = useAppStore(s => s.currentUser);
+  const activeUnitId = useUoStore(s => s.activeUnitId);
+  const scopedMachines = filterByUnitScope(machines, activeUnitId);
+  const scopedProducts = filterByUnitScope(products, activeUnitId);
+  const scopedPieces = filterByUnitScope(pieces, activeUnitId);
   const { toast } = useToast();
 
   const [step, setStep] = useState<number>(1);
@@ -149,7 +155,7 @@ export function NovoSetupPage() {
     [selectedProduct, newProduct]
   );
 
-  const productFiltered = products.filter((p: Product) =>
+  const productFiltered = scopedProducts.filter((p: Product) =>
     productSearch && (p.name.toLowerCase().includes(productSearch) || p.code.toLowerCase().includes(productSearch))
   ).slice(0, 10);
 
@@ -200,14 +206,14 @@ export function NovoSetupPage() {
     return resolveSetup(
       { sealingType, tubeDiameter: Number(tubeDiameter) || 0 },
       selectedMachine,
-      pieces,
+      scopedPieces,
     );
-  }, [selectedMachine, sealingType, tubeDiameter, pieces]);
+  }, [selectedMachine, sealingType, tubeDiameter, scopedPieces]);
 
   const handleSuggestSetup = () => {
     if (!setupResolution || setupResolution.parts.length === 0) return;
     const withAlts: PartWithAlt[] = setupResolution.parts.map((sp) => {
-      const sameCategory = pieces.filter((p: Piece) => p.category === sp.piece.category && p.id !== sp.piece.id);
+      const sameCategory = scopedPieces.filter((p: Piece) => p.category === sp.piece.category && p.id !== sp.piece.id);
       return {
         pieceId: sp.piece.id,
         pieceName: sp.piece.name,
@@ -254,8 +260,8 @@ export function NovoSetupPage() {
   const handleSelectPrimary = (group: string, piece: Piece) => {
     setPartsWithAlternatives(prev => prev.map((p: PartWithAlt) => {
       if ((p.pieceCategory || p.group || '') === group) {
-        const full = pieces.find((pp: Piece) => pp.id === piece.id) || piece;
-        const sameCategory = pieces.filter((pp: Piece) => pp.category === (p.pieceCategory || group) && pp.id !== piece.id);
+        const full = scopedPieces.find((pp: Piece) => pp.id === piece.id) || piece;
+        const sameCategory = scopedPieces.filter((pp: Piece) => pp.category === (p.pieceCategory || group) && pp.id !== piece.id);
         return { ...full, pieceId: piece.id, pieceName: piece.name, pieceCode: piece.code || '', pieceCategory: group, isPrimary: true, available: (full.stock || 0) > (full.min || 0), alternatives: sameCategory.map((pp: Piece) => ({ piece: pp, level: pp.sealingType === sealingType ? 'exact' : 'fallback', requiresAdjustment: false })) };
       }
       return p;
@@ -279,11 +285,11 @@ export function NovoSetupPage() {
     const alternativeList: FlowPart[] = [];
     Object.entries(partSelections).forEach(([group, sel]) => {
       if (sel.primary) {
-        const piece = pieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary);
+        const piece = scopedPieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary);
         primaryList.push({ group, pieceName: sel.primary, pieceId: sel.primaryId || '', pieceCode: piece?.code || '', pieceCategory: group, isPrimary: true, image: piece?.image || '' } as unknown as FlowPart);
       }
       if (sel.alternative) {
-        const piece = pieces.find((p: Piece) => p.id === sel.alternativeId || p.name === sel.alternative);
+        const piece = scopedPieces.find((p: Piece) => p.id === sel.alternativeId || p.name === sel.alternative);
         alternativeList.push({ group, pieceName: sel.alternative, pieceId: sel.alternativeId || '', pieceCode: piece?.code || '', pieceCategory: group, isAlternative: true, image: piece?.image || '' } as unknown as FlowPart);
       }
     });
@@ -292,6 +298,7 @@ export function NovoSetupPage() {
       name: flowName,
       machine: selectedMachine?.name || '—',
       machineId: selectedMachineId,
+      unitId: selectedMachine?.unitId || '',
       line: selectedLine,
       product: activeProduct?.name || '—',
       productId: activeProduct?.id || '',
@@ -374,7 +381,7 @@ export function NovoSetupPage() {
           <div className="mb-4">
             <SearchInput placeholder="Buscar máquina por nome, UO ou linha..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setMachineSearch(e.target.value.toLowerCase()); setSelectedMachineId(''); setSelectedLine(''); }} />
             {machineSearch && (() => {
-              const filtered = machines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
+              const filtered = scopedMachines.filter((m: Machine) => !machineSearch || m.name.toLowerCase().includes(machineSearch) || (m.uo || '').toLowerCase().includes(machineSearch) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(machineSearch)));
               if (filtered.length === 0) return <p className="text-[12px] text-[var(--fg-muted)] mt-2">Nenhuma máquina encontrada.</p>;
               return (
                 <div className="border border-[var(--border)] rounded-[6px] mt-2 max-h-60 overflow-y-auto">
@@ -577,7 +584,7 @@ export function NovoSetupPage() {
                 {partsWithAlternatives.map((part: PartWithAlt, idx) => {
                   const group = part.pieceCategory || part.group || '';
                   const sel = partSelections[group] || { primary: null, primaryId: null, alternative: null, alternativeId: null };
-                  const primaryPiece = (sel.primary ? pieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary) || part : part) as PartWithAlt;
+                  const primaryPiece = (sel.primary ? scopedPieces.find((p: Piece) => p.id === sel.primaryId || p.name === sel.primary) || part : part) as PartWithAlt;
                   const alt = part.alternatives || [];
                   return (
                     <React.Fragment key={group}>
@@ -687,7 +694,7 @@ export function NovoSetupPage() {
           onOpenChange={(open) => { if (!open) setModalGroup(null); }}
           pieces={modalGroup.type === 'alternative' && modalGroup.alternatives
             ? modalGroup.alternatives.map(a => a.piece)
-            : pieces.filter(p => p.category === modalGroup.group)
+            : scopedPieces.filter(p => p.category === modalGroup.group)
           }
           selectedId={modalGroup.type === 'primary'
             ? partSelections[modalGroup.group]?.primaryId

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useToast } from '../../../contexts/ToastContext';
 import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
-import { useMachines, useProducts, usePieces, useFlows, useFormatos } from '../../../queries';
+import { useMachines, useProducts, usePieces, useFlows, useFormatos, useUnits, useLines } from '../../../queries';
 import { PageHeader } from '../../../components/shared/PageHeader';
 
-type ExportKey = 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
+type ExportKey = 'units' | 'lines' | 'machines' | 'products' | 'pieces' | 'flows' | 'formatos';
 
 const ENTITIES = [
+  { key: 'units', label: 'UOs', icon: 'grid-3x3' },
+  { key: 'lines', label: 'Linhas', icon: 'settings' },
   { key: 'machines', label: 'Máquinas', icon: 'box' },
   { key: 'products', label: 'Produtos', icon: 'grid-3x3' },
   { key: 'pieces', label: 'Peças', icon: 'box' },
@@ -34,7 +36,9 @@ export function ExportPage() {
   const { data: pieces = [] } = usePieces();
   const { data: flows = [] } = useFlows();
   const { data: formatos = [] } = useFormatos();
-  const data: Record<ExportKey, unknown[]> = { machines, products, pieces, flows, formatos };
+  const { data: units = [] } = useUnits();
+  const { data: lines = [] } = useLines();
+  const data: Record<ExportKey, unknown[]> = { units, lines, machines, products, pieces, flows, formatos };
   const counts = {} as Record<ExportKey, number>;
   ENTITIES.forEach(e => { counts[e.key] = data[e.key].length; });
 

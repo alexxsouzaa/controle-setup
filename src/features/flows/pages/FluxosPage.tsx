@@ -12,8 +12,11 @@ import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { SearchInput } from '../../../components/shared/SearchInput';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
+import { ResourceScopeBadge } from '../../../components/shared/ResourceScopeBadge';
 import { Flow } from '../../../types';
 import { useFlows, useUpdateFlow, useDeleteFlow, useDeleteFlows, useDuplicateFlow, useLogAction } from '../../../queries';
+import { useUoStore } from '../../../stores/uoStore';
+import { filterByUnitScope } from '../../../lib/unitScope';
 
 const statusVariant: Record<string, string> = {
   'Concluído': 'success',
@@ -152,7 +155,9 @@ export function FluxosPage() {
   const { mutate: duplicateFlow } = useDuplicateFlow();
   const { mutate: logAction } = useLogAction();
   const { toast } = useToast();
-  const { sorted } = useSortable(flows as unknown as Record<string, string>[], 'date');
+  const activeUnitId = useUoStore(s => s.activeUnitId);
+  const scopedFlows = filterByUnitScope(flows, activeUnitId);
+  const { sorted } = useSortable(scopedFlows as unknown as Record<string, string>[], 'date');
   const [search, setSearch] = useState<string>('');
   const [importedNotify, setImportedNotify] = useState<string[] | null>(null);
   const [machineFilter, setMachineFilter] = useState<string>('');
@@ -182,7 +187,7 @@ export function FluxosPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
-  const machineNames = [...new Set(flows.map((f: Flow) => f.machine).filter(Boolean))];
+  const machineNames = [...new Set(scopedFlows.map((f: Flow) => f.machine).filter(Boolean))];
   const selectedCount = selected.size;
 
   const toggleSelect = (id: string) => {
@@ -242,10 +247,10 @@ export function FluxosPage() {
       <PageHeader title="Fluxos" description="Acompanhe os fluxos de setup e seus status." />
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
         {[
-          { label: 'Fluxos', value: flows.length, icon: 'file' },
-          { label: 'Máquinas', value: [...new Set(flows.map((f: Flow) => f.machine).filter(Boolean))].length, icon: 'box' },
-          { label: 'Setups Hoje', value: flows.filter((f: Flow) => f.date === new Date().toISOString().slice(0, 10)).length, icon: 'clock' },
-          { label: 'Versões', value: [...new Set(flows.map((f: Flow) => f.ver).filter(Boolean))].length, icon: 'grid-3x3' },
+          { label: 'Fluxos', value: scopedFlows.length, icon: 'file' },
+          { label: 'Máquinas', value: [...new Set(scopedFlows.map((f: Flow) => f.machine).filter(Boolean))].length, icon: 'box' },
+          { label: 'Setups Hoje', value: scopedFlows.filter((f: Flow) => f.date === new Date().toISOString().slice(0, 10)).length, icon: 'clock' },
+          { label: 'Versões', value: [...new Set(scopedFlows.map((f: Flow) => f.ver).filter(Boolean))].length, icon: 'grid-3x3' },
         ].map((s, i) => (
           <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
@@ -322,6 +327,7 @@ export function FluxosPage() {
               </button>
             ) },
             { key: 'machine', header: 'Máquina', headerClassName: 'hidden md:table-cell', cellClassName: 'hidden md:table-cell text-[var(--fg-secondary)]', render: (s: Record<string, unknown>) => s.machine as string },
+            { key: 'scope', header: 'Escopo', headerClassName: 'w-20 hidden lg:table-cell', cellClassName: 'hidden lg:table-cell', render: (s: Record<string, unknown>) => <ResourceScopeBadge scope={(s.unitId as string) ? 'unit' : 'global'} unitId={s.unitId as string || ''} /> },
             { key: 'status', header: 'Status', headerClassName: 'hidden lg:table-cell', cellClassName: 'hidden lg:table-cell', render: (s: Record<string, unknown>) => (
               <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono ${
                 s.status === 'Concluído' ? 'bg-[var(--success-muted)] text-[var(--success)]' : s.status === 'Em andamento' ? 'bg-[var(--warning-muted)] text-[var(--warning)]' : s.status === 'Cancelado' ? 'bg-[var(--danger-muted)] text-[var(--danger)]' : 'bg-[var(--accent-muted)] text-[var(--fg-secondary)]'

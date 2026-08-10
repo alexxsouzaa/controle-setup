@@ -18,6 +18,7 @@ export interface Flow {
   date: string;
   ver: string;
   status: string;
+  unitId?: string;
   formatId?: string;
   formatName?: string;
   parts?: {

@@ -1,9 +1,35 @@
+export type ResourceScope = 'global' | 'unit';
+
+export interface Unit {
+  id: string;
+  code: string;
+  name: string;
+  status: 'active' | 'inactive';
+  description?: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
+export interface Line {
+  id: string;
+  code?: string;
+  name: string;
+  unitId: string;
+  machineIds?: string[];
+  status: 'active' | 'inactive';
+  notes?: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
 export interface Machine {
   id: string;
   name: string;
   line?: string;
   lines?: string[];
   uo: string;
+  unitId?: string;
+  scope?: ResourceScope;
   type?: string;
   outils?: number;
   toolingCategories?: string[];
@@ -32,6 +58,8 @@ export interface Product {
   image?: string;
   formatType?: string;
   formato?: string;
+  unitId?: string;
+  scope?: ResourceScope;
   notes?: string;
   created?: string;
   createdAt?: string;
@@ -56,6 +84,8 @@ export interface Piece {
   sealingType?: string;
   diameterMin?: number;
   diameterMax?: number;
+  unitId?: string;
+  scope?: ResourceScope;
 }
 
 export interface FlowPart {
@@ -78,6 +108,7 @@ export interface Flow {
   date: string;
   ver: string;
   status: string;
+  unitId?: string;
   formatId?: string;
   formatName?: string;
   parts?: {
@@ -108,6 +139,8 @@ export interface Formato {
   machineId?: string;
   partIds?: string[];
   alternativePartIds?: string[];
+  unitId?: string;
+  scope?: ResourceScope;
   pieces?: FlowPart[];
   notes?: string;
   createdBy?: string;

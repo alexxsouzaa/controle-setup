@@ -6,13 +6,16 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { Select } from '../../../components/Select';
 import { SearchInput } from '../../../components/shared/SearchInput';
-import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useDeleteProducts, useLogAction } from '../../../queries';
+import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, useDeleteProducts, useLogAction, useUnits } from '../../../queries';
 import { processImageFile } from '../../../lib/image';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
-import { Product } from '../../../types';
+import { ResourceScopeBadge } from '../../../components/shared/ResourceScopeBadge';
+import { useUoStore } from '../../../stores/uoStore';
+import { filterByUnitScope } from '../../../lib/unitScope';
+import { Product, Unit, ResourceScope } from '../../../types';
 
 const CATEGORIES = ['Shampoo', 'Condicionador', 'Creme', 'Sérum', 'Loção', 'Gel', 'Pomada', 'Óleo'];
 
@@ -24,15 +27,19 @@ interface ProductForm {
   unit: string;
   formato: string;
   image: string;
+  scope: ResourceScope;
+  unitId: string;
 }
 
 export function ProdutosPage() {
   const { data: products = [] } = useProducts();
+  const { data: units = [] } = useUnits();
   const { mutate: addProduct } = useAddProduct();
   const { mutate: updateProduct } = useUpdateProduct();
   const { mutate: deleteProduct } = useDeleteProduct();
   const { mutate: deleteProducts } = useDeleteProducts();
   const { mutate: logAction } = useLogAction();
+  const activeUnitId = useUoStore(s => s.activeUnitId);
   const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -43,11 +50,11 @@ export function ProdutosPage() {
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const [confirmTarget, setConfirmTarget] = useState<{ kind: 'bulk' | 'single' } | null>(null);
   const perPage = 10;
-  const [form, setForm] = useState<ProductForm>({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' });
+  const [form, setForm] = useState<ProductForm>({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '', scope: 'unit', unitId: '' });
   const [imageError, setImageError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '' }); setEditingId(null); setImageError(''); };
+  const resetForm = () => { setForm({ code: '', name: '', category: '', vol: '', unit: 'ml', formato: '', image: '', scope: 'unit', unitId: '' }); setEditingId(null); setImageError(''); };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,6 +71,7 @@ export function ProdutosPage() {
 
   const handleSave = () => {
     if (!form.code || !form.name || !form.vol) { toast('Preencha os campos obrigatórios: Código, Nome e Volume.', 'warning'); return; }
+    if (form.scope === 'unit' && !form.unitId) { toast('Selecione a UO do produto.', 'warning'); return; }
     if (editingId) {       updateProduct({ id: editingId, updates: { ...form, vol: Number(form.vol) } }); }
     else { addProduct({ ...form, vol: Number(form.vol), created: new Date().toISOString().slice(0, 10) }); }
     logAction({ type: editingId ? 'update' : 'create', entity: 'Produto', detail: editingId ? `${form.name} atualizado` : `${form.name} cadastrado` });
@@ -73,12 +81,13 @@ export function ProdutosPage() {
   };
 
   const startEdit = (p: Product) => {
-    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '', image: p.image || '' });
+    setForm({ code: p.code, name: p.name, category: p.category || '', vol: String(p.vol || ''), unit: p.unit || 'ml', formato: p.formato || '', image: p.image || '', scope: p.scope || 'unit', unitId: p.unitId || '' });
     setEditingId(p.id);
     setTab('create');
   };
 
-  const filtered = products.filter((p: Product) => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
+  const scopedProducts = filterByUnitScope(products, activeUnitId);
+  const filtered = scopedProducts.filter((p: Product) => !search || p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -107,10 +116,10 @@ export function ProdutosPage() {
           <PageHeader title="Produtos" description="Cadastre e gerencie os produtos do portfólio." />
           <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
             {[
-              { label: 'Produtos', value: products.length, icon: 'grid-3x3' },
+              { label: 'Produtos', value: scopedProducts.length, icon: 'grid-3x3' },
               { label: 'Categorias', value: CATEGORIES.length, icon: 'box' },
-              { label: 'Com Código', value: products.filter((p: Product) => p.code).length, icon: 'file' },
-              { label: 'Com Formato', value: products.filter((p: Product) => p.formato).length, icon: 'settings' },
+              { label: 'Com Código', value: scopedProducts.filter((p: Product) => p.code).length, icon: 'file' },
+              { label: 'Com Formato', value: scopedProducts.filter((p: Product) => p.formato).length, icon: 'settings' },
             ].map((s, i) => (
               <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-[6px] bg-[var(--accent-muted)] text-[var(--fg-secondary)] flex items-center justify-center shrink-0">
@@ -166,6 +175,7 @@ export function ProdutosPage() {
                 { key: 'volume', header: 'Volume', headerClassName: 'w-20', render: (p: Product) => (
                   <span className="text-[12px] font-mono text-[var(--fg-secondary)]">{p.vol} {p.unit}</span>
                 ) },
+                { key: 'scope', header: 'Escopo', headerClassName: 'w-20 hidden md:table-cell', cellClassName: 'hidden md:table-cell', render: (p: Product) => <ResourceScopeBadge scope={p.scope || 'unit'} unitId={p.unitId || ''} /> },
                 { key: 'created', header: 'Criado em', headerClassName: 'w-24 hidden sm:table-cell', cellClassName: 'text-[12px] text-[var(--fg-muted)] font-mono hidden sm:table-cell', render: (p: Product) => p.created },
                 { key: 'actions', header: '', headerClassName: 'w-20 text-right', cellClassName: 'text-right', render: (p: Product) => (
                   <div className="flex items-center justify-end gap-0.5">
@@ -245,6 +255,24 @@ export function ProdutosPage() {
                 <option value="">Selecione</option>
                 {CATEGORIES.map((c: string) => <option key={c}>{c}</option>)}
               </Select>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Escopo *</label>
+                <Select value={form.scope} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, scope: e.target.value as ResourceScope, unitId: e.target.value === 'unit' ? form.unitId : '' })}>
+                  <option value="unit">UO</option>
+                  <option value="global">Global</option>
+                </Select>
+              </div>
+              {form.scope === 'unit' && (
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">UO *</label>
+                  <Select value={form.unitId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, unitId: e.target.value })}>
+                    <option value="">Selecione</option>
+                    {units.map((u: Unit) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </Select>
+                </div>
+              )}
             </div>
           </Card>
           <Card>

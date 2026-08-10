@@ -1,4 +1,5 @@
 import type { FlowPart } from '../../flows/types/flow.types';
+import type { ResourceScope } from '../../units/types/unit.types';
 
 export interface Formato {
   id: string;
@@ -9,6 +10,8 @@ export interface Formato {
   volMin?: number;
   volumeUnit?: string;
   uo?: string;
+  unitId?: string;
+  scope?: ResourceScope;
   category?: string;
   diameter?: number;
   productId?: string;

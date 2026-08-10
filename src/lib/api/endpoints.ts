@@ -1,6 +1,81 @@
 import { fsList, fsGet, fsCreate, fsUpdate, fsRemove, fsRemoveMany, fsReplaceAll, fsGetConfig, fsUpdateConfig } from './firestore';
 import { nowDate, nowISO, getUser } from './client';
-import type { Machine, Product, Piece, Flow, Formato, Config } from '../../types';
+import type { Machine, Product, Piece, Flow, Formato, Config, Unit, Line } from '../../types';
+
+// ---------------------------------------------------------------------------
+// Unidades Organizacionais (UO)
+// ---------------------------------------------------------------------------
+
+export const unitsApi = {
+  async list(): Promise<Unit[]> {
+    return fsList<Unit>('units');
+  },
+
+  async get(id: string): Promise<Unit> {
+    return fsGet<Unit>('units', id);
+  },
+
+  async create(input: Partial<Unit> & { code: string; name: string }): Promise<Unit> {
+    const unit: Unit = {
+      ...input,
+      status: input.status ?? 'active',
+      createdAt: input.createdAt ?? nowDate(),
+      createdBy: input.createdBy ?? getUser(),
+    } as Unit;
+    return fsCreate<Unit>('units', unit);
+  },
+
+  async update(id: string, updates: Partial<Unit>): Promise<Unit> {
+    await fsUpdate('units', id, updates);
+    return fsGet<Unit>('units', id);
+  },
+
+  async remove(id: string): Promise<void> {
+    await fsRemove('units', id);
+  },
+
+  async removeMany(ids: string[]): Promise<void> {
+    await fsRemoveMany('units', ids);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Linhas
+// ---------------------------------------------------------------------------
+
+export const linesApi = {
+  async list(): Promise<Line[]> {
+    return fsList<Line>('lines');
+  },
+
+  async get(id: string): Promise<Line> {
+    return fsGet<Line>('lines', id);
+  },
+
+  async create(input: Partial<Line> & { name: string; unitId: string }): Promise<Line> {
+    const line: Line = {
+      ...input,
+      machineIds: input.machineIds ?? [],
+      status: input.status ?? 'active',
+      createdAt: input.createdAt ?? nowDate(),
+      createdBy: input.createdBy ?? getUser(),
+    } as Line;
+    return fsCreate<Line>('lines', line);
+  },
+
+  async update(id: string, updates: Partial<Line>): Promise<Line> {
+    await fsUpdate('lines', id, updates);
+    return fsGet<Line>('lines', id);
+  },
+
+  async remove(id: string): Promise<void> {
+    await fsRemove('lines', id);
+  },
+
+  async removeMany(ids: string[]): Promise<void> {
+    await fsRemoveMany('lines', ids);
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Máquinas
@@ -239,6 +314,8 @@ export const configApi = {
 // ---------------------------------------------------------------------------
 
 const EXPORT_ENTITIES = [
+  { key: 'units', api: unitsApi },
+  { key: 'lines', api: linesApi },
   { key: 'machines', api: machinesApi },
   { key: 'products', api: productsApi },
   { key: 'pieces', api: piecesApi },

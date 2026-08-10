@@ -11,6 +11,8 @@ import { getMachineTooling, getFormatTypeOptions } from '../../compatibility';
 import { useMachines, usePieces, useFormatos, useAddFormato, useUpdateFormato, useDeleteFormatos, useLogAction } from '../../../queries';
 import { useConfig } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
+import { useUoStore } from '../../../stores/uoStore';
+import { useUnits } from '../../../queries';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
@@ -36,6 +38,7 @@ interface FormatoPayload {
   name: string;
   formatType: string;
   uo: string;
+  unitId?: string;
   category?: string;
   diameter?: number;
   volume: number;
@@ -53,11 +56,13 @@ export function FormatosPage() {
   const { data: pieces = [] } = usePieces();
   const { data: machines = [] } = useMachines();
   const { data: config = {} as Config } = useConfig();
+  const { data: units = [] } = useUnits();
   const { mutate: addFormato } = useAddFormato();
   const { mutate: updateFormato } = useUpdateFormato();
   const { mutate: deleteFormatos } = useDeleteFormatos();
   const { mutate: logAction } = useLogAction();
   const currentUser = useAppStore(s => s.currentUser);
+  const activeUnitId = useUoStore(s => s.activeUnitId);
   const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -184,6 +189,7 @@ export function FormatosPage() {
       name: formatName.trim(),
       formatType,
       uo: selectedUo,
+      unitId: selectedMachine?.unitId,
       category,
       diameter: diameter ? Number(diameter) : undefined,
       volume: volumeNum,
@@ -226,7 +232,17 @@ export function FormatosPage() {
 
   const go = (s: number) => goToStep(s);
 
-  const filtered = search ? formatos.filter((f: Formato) => f.name?.toLowerCase().includes(search) || (f.uo || '').toLowerCase().includes(search) || (f.formatType || f.tipo || '').toLowerCase().includes(search)) : formatos;
+  const scopedFormatos = useMemo(() => {
+    if (!activeUnitId) return formatos;
+    const unit = units.find((u: { id: string; name: string }) => u.id === activeUnitId);
+    return formatos.filter((f: Formato) => {
+      if (f.unitId) return f.unitId === activeUnitId;
+      if (unit && f.uo) return f.uo === unit.name;
+      return true;
+    });
+  }, [formatos, activeUnitId, units]);
+
+  const filtered = search ? scopedFormatos.filter((f: Formato) => f.name?.toLowerCase().includes(search) || (f.uo || '').toLowerCase().includes(search) || (f.formatType || f.tipo || '').toLowerCase().includes(search)) : scopedFormatos;
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -252,7 +268,7 @@ export function FormatosPage() {
           <PageHeader title="Formatos" description="Gerencie os formatos de produção por máquina e peça." />
           <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
             {[
-              { label: 'Formatos', value: formatos.length, icon: 'grid-3x3' },
+              { label: 'Formatos', value: scopedFormatos.length, icon: 'grid-3x3' },
               { label: 'UOs', value: [...new Set(machines.map((m: Machine) => m.uo).filter(Boolean))].length, icon: 'box' },
               { label: 'Máquinas', value: machines.length, icon: 'settings' },
               { label: 'Peças', value: pieces.length, icon: 'wrench' },

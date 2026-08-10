@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { ROUTE_TITLES } from '@/app/router/routes';
 import { useMachines } from '@/queries/useMachines';
+import { UOSelector } from '@/components/shared/UOSelector';
 
 export function Topbar() {
   const { theme, toggle } = useContext(ThemeContext);
@@ -61,6 +62,7 @@ export function Topbar() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="flex items-center gap-2">
+        <UOSelector />
         <button
           type="button"
           onClick={toggle}

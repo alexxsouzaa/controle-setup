@@ -7,6 +7,8 @@ import { useFlows, useImportData, useLogAction } from '../../../queries';
 import { PageHeader } from '../../../components/shared/PageHeader';
 
 const ENTITY_INFO = [
+  { key: 'units', label: 'UOs', icon: 'grid-3x3' },
+  { key: 'lines', label: 'Linhas', icon: 'settings' },
   { key: 'machines', label: 'Máquinas', icon: 'box' },
   { key: 'products', label: 'Produtos', icon: 'grid-3x3' },
   { key: 'pieces', label: 'Peças', icon: 'box' },
@@ -136,7 +138,7 @@ export function ImportPage() {
 
   return (
     <div className="p-6 pb-16">
-      <PageHeader title="Importar" description="Importe dados de máquinas, produtos, peças, fluxos e formatos." />
+      <PageHeader title="Importar" description="Importe dados de UOs, linhas, máquinas, produtos, peças, fluxos e formatos." />
       <div className="">
         <div
           role="button"

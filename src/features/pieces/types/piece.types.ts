@@ -1,3 +1,5 @@
+import type { ResourceScope } from '../../units/types/unit.types';
+
 export interface Piece {
   id: string;
   code: string;
@@ -17,4 +19,6 @@ export interface Piece {
   sealingType?: string;
   diameterMin?: number;
   diameterMax?: number;
+  unitId?: string;
+  scope?: ResourceScope;
 }

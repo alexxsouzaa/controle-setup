@@ -1,4 +1,6 @@
 export * from './useMachines';
+export * from './useUnits';
+export * from './useLines';
 export * from './useProducts';
 export * from './usePieces';
 export * from './useFlows';
@@ -6,4 +8,5 @@ export * from './useFormatos';
 export * from './useHistory';
 export * from './useConfig';
 export * from './useExportImport';
+export * from './useDataTools';
 export * from './useStats';

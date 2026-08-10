@@ -9,14 +9,16 @@ import { Select } from '../../../components/Select';
 import { getToolingOptions } from '../../compatibility';
 import { processImageFile } from '../../../lib/image';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
-import { useMachines, useAddMachine, useUpdateMachine, useLogAction, useConfig } from '../../../queries';
+import { useMachines, useAddMachine, useUpdateMachine, useLogAction, useConfig, useUnits } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
-import { Machine, Config } from '../../../types';
+import { Machine, Config, ResourceScope } from '../../../types';
 
 interface MachineForm {
   name: string;
   lines: string[];
   uo: string;
+  unitId: string;
+  scope: ResourceScope;
   image: string;
   createdBy: string;
   toolingCategories: string[];
@@ -26,6 +28,7 @@ export function NewMachinePage() {
   const navigate = useNavigate();
   const { id: editId } = useParams();
   const { data: machines = [] } = useMachines();
+  const { data: units = [] } = useUnits();
   const { mutate: addMachine } = useAddMachine();
   const { mutate: updateMachine } = useUpdateMachine();
   const { mutate: logAction } = useLogAction();
@@ -33,7 +36,7 @@ export function NewMachinePage() {
   const currentUser = useAppStore(s => s.currentUser);
   const { toast } = useToast();
 
-  const [form, setForm] = useState<MachineForm>({ name: '', lines: [], uo: '', image: '', createdBy: currentUser, toolingCategories: [] });
+  const [form, setForm] = useState<MachineForm>({ name: '', lines: [], uo: '', unitId: '', scope: 'unit', image: '', createdBy: currentUser, toolingCategories: [] });
   const [imageError, setImageError] = useState<string>('');
   const [lineDropdownOpen, setLineDropdownOpen] = useState<boolean>(false);
   const [lineSearch, setLineSearch] = useState<string>('');
@@ -51,7 +54,7 @@ export function NewMachinePage() {
     if (isEdit) {
       const m = machines.find((mach: Machine) => mach.id === editId);
       if (m) {
-        setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', image: m.image || '', createdBy: m.createdBy || currentUser, toolingCategories: m.toolingCategories || [] });
+        setForm({ name: m.name, lines: m.lines || (m.line ? [m.line] : []), uo: m.uo || '', unitId: m.unitId || '', scope: m.scope || 'unit', image: m.image || '', createdBy: m.createdBy || currentUser, toolingCategories: m.toolingCategories || [] });
       }
     }
   }, [editId, isEdit, machines, currentUser]);
@@ -74,8 +77,9 @@ export function NewMachinePage() {
     const uos = new Set<string>();
     machines.forEach((m: Machine) => { if (m.uo) uos.add(m.uo); });
     if (config?.uoConfigs) Object.keys(config.uoConfigs).forEach(u => uos.add(u));
+    units.forEach((u) => { if (u.name) uos.add(u.name); });
     return [...uos].sort();
-  }, [machines, config]);
+  }, [machines, config, units]);
 
   const filteredLines = lineSearch ? allLines.filter((l: string) => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
   const toolingOptions = getToolingOptions(form.uo, config);
@@ -105,12 +109,14 @@ export function NewMachinePage() {
   };
 
   const handleSave = () => {
-    if (!form.name || !form.uo || form.lines.length === 0) { toast('Preencha todos os campos obrigatórios.', 'warning'); return; }
+    if (!form.name || form.lines.length === 0) { toast('Preencha os campos obrigatórios.', 'warning'); return; }
+    if (form.scope === 'unit' && !form.unitId && !form.uo) { toast('Selecione a UO da máquina.', 'warning'); return; }
     if (machines.some((m: Machine) => m.name.toLowerCase() === form.name.toLowerCase() && m.id !== editingId)) {
       toast('Já existe uma máquina com este nome.', 'warning'); return;
     }
     const createdAt = new Date().toISOString().slice(0, 10);
-    const machineData = { ...form, createdAt, updatedAt: createdAt };
+    const uo = form.uo || units.find((u) => u.id === form.unitId)?.name || '';
+    const machineData = { ...form, uo, createdAt, updatedAt: createdAt };
     if (editingId) {
       updateMachine({ id: editingId, updates: machineData });
       logAction({ type: 'update', entity: 'Máquina', detail: `${form.name} atualizada` });
@@ -144,7 +150,7 @@ export function NewMachinePage() {
             <p className="text-[12px] text-[var(--fg-secondary)] mb-6">A máquina foi cadastrada e está disponível.</p>
             <div className="flex gap-3 justify-center">
               <Button variant="primary" size="sm" onClick={() => navigate('/maquinas')}><Icon name="box" size={14} />Ver máquinas</Button>
-              <Button variant="secondary" size="sm" onClick={() => { setSaved(false); setForm(prev => ({ ...prev, name: '', lines: [], uo: '', image: '', toolingCategories: [] })); }}><Icon name="plus" size={14} />Criar nova máquina</Button>
+              <Button variant="secondary" size="sm" onClick={() => { setSaved(false); setForm(prev => ({ ...prev, name: '', lines: [], uo: '', unitId: '', scope: 'unit', image: '', toolingCategories: [] })); }}><Icon name="plus" size={14} />Criar nova máquina</Button>
             </div>
           </div>
         </Card>
@@ -167,11 +173,25 @@ export function NewMachinePage() {
                 <Input placeholder="Ex: Máquina de Envase 01" value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
-                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">UO *</label>
-                <Select value={form.uo} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, uo: e.target.value })}>
-                  <option value="">Selecione</option>
-                  {allUos.map((u: string) => <option key={u}>{u}</option>)}
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Escopo *</label>
+                <Select value={form.scope} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, scope: e.target.value as ResourceScope })}>
+                  <option value="unit">UO</option>
+                  <option value="global">Global</option>
                 </Select>
+              </div>
+              <div>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">UO {form.scope === 'unit' ? '*' : ''}</label>
+                {units.length > 0 ? (
+                  <Select value={form.unitId} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { const u = units.find((x) => x.id === e.target.value); setForm({ ...form, unitId: e.target.value, uo: u?.name ?? form.uo }); }}>
+                    <option value="">Selecione</option>
+                    {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </Select>
+                ) : (
+                  <Select value={form.uo} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, uo: e.target.value })}>
+                    <option value="">Selecione</option>
+                    {allUos.map((u: string) => <option key={u}>{u}</option>)}
+                  </Select>
+                )}
               </div>
               <div>
                 <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Criado por</label>
@@ -304,7 +324,7 @@ export function NewMachinePage() {
 
         <div className="flex items-center justify-end gap-3 pb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate('/maquinas')}>Cancelar</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.name || !form.uo || form.lines.length === 0}>{editingId ? 'Salvar' : 'Criar Máquina'}</Button>
+          <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.name || (form.scope === 'unit' && !form.unitId && !form.uo) || form.lines.length === 0}>{editingId ? 'Salvar' : 'Criar Máquina'}</Button>
         </div>
       </div>
       )}

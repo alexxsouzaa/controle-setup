@@ -1,3 +1,5 @@
+import type { ResourceScope } from '../../units/types/unit.types';
+
 export interface Product {
   id: string;
   code: string;
@@ -13,6 +15,8 @@ export interface Product {
   photo?: string;
   image?: string;
   formatType?: string;
+  unitId?: string;
+  scope?: ResourceScope;
   notes?: string;
   created?: string;
   createdAt?: string;

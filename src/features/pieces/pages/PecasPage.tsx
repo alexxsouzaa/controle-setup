@@ -6,10 +6,13 @@ import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { SearchInput } from '../../../components/shared/SearchInput';
 import { ImagePreview } from '../../../components/ImagePreview';
-import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction } from '../../../queries';
+import { usePieces, useAddPiece, useUpdatePiece, useDeletePiece, useDeletePieces, useLogAction, useUnits } from '../../../queries';
 import { useMachines } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
-import { Piece, Machine } from '../../../types';
+import { useUoStore } from '../../../stores/uoStore';
+import { Piece, Machine, Unit, ResourceScope } from '../../../types';
+import { filterByUnitScope } from '../../../lib/unitScope';
+import { ResourceScopeBadge } from '../../../components/shared/ResourceScopeBadge';
 import { processImageFile } from '../../../lib/image';
 import { useDialogAccessibility } from '../../../components/shared/useDialogAccessibility';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
@@ -29,6 +32,8 @@ interface PieceForm {
   image: string;
   createdBy: string;
   createdAt: string;
+  scope: ResourceScope;
+  unitId: string;
 }
 
 const CATEGORY_STRATEGIES: Record<string, string> = {
@@ -60,12 +65,14 @@ function guessCategory(name: string): string {
 export function PecasPage() {
   const { data: pieces = [] } = usePieces();
   const { data: machines = [] } = useMachines();
+  const { data: units = [] } = useUnits();
   const { mutate: addPiece } = useAddPiece();
   const { mutate: updatePiece } = useUpdatePiece();
   const { mutate: deletePiece } = useDeletePiece();
   const { mutate: deletePieces } = useDeletePieces();
   const { mutate: logAction } = useLogAction();
   const currentUser = useAppStore(s => s.currentUser);
+  const activeUnitId = useUoStore(s => s.activeUnitId);
   const { toast } = useToast();
   const [tab, setTab] = useState<string>('list');
   const [search, setSearch] = useState<string>('');
@@ -77,7 +84,7 @@ export function PecasPage() {
   const [page, setPage] = useState<number>(1);
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const perPage = 10;
-  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState<PieceForm>({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10), scope: 'unit', unitId: '' });
   const [imageError, setImageError] = useState<string>('');
   const [machineDropdownOpen, setMachineDropdownOpen] = useState<boolean>(false);
   const [machineSearch, setMachineSearch] = useState<string>('');
@@ -86,7 +93,7 @@ export function PecasPage() {
   const filteredMachines = machineSearch ? machines.filter((m: Machine) => m.name.toLowerCase().includes(machineSearch.toLowerCase())) : machines;
 
   const resetForm = () => {
-    setForm({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10) });
+    setForm({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10), scope: 'unit', unitId: '' });
     setEditingId(null); setImageError(''); setMachineSearch('');
   };
 
@@ -114,6 +121,7 @@ export function PecasPage() {
     if (!form.name) { toast('Informe o nome da peça.', 'warning'); return; }
     if (!form.specification) { toast('Informe a especificação da peça.', 'warning'); return; }
     if (form.compatibleMachineIds.length === 0) { toast('Selecione pelo menos uma máquina compatível.', 'warning'); return; }
+    if (form.scope === 'unit' && !form.unitId) { toast('Selecione a UO da peça.', 'warning'); return; }
     const category = form.category || guessCategory(form.name);
     const sealingType = form.sealingType || undefined;
     const diameterMin = form.diameterMin ? Number(form.diameterMin) : undefined;
@@ -134,12 +142,14 @@ export function PecasPage() {
       diameterMax: p.diameterMax != null ? String(p.diameterMax) : '',
       compatibleMachineIds: p.compatibleMachineIds || [], image: p.image || '',
       createdBy: p.createdBy || currentUser, createdAt: p.createdAt || new Date().toISOString().slice(0, 10),
+      scope: p.scope || 'unit', unitId: p.unitId || '',
     });
     setEditingId(p.id);
     setTab('create');
   };
 
-  const filtered = pieces.filter((p: Piece) => !search || p.name.toLowerCase().includes(search) || (p.specification || '').toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
+  const scopedPieces = filterByUnitScope(pieces, activeUnitId);
+  const filtered = scopedPieces.filter((p: Piece) => !search || p.name.toLowerCase().includes(search) || (p.specification || '').toLowerCase().includes(search) || (p.category || '').toLowerCase().includes(search));
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
@@ -173,9 +183,9 @@ export function PecasPage() {
           <PageHeader title="Peças" description="Cadastre e gerencie as peças utilizadas nos setups." />
           <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
             {[
-              { label: 'Peças', value: pieces.length, icon: 'box' },
+              { label: 'Peças', value: scopedPieces.length, icon: 'box' },
               { label: 'Categorias', value: ALL_CATEGORIES.length, icon: 'settings' },
-              { label: 'Com Foto', value: pieces.filter((p: Piece) => p.image).length, icon: 'upload' },
+              { label: 'Com Foto', value: scopedPieces.filter((p: Piece) => p.image).length, icon: 'upload' },
               { label: 'Máquinas compat.', value: machines.length, icon: 'grid-3x3' },
             ].map((s, i) => (
               <div key={i} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
@@ -217,8 +227,7 @@ export function PecasPage() {
             <div className="flex flex-col items-center justify-center py-16">
               <div className="w-12 h-12 rounded-[8px] bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--fg-muted)]"><Icon name="box" size={24} /></div>
               <p className="text-[15px] font-medium text-[var(--fg)] mb-1">{pieces.length === 0 ? 'Nenhuma peça cadastrada' : 'Nenhuma peça encontrada'}</p>
-              <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{pieces.length === 0 ? 'Cadastre a primeira peça.' : 'Tente ajustar a busca.'}</p>
-              {pieces.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Peça</Button>}
+              <p className="text-[12px] text-[var(--fg-secondary)] mb-4">{pieces.length === 0 ? 'Cadastre a primeira peça.' : 'Tente ajustar a busca.'}</p>              {pieces.length === 0 && <Button variant="primary" size="sm" onClick={() => setTab('create')}><Icon name="plus" size={14} />Nova Peça</Button>}
             </div>
           ) : (
             <DataTable
@@ -243,6 +252,7 @@ export function PecasPage() {
                     </div>
                   );
                 } },
+                { key: 'scope', header: 'Escopo', headerClassName: 'w-20 hidden md:table-cell', cellClassName: 'hidden md:table-cell', render: (p: Piece) => <ResourceScopeBadge scope={p.scope || 'unit'} unitId={p.unitId || ''} /> },
                 { key: 'actions', header: '', headerClassName: 'w-20 text-right', cellClassName: 'text-right', render: (p: Piece) => (
                   <div className="flex items-center justify-end gap-0.5">
                     <button type="button" onClick={() => setDrawerItem(p)} className="w-7 h-7 flex items-center justify-center rounded-[4px] hover:bg-[var(--surface-hover)] transition-colors" aria-label="Detalhes">
@@ -324,6 +334,32 @@ export function PecasPage() {
                 <Input placeholder="Ex: padrão, reforçado" value={form.sealingType} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sealingType: e.target.value })} />
               </div>
             )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Escopo *</label>
+                <select
+                  value={form.scope}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, scope: e.target.value as ResourceScope, unitId: e.target.value === 'unit' ? form.unitId : '' })}
+                  className="shad-select w-full"
+                >
+                  <option value="unit">UO</option>
+                  <option value="global">Global</option>
+                </select>
+              </div>
+              {form.scope === 'unit' && (
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">UO *</label>
+                  <select
+                    value={form.unitId}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm({ ...form, unitId: e.target.value })}
+                    className="shad-select w-full"
+                  >
+                    <option value="">Selecione</option>
+                    {units.map((u: Unit) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
           </Card>
           <Card>
             <div className="flex items-center gap-2 mb-4">

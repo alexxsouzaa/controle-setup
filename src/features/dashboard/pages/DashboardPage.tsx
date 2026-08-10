@@ -4,19 +4,30 @@ import { Icon } from '../../../components/Icon';
 import { Button } from '../../../components/Button';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import type { Flow, Machine } from '../../../types';
-import { useMachines, useFlows, useStats } from '../../../queries';
+import { useMachines, useFlows, useProducts, usePieces, useFormatos } from '../../../queries';
+import { useUoStore } from '../../../stores/uoStore';
+import { filterByUnitScope } from '../../../lib/unitScope';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { data: flows = [] } = useFlows();
   const { data: machines = [] } = useMachines();
-  const stats = useStats();
+  const { data: products = [] } = useProducts();
+  const { data: pieces = [] } = usePieces();
+  const { data: formatos = [] } = useFormatos();
+  const activeUnitId = useUoStore(s => s.activeUnitId);
 
-  const recent = useMemo(() => [...flows].sort((a: Flow, b: Flow) => (b.date || '').localeCompare(a.date || '')).slice(0, 5), [flows]);
-  const recentMachines = useMemo(() => [...machines].slice(-4), [machines]);
+  const scopedFlows = filterByUnitScope(flows, activeUnitId);
+  const scopedMachines = filterByUnitScope(machines, activeUnitId);
+  const scopedProducts = filterByUnitScope(products, activeUnitId);
+  const scopedPieces = filterByUnitScope(pieces, activeUnitId);
+  const scopedFormatos = filterByUnitScope(formatos, activeUnitId);
 
-  const today = flows.filter(f => f.date === new Date().toISOString().slice(0, 10)).length;
-  const yesterday = flows.filter(f => {
+  const recent = useMemo(() => [...scopedFlows].sort((a: Flow, b: Flow) => (b.date || '').localeCompare(a.date || '')).slice(0, 5), [scopedFlows]);
+  const recentMachines = useMemo(() => [...scopedMachines].slice(-4), [scopedMachines]);
+
+  const today = scopedFlows.filter(f => f.date === new Date().toISOString().slice(0, 10)).length;
+  const yesterday = scopedFlows.filter(f => {
     const d = new Date(); d.setDate(d.getDate() - 1);
     return f.date === d.toISOString().slice(0, 10);
   }).length;
@@ -41,10 +52,10 @@ export function DashboardPage() {
 
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-6">
         {[
-          { label: 'Total de Fluxos', value: stats.totalFlows, icon: 'file' as const, sub: `${today} hoje` },
-          { label: 'Máquinas Ativas', value: stats.totalMachines, icon: 'box' as const, sub: 'em operação' },
+          { label: 'Total de Fluxos', value: scopedFlows.length, icon: 'file' as const, sub: `${today} hoje` },
+          { label: 'Máquinas Ativas', value: scopedMachines.length, icon: 'box' as const, sub: 'em operação' },
           { label: 'Setups Hoje', value: today, icon: 'clock' as const, sub: yesterday > 0 ? `${pctChange >= 0 ? '+' : ''}${pctChange}% vs ontem` : 'primeiro do dia' },
-          { label: 'Produtos', value: stats.totalProducts, icon: 'grid-3x3' as const, sub: `${stats.totalFormatos} formatos` },
+          { label: 'Produtos', value: scopedProducts.length, icon: 'grid-3x3' as const, sub: `${scopedFormatos.length} formatos` },
         ].map(s => (
           <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex flex-col gap-2 hover:border-[var(--fg-muted)] transition-colors">
             <div className="flex items-center justify-between">
@@ -104,9 +115,9 @@ export function DashboardPage() {
           </div>
           <div className="p-4 space-y-1">
             {[
-              { label: 'Produtos', value: stats.totalProducts, icon: 'grid-3x3' as const, href: '/produtos' },
-              { label: 'Peças', value: stats.totalPieces, icon: 'box' as const, href: '/pecas' },
-              { label: 'Formatos', value: stats.totalFormatos, icon: 'grid-3x3' as const, href: '/formatos' },
+              { label: 'Produtos', value: scopedProducts.length, icon: 'grid-3x3' as const, href: '/produtos' },
+              { label: 'Peças', value: scopedPieces.length, icon: 'box' as const, href: '/pecas' },
+              { label: 'Formatos', value: scopedFormatos.length, icon: 'grid-3x3' as const, href: '/formatos' },
             ].map(item => (
               <button key={item.label} type="button" onClick={() => navigate(item.href)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-[6px] hover:bg-[var(--surface-hover)] transition-colors text-left">

@@ -5,11 +5,14 @@ import { Button } from '../../../components/Button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '../../../components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { Icon } from '../../../components/Icon';
-import { useMachines, useDeleteMachines, useLogAction, useConfig } from '../../../queries';
+import { useMachines, useDeleteMachines, useLogAction, useConfig, useUnits } from '../../../queries';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { SearchInput } from '../../../components/shared/SearchInput';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
+import { ResourceScopeBadge } from '../../../components/shared/ResourceScopeBadge';
+import { useUoStore } from '../../../stores/uoStore';
+import { filterByUnitScope } from '../../../lib/unitScope';
 import { Machine, Config } from '../../../types';
 
 interface StatCard {
@@ -23,9 +26,11 @@ const getLines = (m: Machine) => m.lines || (m.line ? [m.line] : []);
 export function MaquinasPage() {
   const navigate = useNavigate();
   const { data: machines = [] } = useMachines();
+  const { data: units = [] } = useUnits();
   const { mutate: deleteMachines } = useDeleteMachines();
   const { mutate: logAction } = useLogAction();
   const { data: config = {} as Config } = useConfig();
+  const activeUnitId = useUoStore(s => s.activeUnitId);
   const { toast } = useToast();
   const [search, setSearch] = useState<string>('');
   const [uoFilter, setUoFilter] = useState<string>('');
@@ -35,14 +40,17 @@ export function MaquinasPage() {
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const perPage = 10;
 
+  const scopedMachines = useMemo(() => filterByUnitScope(machines, activeUnitId), [machines, activeUnitId]);
+
   const allUos = useMemo(() => {
     const uos = new Set<string>();
-    machines.forEach((m: Machine) => { if (m.uo) uos.add(m.uo); });
+    scopedMachines.forEach((m: Machine) => { if (m.uo) uos.add(m.uo); });
     if (config?.uoConfigs) Object.keys(config.uoConfigs).forEach(u => uos.add(u));
+    units.forEach((u) => { if (u.name) uos.add(u.name); });
     return [...uos].sort();
-  }, [machines, config]);
+  }, [scopedMachines, config, units]);
 
-  const filtered = machines.filter((m: Machine) =>
+  const filtered = scopedMachines.filter((m: Machine) =>
     (!search || m.name.toLowerCase().includes(search.toLowerCase()) || (m.lines || (m.line ? [m.line] : [])).some((l: string) => l.toLowerCase().includes(search.toLowerCase()))) &&
     (!uoFilter || m.uo === uoFilter)
   );
@@ -71,9 +79,9 @@ export function MaquinasPage() {
       <PageHeader title="Máquinas" description="Gerencie as máquinas, UOs e ferramentais de produção." />
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-3 mb-5">
         {([
-          { label: 'Total', value: machines.length, icon: 'box' },
-          { label: 'Com Foto', value: machines.filter((m: Machine) => m.image).length, icon: 'upload' },
-          { label: 'Com Ferramentais', value: machines.filter((m: Machine) => (m.toolingCategories?.length ?? 0) > 0).length, icon: 'wrench' },
+          { label: 'Total', value: scopedMachines.length, icon: 'box' },
+          { label: 'Com Foto', value: scopedMachines.filter((m: Machine) => m.image).length, icon: 'upload' },
+          { label: 'Com Ferramentais', value: scopedMachines.filter((m: Machine) => (m.toolingCategories?.length ?? 0) > 0).length, icon: 'wrench' },
           { label: 'UOs', value: allUos.length, icon: 'grid-3x3' },
         ] as StatCard[]).map(s => (
           <div key={s.label} className="bg-[var(--surface)] border border-[var(--border)] rounded-[8px] p-4 flex items-center gap-3">
@@ -164,7 +172,10 @@ export function MaquinasPage() {
               </div>
             ) },
             { key: 'uo', header: 'UO', headerClassName: 'hidden sm:table-cell', cellClassName: 'hidden sm:table-cell', render: (m: Machine) => (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <ResourceScopeBadge scope={m.scope} />
+                {m.uo && <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{m.uo}</span>}
+              </div>
             ) },
             { key: 'createdAt', header: 'Criado em', headerClassName: 'hidden lg:table-cell', cellClassName: 'hidden lg:table-cell text-[12px] font-mono text-[var(--fg-muted)]', render: (m: Machine) => m.createdAt },
             { key: 'createdBy', header: 'Criado por', headerClassName: 'hidden xl:table-cell', cellClassName: 'hidden xl:table-cell text-[12px] text-[var(--fg-muted)]', render: (m: Machine) => m.createdBy || '—' },
