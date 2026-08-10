@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react"
-import { useAppStore } from '@/stores/appStore'
+import { useAuthStore } from '@/stores/authStore'
 
 interface NavUserProps {
   user: { name: string; email: string; avatar: string; };
@@ -10,13 +10,13 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar()
-  const setCurrentUser = useAppStore(s => s.setCurrentUser)
+  const signOut = useAuthStore(s => s.signOut)
 
   const initials = (user.name || 'O').trim().split(/\s+/).slice(0, 2).map(p => p.charAt(0).toUpperCase()).join('') || 'O'
 
   const handleLogout = () => {
     try { localStorage.removeItem('cs-user'); } catch { }
-    setCurrentUser('Operador')
+    void signOut()
   }
 
   return (

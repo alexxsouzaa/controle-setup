@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Configuração lida de variáveis de ambiente (nunca versionar as chaves).
@@ -17,3 +18,4 @@ const cleanConfig = Object.fromEntries(Object.entries(firebaseConfig).filter(([,
 
 export const app = initializeApp(cleanConfig);
 export const db: Firestore = getFirestore(app);
+export const auth: Auth = getAuth(app);

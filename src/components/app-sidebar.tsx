@@ -1,10 +1,11 @@
 import * as React from "react"
 import { useAppStore } from '@/stores/appStore'
+import { useAuthStore } from '@/stores/authStore'
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { SetFlowLogo } from "@/components/SetFlowLogo"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon } from "lucide-react"
+import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon, Building2Icon, GitForkIcon } from "lucide-react"
 import { APP_VERSION } from "@/version"
 
 const data = {
@@ -27,6 +28,13 @@ const data = {
       ],
     },
     {
+      title: "Organização",
+      items: [
+        { title: "Unidades (UO)", url: "/unidades", icon: <Building2Icon /> },
+        { title: "Linhas", url: "/linhas", icon: <GitForkIcon /> },
+      ],
+    },
+    {
       title: "Sistema",
       items: [
         { title: "Importar", url: "/importar", icon: <UploadIcon /> },
@@ -40,7 +48,8 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const currentUser = useAppStore(s => s.currentUser)
-  const user = { name: currentUser, email: "", avatar: "" }
+  const authUser = useAuthStore(s => s.user)
+  const user = { name: currentUser, email: authUser?.email || "", avatar: "" }
 
   return (
     <Sidebar collapsible="icon" {...props}>
