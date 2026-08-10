@@ -1,0 +1,1 @@
+import{y as e}from"./client-DGuqiG8f.js";var t=e();function n({className:e=``,...n}){return(0,t.jsx)(`input`,{className:`shad-input ${e}`,...n})}export{n as t};

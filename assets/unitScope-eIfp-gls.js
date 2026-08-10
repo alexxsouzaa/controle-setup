@@ -1,0 +1,1 @@
+function e(e){return!!e&&typeof e==`object`&&typeof e.unitId==`string`}function t(t,n){return n?t.filter(t=>t.scope===`global`?!0:e(t)?t.unitId===n:!1):t}export{t};
