@@ -14,11 +14,10 @@ export function Topbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
-  const { data: machines = [] } = useMachines();
-
-  const machineNames = new Map((machines as any[]).map((m: any) => [m.id, m.name]));
-
   const parts = path === '/' ? ['dashboard'] : path.split('/').filter(Boolean);
+  const needsMachineNames = parts.some((_, i) => !ROUTE_TITLES['/' + parts.slice(0, i + 1).join('/')]);
+  const { data: machines = [] } = useMachines(needsMachineNames);
+  const machineNames = new Map((machines as any[]).map((m: any) => [m.id, m.name]));
 
   return (
     <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg)] flex items-center px-5 gap-1.5 sticky top-0 z-10">

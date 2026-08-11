@@ -1,6 +1,7 @@
 import { fsList, fsGet, fsCreate, fsUpdate, fsRemove, fsRemoveMany, fsReplaceAll, fsGetConfig, fsUpdateConfig } from './firestore';
 import { nowDate, nowISO, getUser } from './client';
 import type { Machine, Product, Piece, Flow, Formato, Config, Unit, Line } from '../../types';
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Unidades Organizacionais (UO)
@@ -325,12 +326,23 @@ const EXPORT_ENTITIES = [
 
 export const exportApi = {
   async importAll(imported: unknown): Promise<number> {
-    const data = imported as Record<string, unknown>;
+    const root = z.record(z.string(), z.unknown()).safeParse(imported);
+    if (!root.success) throw new Error('Arquivo de importação inválido (esperado um objeto JSON).');
+    const data = root.data;
+
+    // Esquema permissivo por entidade: cada item deve ser um objeto (record).
+    // Rejeita primitivos, arrays aninhados e null, preservando campos legados/extras.
+    const itemsSchema = z.array(z.record(z.string(), z.unknown()));
+
     let total = 0;
     for (const e of EXPORT_ENTITIES) {
-      const items = data[e.key];
-      if (!Array.isArray(items)) continue;
-      total += await fsReplaceAll(e.key, items);
+      const raw = data[e.key];
+      if (raw === undefined) continue;
+      const parsed = itemsSchema.safeParse(raw);
+      if (!parsed.success) {
+        throw new Error(`Importação: "${e.key}" deve ser uma lista de objetos.`);
+      }
+      total += await fsReplaceAll(e.key, parsed.data);
     }
     if (data.config && typeof data.config === 'object') {
       await fsUpdateConfig(data.config as Partial<Config>);

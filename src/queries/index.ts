@@ -9,4 +9,3 @@ export * from './useHistory';
 export * from './useConfig';
 export * from './useExportImport';
 export * from './useDataTools';
-export * from './useStats';

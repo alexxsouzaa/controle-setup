@@ -4,10 +4,11 @@ import type { Machine } from '../types';
 
 const MACHINES_KEY = 'machines' as const;
 
-export function useMachines() {
+export function useMachines(enabled = true) {
   return useQuery({
     queryKey: [MACHINES_KEY],
     queryFn: () => machinesApi.list(),
+    enabled,
   });
 }
 
