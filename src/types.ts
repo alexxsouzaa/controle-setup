@@ -2,7 +2,7 @@ export type ResourceScope = 'global' | 'unit';
 
 export interface Unit {
   id: string;
-  code: string;
+  code?: string;
   name: string;
   status: 'active' | 'inactive';
   description?: string;

@@ -6,12 +6,13 @@ import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { RecordMeta } from '../../../components/shared/RecordMeta';
 import { useUnits, useAddUnit, useUpdateUnit, useLogAction } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
 import { unitSchema, type UnitFormData } from '../schemas/unit.schema';
 import { Unit } from '../../../types';
 
-const EMPTY: UnitFormData = { code: '', name: '', status: 'active', description: '' };
+const EMPTY: UnitFormData = { name: '', status: 'active', description: '' };
 
 export function NewUnitPage() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export function NewUnitPage() {
   useEffect(() => {
     if (isEdit) {
       const u = units.find((un: Unit) => un.id === editId);
-      if (u) setForm({ code: u.code, name: u.name, status: u.status, description: u.description ?? '' });
+      if (u) setForm({ name: u.name, status: u.status, description: u.description ?? '' });
     }
   }, [editId, isEdit, units]);
 
@@ -43,23 +44,21 @@ export function NewUnitPage() {
       toast(msg, 'warning');
       return;
     }
-    const exists = units.some((u: Unit) => u.code.toLowerCase() === form.code.toLowerCase() && u.id !== editId);
-    if (exists) { toast('Já existe uma UO com este código.', 'warning'); return; }
     const createdAt = new Date().toISOString().slice(0, 10);
     if (isEdit && editId) {
       updateUnit({ id: editId, updates: { ...form, description: form.description || undefined } });
-      logAction({ type: 'update', entity: 'UO', detail: `${form.name} (${form.code}) atualizada` });
+      logAction({ type: 'update', entity: 'UO', detail: `${form.name} atualizada` });
       toast('UO atualizada com sucesso!');
     } else {
       addUnit({ ...form, description: form.description || undefined, createdAt, createdBy: currentUser });
-      logAction({ type: 'create', entity: 'UO', detail: `${form.name} (${form.code}) cadastrada` });
+      logAction({ type: 'create', entity: 'UO', detail: `${form.name} cadastrada` });
       toast('UO cadastrada com sucesso!');
     }
     setSaved(true);
   };
 
   const handleBack = () => {
-    if (form.code || form.name || form.description) setConfirmDiscard(true);
+    if (form.name || form.description) setConfirmDiscard(true);
     else navigate('/unidades');
   };
 
@@ -95,10 +94,6 @@ export function NewUnitPage() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Código *</label>
-                <Input placeholder="Ex: ENV" value={form.code} onChange={(e) => input('code', e.target.value)} />
-              </div>
-              <div>
                 <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Nome *</label>
                 <Input placeholder="Ex: Envase" value={form.name} onChange={(e) => input('name', e.target.value)} />
               </div>
@@ -115,9 +110,13 @@ export function NewUnitPage() {
               </div>
             </div>
           </Card>
+          <RecordMeta
+            createdBy={isEdit ? units.find((u: Unit) => u.id === editId)?.createdBy : currentUser}
+            createdAt={isEdit ? units.find((u: Unit) => u.id === editId)?.createdAt : new Date().toISOString().slice(0, 10)}
+          />
           <div className="flex items-center justify-end gap-3 pb-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/unidades')}>Cancelar</Button>
-            <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.code || !form.name}>{isEdit ? 'Salvar' : 'Criar UO'}</Button>
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.name}>{isEdit ? 'Salvar' : 'Criar UO'}</Button>
           </div>
         </div>
       )}

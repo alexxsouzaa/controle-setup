@@ -29,7 +29,7 @@ export function LinesPage() {
   }, [units]);
 
   const filtered = lines.filter((l: Line) =>
-    (!search || l.name.toLowerCase().includes(search.toLowerCase()) || (l.code ?? '').toLowerCase().includes(search.toLowerCase())) &&
+    (!search || l.name.toLowerCase().includes(search.toLowerCase())) &&
     (!unitFilter || l.unitId === unitFilter)
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
@@ -51,7 +51,7 @@ export function LinesPage() {
       />
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <SearchInput className="flex-1 max-w-xs" placeholder="Buscar por nome ou código..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); }} aria-label="Buscar linhas" />
+        <SearchInput className="flex-1 max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); }} aria-label="Buscar linhas" />
         <select className="shad-select py-1.5 text-[12px] max-w-[200px]" value={unitFilter} onChange={(e) => { setUnitFilter(e.target.value); setPage(1); }} aria-label="Filtrar por UO">
           <option value="">Todas as UOs</option>
           {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -75,7 +75,6 @@ export function LinesPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="font-medium text-[var(--fg)]">{l.name}</div>
-                  {l.code && <div className="text-[11px] font-mono text-[var(--fg-muted)]">{l.code}</div>}
                 </div>
               </div>
             ) },

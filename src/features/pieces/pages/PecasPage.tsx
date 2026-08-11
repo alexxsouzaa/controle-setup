@@ -18,6 +18,8 @@ import { useDialogAccessibility } from '../../../components/shared/useDialogAcce
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
+import { DataTableSelectionBar } from '../../../components/shared/DataTableSelectionBar';
+import { MultiSelectDropdown } from '../../../components/shared/MultiSelectDropdown';
 
 const ALL_CATEGORIES = ['Copos', 'Ponteira do Empurrador', 'Ponteira do Centralizador', 'Estação de Limpeza', 'Bico de Envase', 'Suporte do Camisa do Bico de Ar Quente', 'Camisa do Bico de Ar Quente', 'Ponteira do Bico de Ar Quente', 'Faca', 'Mordente', 'Régua do Mordente', 'Batedor do Mordente', 'Berço'];
 
@@ -86,15 +88,11 @@ export function PecasPage() {
   const perPage = 10;
   const [form, setForm] = useState<PieceForm>({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10), scope: 'unit', unitId: '' });
   const [imageError, setImageError] = useState<string>('');
-  const [machineDropdownOpen, setMachineDropdownOpen] = useState<boolean>(false);
-  const [machineSearch, setMachineSearch] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const filteredMachines = machineSearch ? machines.filter((m: Machine) => m.name.toLowerCase().includes(machineSearch.toLowerCase())) : machines;
 
   const resetForm = () => {
     setForm({ name: '', specification: '', category: '', sealingType: '', diameterMin: '', diameterMax: '', compatibleMachineIds: [], image: '', createdBy: currentUser, createdAt: new Date().toISOString().slice(0, 10), scope: 'unit', unitId: '' });
-    setEditingId(null); setImageError(''); setMachineSearch('');
+    setEditingId(null); setImageError('');
   };
 
   const drawerRef = useDialogAccessibility(!!drawerItem, () => setDrawerItem(null));
@@ -216,11 +214,7 @@ export function PecasPage() {
           </div>
 
           {selectionMode && selectedCount > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
-              <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionada{selectedCount !== 1 ? 's' : ''}</span>
-              <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionadas</button>
-              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
-            </div>
+            <DataTableSelectionBar count={selectedCount} allSelected={allSelected} onCancel={clearSelection} actionLabel="Excluir selecionadas" onAction={handleBulkDelete} />
           )}
 
           {filtered.length === 0 ? (
@@ -369,7 +363,6 @@ export function PecasPage() {
                 <p className="text-[11px] text-[var(--fg-secondary)]">Máquinas onde esta peça pode ser utilizada.</p>
               </div>
             </div>
-            <div className="relative">
               {form.compatibleMachineIds.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {getMachNames(form.compatibleMachineIds).map((n: string) => (
@@ -383,31 +376,14 @@ export function PecasPage() {
                   ))}
                 </div>
               )}
-              <button type="button" onClick={() => setMachineDropdownOpen(!machineDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] border border-[var(--border)] bg-[var(--bg)] text-[12px] hover:border-[var(--fg-muted)] transition-colors">
-                <span className={form.compatibleMachineIds.length === 0 ? 'text-[var(--fg-muted)]' : ''}>Selecionar máquinas...</span>
-                <Icon name="arrow-right" size={12} className={`transition-transform ${machineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
-              </button>
-              {machineDropdownOpen && (
-                <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-[6px] shadow-md">
-                  <div className="p-2 border-b border-[var(--border)]">
-                    <input className="shad-input w-full py-1 text-[11px]" placeholder="Buscar máquina..." value={machineSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMachineSearch(e.target.value)} />
-                  </div>
-                  <div className="max-h-40 overflow-y-auto">
-                    {filteredMachines.map((m: Machine) => (
-                      <button key={m.id} type="button" onClick={() => { toggleMachine(m.id); }}
-                        className={`w-full text-left px-3 py-2 flex items-center gap-2 text-[12px] hover:bg-[var(--surface-hover)] transition-colors ${form.compatibleMachineIds.includes(m.id) ? 'bg-[var(--accent-muted)]' : ''}`}>
-                        <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center shrink-0 ${form.compatibleMachineIds.includes(m.id) ? 'bg-[var(--fg)] border-[var(--fg)]' : 'border-[var(--border)]'}`}>
-                          {form.compatibleMachineIds.includes(m.id) && <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
-                        </div>
-                        <span>{m.name}</span>
-                        <span className="text-[10px] text-[var(--fg-muted)] ml-auto">{m.line}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              <MultiSelectDropdown
+                options={machines.map((m: Machine) => ({ value: m.id, label: m.name, hint: m.line }))}
+                selected={form.compatibleMachineIds}
+                onToggle={toggleMachine}
+                placeholder="Selecionar máquinas..."
+                searchPlaceholder="Buscar máquina..."
+                ariaLabel="Selecionar máquinas"
+              />
           </Card>
           <Card>
             <div className="flex items-center gap-2 mb-4">

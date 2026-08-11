@@ -45,13 +45,22 @@ export function DataTable<T>({
   getRowAriaLabel,
   className,
 }: DataTableProps<T>) {
+  const headerCheckboxRef = React.useRef<HTMLInputElement>(null);
+  const partialSelection = selectionMode && selected.size > 0 && !allSelected;
+
+  React.useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = partialSelection;
+    }
+  }, [partialSelection]);
+
   return (
     <div className={`bg-[var(--surface)] border border-[var(--border)] rounded-[8px] overflow-hidden overflow-x-auto ${className || ''}`}>
       <table className="w-full text-[13px] border-collapse">
         <thead className="bg-[var(--bg-secondary)]">
           <tr className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--fg-muted)]">
             <th className={`w-8 px-3.5 py-2.5 border-b border-[var(--border)] ${selectionMode ? '' : 'hidden'}`}>
-              <input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" />
+              <input ref={headerCheckboxRef} type="checkbox" checked={allSelected} onChange={onToggleSelectAll} aria-label="Selecionar todos" className="accent-[var(--fg)] cursor-pointer" />
             </th>
             {columns.map(col => (
               <th key={col.key} className={`text-left py-2.5 border-b border-[var(--border)] ${col.first ? 'px-4' : 'px-3.5'} ${col.headerClassName || ''}`}>

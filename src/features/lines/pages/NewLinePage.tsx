@@ -6,13 +6,14 @@ import { Button } from '../../../components/Button';
 import { Icon } from '../../../components/Icon';
 import { Input } from '../../../components/Input';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { RecordMeta } from '../../../components/shared/RecordMeta';
 import { useLines, useUnits, useMachines, useAddLine, useUpdateLine, useLogAction } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
 import { useUoStore } from '../../../stores/uoStore';
 import { lineSchema, type LineFormData } from '../schemas/line.schema';
 import { Line } from '../../../types';
 
-const EMPTY: LineFormData = { name: '', code: '', unitId: '', machineIds: [], status: 'active', notes: '' };
+const EMPTY: LineFormData = { name: '', unitId: '', machineIds: [], status: 'active', notes: '' };
 
 export function NewLinePage() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export function NewLinePage() {
   useEffect(() => {
     if (isEdit) {
       const l = lines.find((ln: Line) => ln.id === editId);
-      if (l) setForm({ name: l.name, code: l.code ?? '', unitId: l.unitId, machineIds: l.machineIds ?? [], status: l.status, notes: l.notes ?? '' });
+      if (l) setForm({ name: l.name, unitId: l.unitId, machineIds: l.machineIds ?? [], status: l.status, notes: l.notes ?? '' });
     } else if (!form.unitId && activeUnitId) {
       setForm(prev => ({ ...prev, unitId: activeUnitId }));
     }
@@ -63,7 +64,7 @@ export function NewLinePage() {
     const exists = lines.some((l: Line) => l.name.toLowerCase() === form.name.trim().toLowerCase() && l.unitId === form.unitId && l.id !== editId);
     if (exists) { toast('Já existe uma linha com este nome nesta UO.', 'warning'); return; }
     const createdAt = new Date().toISOString().slice(0, 10);
-    const payload = { ...form, code: form.code || undefined, notes: form.notes || undefined };
+    const payload = { ...form, notes: form.notes || undefined };
     if (isEdit && editId) {
       updateLine({ id: editId, updates: payload });
       logAction({ type: 'update', entity: 'Linha', detail: `${form.name} atualizada` });
@@ -77,7 +78,7 @@ export function NewLinePage() {
   };
 
   const handleBack = () => {
-    if (form.name || form.code || form.notes) setConfirmDiscard(true);
+    if (form.name || form.notes) setConfirmDiscard(true);
     else navigate('/linhas');
   };
 
@@ -115,10 +116,6 @@ export function NewLinePage() {
                 <Input placeholder="Ex: Linha 01" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div>
-                <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Código</label>
-                <Input placeholder="Opcional" value={form.code ?? ''} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-              </div>
-              <div>
                 <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">UO *</label>
                 <select className="shad-select w-full py-2 text-[12px]" value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })}>
                   <option value="">Selecione</option>
@@ -154,6 +151,10 @@ export function NewLinePage() {
               </div>
             </div>
           </Card>
+          <RecordMeta
+            createdBy={isEdit ? lines.find((l: Line) => l.id === editId)?.createdBy : currentUser}
+            createdAt={isEdit ? lines.find((l: Line) => l.id === editId)?.createdAt : new Date().toISOString().slice(0, 10)}
+          />
           <div className="flex items-center justify-end gap-3 pb-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/linhas')}>Cancelar</Button>
             <Button variant="primary" size="sm" onClick={handleSave} disabled={!form.name || !form.unitId}>{isEdit ? 'Salvar' : 'Criar Linha'}</Button>

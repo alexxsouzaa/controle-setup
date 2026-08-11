@@ -98,6 +98,7 @@ export function NovoSetupPage() {
 
   const [productSearch, setProductSearch] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productMode, setProductMode] = useState<'none' | 'existing' | 'new'>('none');
   const [newProduct, setNewProduct] = useState<NewProductForm>({ code: '', name: '', vol: '', unit: 'ml', category: '' });
   const [codeExists, setCodeExists] = useState<boolean>(false);
 
@@ -122,9 +123,10 @@ export function NovoSetupPage() {
       if (m) { setSelectedMachineId(m.id); setSelectedLine(flow.line || m.line || ''); }
       else { setSelectedLine(flow.line || ''); }
       const prod = products.find((p: Product) => p.id === flow.productId || p.code === flow.code);
-      if (prod) { setSelectedProduct(prod); }
+      if (prod) { setSelectedProduct(prod); setProductMode('existing'); }
       else if (flow.code && flow.product) {
         setNewProduct({ code: flow.code, name: flow.product, vol: String(parseInt(flow.vol) || ''), unit: (flow.vol || '').includes('g') ? 'g' : 'ml', category: '' });
+        setProductMode('new');
       }
       if (flow.sealingType) setSealingType(flow.sealingType);
       if (flow.tubeDiameter) setTubeDiameter(flow.tubeDiameter);
@@ -171,6 +173,7 @@ export function NovoSetupPage() {
         const existing = products.find((p: Product) => p.code.toLowerCase() === newProduct.code.toLowerCase());
         if (existing) {
           setSelectedProduct(existing);
+          setProductMode('existing');
           setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' });
         }
       }
@@ -182,6 +185,7 @@ export function NovoSetupPage() {
       const existing = products.find((p: Product) => p.code.toLowerCase() === newProduct.code.toLowerCase());
       if (existing) {
         setSelectedProduct(existing);
+        setProductMode('existing');
         setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' });
         setCodeExists(false);
       }
@@ -336,7 +340,7 @@ export function NovoSetupPage() {
 
   const resetAll = () => {
     setSelectedMachineId(''); setSelectedLine(''); setSelectedProduct(null);
-    setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' });
+    setProductMode('none'); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' });
     setCodeExists(false); setProductSearch('');
     setSealingType(''); setTubeDiameter('');
     setPartsWithAlternatives([]);
@@ -438,59 +442,69 @@ export function NovoSetupPage() {
           <h3 className="text-lg font-semibold mb-1">Selecionar ou cadastrar produto</h3>
           <p className="text-sm text-[var(--fg-secondary)] mb-4">{selectedMachine ? `Máquina ${selectedMachine.name} — Linha ${selectedLine}` : 'Escolha o produto para este setup.'}</p>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <button type="button" onClick={() => { setSelectedProduct(null); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setCodeExists(false); }}
-              className={`p-4 rounded-[6px] border-2 text-left transition-all ${!selectedProduct && !newProduct.name ? 'border-[var(--fg)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--fg-muted)]'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <Icon name="grid-3x3" size={18} />
-                <span className="text-sm font-semibold">Produto pré-cadastrado</span>
-              </div>
-              <p className="text-xs text-[var(--fg-secondary)]">Selecione um produto existente no sistema</p>
-            </button>
-            <button type="button" onClick={() => { setSelectedProduct(null); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setCodeExists(false); setProductSearch(''); }}
-              className={`p-4 rounded-[6px] border-2 text-left transition-all ${newProduct.name || newProduct.code ? 'border-[var(--fg)] bg-[var(--accent-muted)]' : 'border-[var(--border)] hover:border-[var(--fg-muted)]'}`}>
-              <div className="flex items-center gap-2 mb-1">
-                <Icon name="plus" size={18} />
-                <span className="text-sm font-semibold">Novo produto</span>
-              </div>
-              <p className="text-xs text-[var(--fg-secondary)]">Cadastre um novo produto</p>
-            </button>
-          </div>
-
-          <div className="mb-4">
-            <SearchInput placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setProductSearch(e.target.value.toLowerCase()); setSelectedProduct(null); }} aria-label="Buscar produtos" />
-            {productSearch && productFiltered.length > 0 && (
-              <div className="border border-[var(--border)] rounded-[6px] mt-2 overflow-hidden max-h-60 overflow-y-auto">
-                {productFiltered.map((p: Product) => (
-                  <button key={p.id} type="button" onClick={() => { setSelectedProduct(p); setNewProduct({ code: '', name: '', vol: '', unit: 'ml', category: '' }); setProductSearch(''); setCodeExists(false); }}
-                    className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${selectedProduct?.id === p.id ? 'bg-[var(--accent-muted)] text-[var(--accent-fg)]' : 'hover:bg-[var(--bg)]'}`}>
-                    <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{p.name}</div>
-                      <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.vol} {p.unit}</div>
-                    </div>
-                    {selectedProduct?.id === p.id && <Icon name="check-circle" size={16} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {selectedProduct && (
-            <div className="mb-4 p-4 bg-[var(--accent-muted)] border border-[var(--fg)] rounded-[6px]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-[var(--accent-fg)]">{selectedProduct.name}</div>
-                  <div className="text-xs text-[var(--fg-secondary)] mt-0.5">Código: {selectedProduct.code} · {selectedProduct.category || '—'} · {selectedProduct.vol} {selectedProduct.unit}</div>
+          {productMode === 'none' && (
+            <div className="grid md:grid-cols-2 gap-4 mb-6">
+              <button type="button" onClick={() => setProductMode('existing')}
+                className="p-4 rounded-[6px] border-2 text-left transition-all border-[var(--border)] hover:border-[var(--fg-muted)]">
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon name="grid-3x3" size={18} />
+                  <span className="text-sm font-semibold">Produto pré-cadastrado</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(null); setProductSearch(''); }}>Remover</Button>
-              </div>
+                <p className="text-xs text-[var(--fg-secondary)]">Selecione um produto existente no sistema</p>
+              </button>
+              <button type="button" onClick={() => setProductMode('new')}
+                className="p-4 rounded-[6px] border-2 text-left transition-all border-[var(--border)] hover:border-[var(--fg-muted)]">
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon name="plus" size={18} />
+                  <span className="text-sm font-semibold">Novo produto</span>
+                </div>
+                <p className="text-xs text-[var(--fg-secondary)]">Cadastre um novo produto</p>
+              </button>
             </div>
           )}
 
-          {!selectedProduct && (
-            <div className="border-t border-[var(--border)] pt-4 space-y-3">
-              <div className="flex items-center gap-2"><span className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Novo produto</span></div>
+          {productMode === 'existing' && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Produto pré-cadastrado</span>
+                <button type="button" onClick={() => setProductMode('none')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Trocar opção</button>
+              </div>
+              <SearchInput placeholder="Buscar produto por nome ou código..." value={productSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setProductSearch(e.target.value.toLowerCase()); setSelectedProduct(null); }} aria-label="Buscar produtos" />
+              {productSearch && productFiltered.length > 0 && (
+                <div className="border border-[var(--border)] rounded-[6px] mt-2 overflow-hidden max-h-60 overflow-y-auto">
+                  {productFiltered.map((p: Product) => (
+                    <button key={p.id} type="button" onClick={() => { setSelectedProduct(p); setProductSearch(''); }}
+                      className={`w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors ${selectedProduct?.id === p.id ? 'bg-[var(--accent-muted)] text-[var(--accent-fg)]' : 'hover:bg-[var(--bg)]'}`}>
+                      <div className="w-8 h-8 rounded-[6px] bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--fg-secondary)] shrink-0"><Icon name="grid-3x3" size={16} /></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{p.name}</div>
+                        <div className="text-xs text-[var(--fg-secondary)]">{p.code} · {p.vol} {p.unit}</div>
+                      </div>
+                      {selectedProduct?.id === p.id && <Icon name="check-circle" size={16} />}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedProduct && (
+                <div className="mt-4 p-4 bg-[var(--accent-muted)] border border-[var(--fg)] rounded-[6px]">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-[var(--accent-fg)]">{selectedProduct.name}</div>
+                      <div className="text-xs text-[var(--fg-secondary)] mt-0.5">Código: {selectedProduct.code} · {selectedProduct.category || '—'} · {selectedProduct.vol} {selectedProduct.unit}</div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(null); setProductSearch(''); }}>Remover</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {productMode === 'new' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-[var(--fg-secondary)] uppercase tracking-wider">Novo produto</span>
+                <button type="button" onClick={() => setProductMode('none')} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Trocar opção</button>
+              </div>
               <div className="grid md:grid-cols-2 grid-cols-1 gap-3">
                 <div><label className="text-xs font-medium text-[var(--fg)] mb-1 block">Nome do produto *</label>
                   <Input placeholder="Ex: Shampoo Nutritivo" value={newProduct.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewProduct({ ...newProduct, name: e.target.value })} /></div>
@@ -526,7 +540,7 @@ export function NovoSetupPage() {
           <div className="flex justify-between mt-6">
             <Button variant="ghost" onClick={() => goToStep(1)}>← Contexto</Button>
             <Button variant="primary" onClick={handleProductNext}
-              disabled={!selectedProduct && (!newProduct.name || !newProduct.code || !newProduct.vol)}>
+              disabled={productMode === 'none' || (productMode === 'existing' && !selectedProduct) || (productMode === 'new' && (!newProduct.name || !newProduct.code || !newProduct.vol))}>
               Avançar →
             </Button>
           </div>

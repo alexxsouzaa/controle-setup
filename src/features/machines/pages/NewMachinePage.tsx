@@ -9,6 +9,7 @@ import { Select } from '../../../components/Select';
 import { getToolingOptions } from '../../compatibility';
 import { processImageFile } from '../../../lib/image';
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
+import { MultiSelectDropdown } from '../../../components/shared/MultiSelectDropdown';
 import { useMachines, useAddMachine, useUpdateMachine, useLogAction, useConfig, useUnits } from '../../../queries';
 import { useAppStore } from '../../../stores/appStore';
 import { Machine, Config, ResourceScope } from '../../../types';
@@ -38,11 +39,6 @@ export function NewMachinePage() {
 
   const [form, setForm] = useState<MachineForm>({ name: '', lines: [], uo: '', unitId: '', scope: 'unit', image: '', createdBy: currentUser, toolingCategories: [] });
   const [imageError, setImageError] = useState<string>('');
-  const [lineDropdownOpen, setLineDropdownOpen] = useState<boolean>(false);
-  const [lineSearch, setLineSearch] = useState<string>('');
-  const [lineInput, setLineInput] = useState<string>('');
-  const [toolingDropdownOpen, setToolingDropdownOpen] = useState<boolean>(false);
-  const [toolingSearch, setToolingSearch] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState<boolean>(false);
   const [confirmDiscard, setConfirmDiscard] = useState<boolean>(false);
@@ -81,18 +77,14 @@ export function NewMachinePage() {
     return [...uos].sort();
   }, [machines, config, units]);
 
-  const filteredLines = lineSearch ? allLines.filter((l: string) => l.toLowerCase().includes(lineSearch.toLowerCase())) : allLines;
   const toolingOptions = getToolingOptions(form.uo, config);
-  const filteredTooling = toolingSearch ? toolingOptions.filter((c: string) => c.toLowerCase().includes(toolingSearch.toLowerCase())) : toolingOptions;
 
   const toggleLine = (line: string) => setForm(prev => ({ ...prev, lines: prev.lines.includes(line) ? prev.lines.filter((l: string) => l !== line) : [...prev.lines, line] }));
   const toggleTooling = (cat: string) => setForm(prev => ({ ...prev, toolingCategories: prev.toolingCategories.includes(cat) ? prev.toolingCategories.filter((c: string) => c !== cat) : [...prev.toolingCategories, cat] }));
 
-  const addNewLine = () => {
-    const val = lineInput.trim();
+  const addNewLine = (val: string) => {
     if (!val) return;
     if (!form.lines.includes(val)) setForm(prev => ({ ...prev, lines: [...prev.lines, val] }));
-    setLineInput('');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,85 +204,47 @@ export function NewMachinePage() {
           <div className="space-y-4">
             <div>
               <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Linhas *</label>
-              <div className="relative">
-                {form.lines.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {form.lines.map((l: string) => (
-                      <span key={l} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px]">
-                        {l}
-                        <button type="button" onClick={() => setForm(prev => ({ ...prev, lines: prev.lines.filter((ln: string) => ln !== l) }))} className="text-[var(--fg-muted)] hover:text-[var(--danger)] leading-none">&times;</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <button type="button" onClick={() => setLineDropdownOpen(!lineDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] border border-[var(--border)] bg-[var(--bg)] text-[12px] hover:border-[var(--fg-muted)] transition-colors">
-                  <span className={form.lines.length === 0 ? 'text-[var(--fg-muted)]' : ''}>Selecionar linhas...</span>
-                  <Icon name="arrow-right" size={12} className={`transition-transform ${lineDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
-                {lineDropdownOpen && (
-                  <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-[6px] shadow-md">
-                    <div className="p-2 border-b border-[var(--border)]">
-                      <div className="flex gap-1">
-                        <input className="shad-input flex-1 py-1 text-[11px]" placeholder="Buscar ou criar linha..." value={lineSearch || lineInput} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setLineSearch(e.target.value); setLineInput(e.target.value); }} />
-                        {lineInput.trim() && !allLines.includes(lineInput.trim()) && (
-                          <button type="button" onClick={() => { addNewLine(); setLineSearch(''); }} className="px-2 py-1 rounded text-[10px] bg-[var(--fg)] text-[var(--bg)] shrink-0">Criar</button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="max-h-40 overflow-y-auto">
-                      {filteredLines.map((l: string) => (
-                        <button key={l} type="button" onClick={() => { toggleLine(l); setLineSearch(''); setLineInput(''); }}
-                          className={`w-full text-left px-3 py-2 flex items-center gap-2 text-[12px] hover:bg-[var(--surface-hover)] transition-colors ${form.lines.includes(l) ? 'bg-[var(--accent-muted)]' : ''}`}>
-                          <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center shrink-0 ${form.lines.includes(l) ? 'bg-[var(--fg)] border-[var(--fg)]' : 'border-[var(--border)]'}`}>
-                            {form.lines.includes(l) && <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
-                          </div>
-                          <span>{l}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              {form.lines.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {form.lines.map((l: string) => (
+                    <span key={l} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px]">
+                      {l}
+                      <button type="button" onClick={() => setForm(prev => ({ ...prev, lines: prev.lines.filter((ln: string) => ln !== l) }))} className="text-[var(--fg-muted)] hover:text-[var(--danger)] leading-none">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <MultiSelectDropdown
+                options={allLines.map((l: string) => ({ value: l, label: l }))}
+                selected={form.lines}
+                onToggle={toggleLine}
+                placeholder="Selecionar linhas..."
+                searchPlaceholder="Buscar ou criar linha..."
+                onCreate={addNewLine}
+                ariaLabel="Selecionar linhas"
+              />
             </div>
             <div>
               <label className="text-[12px] font-medium text-[var(--fg)] mb-1 block">Ferramentais</label>
               <p className="text-[10px] text-[var(--fg-muted)] mb-1">Categorias de peças usadas por esta máquina.</p>
-              <div className="relative">
-                {form.toolingCategories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {form.toolingCategories.map((c: string) => (
-                      <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px]">
-                        {c}
-                        <button type="button" onClick={() => toggleTooling(c)} className="text-[var(--fg-muted)] hover:text-[var(--danger)] leading-none">&times;</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <button type="button" onClick={() => setToolingDropdownOpen(!toolingDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-[6px] border border-[var(--border)] bg-[var(--bg)] text-[12px] hover:border-[var(--fg-muted)] transition-colors">
-                  <span className={form.toolingCategories.length === 0 ? 'text-[var(--fg-muted)]' : ''}>Selecionar ferramentais...</span>
-                  <Icon name="arrow-right" size={12} className={`transition-transform ${toolingDropdownOpen ? '-rotate-90' : 'rotate-90'}`} />
-                </button>
-                {toolingDropdownOpen && (
-                  <div className="absolute z-20 mt-1 w-full bg-[var(--surface)] border border-[var(--border)] rounded-[6px] shadow-md">
-                    <div className="p-2 border-b border-[var(--border)]">
-                      <input className="shad-input w-full py-1 text-[11px]" placeholder="Buscar ferramental..." value={toolingSearch} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setToolingSearch(e.target.value)} />
-                    </div>
-                    <div className="max-h-40 overflow-y-auto">
-                      {filteredTooling.map((c: string) => (
-                        <button key={c} type="button" onClick={() => { toggleTooling(c); }}
-                          className={`w-full text-left px-3 py-2 flex items-center gap-2 text-[12px] hover:bg-[var(--surface-hover)] transition-colors ${form.toolingCategories.includes(c) ? 'bg-[var(--accent-muted)]' : ''}`}>
-                          <div className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center shrink-0 ${form.toolingCategories.includes(c) ? 'bg-[var(--fg)] border-[var(--fg)]' : 'border-[var(--border)]'}`}>
-                            {form.toolingCategories.includes(c) && <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
-                          </div>
-                          <span>{c}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              {form.toolingCategories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {form.toolingCategories.map((c: string) => (
+                    <span key={c} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] border border-[var(--border)] bg-[var(--surface)] text-[11px]">
+                      {c}
+                      <button type="button" onClick={() => toggleTooling(c)} className="text-[var(--fg-muted)] hover:text-[var(--danger)] leading-none">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <MultiSelectDropdown
+                options={toolingOptions.map((c: string) => ({ value: c, label: c }))}
+                selected={form.toolingCategories}
+                onToggle={toggleTooling}
+                placeholder="Selecionar ferramentais..."
+                searchPlaceholder="Buscar ferramental..."
+                ariaLabel="Selecionar ferramentais"
+              />
             </div>
           </div>
         </Card>

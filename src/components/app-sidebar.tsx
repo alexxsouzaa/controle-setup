@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { SetFlowLogo } from "@/components/SetFlowLogo"
+import { SetFlowMark } from "@/components/SetFlowMark"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, WrenchIcon, FileIcon, UploadIcon, DownloadIcon, ClockIcon, Settings2Icon, BoxIcon, Grid3X3Icon, PuzzleIcon, ShapesIcon, Building2Icon, GitForkIcon } from "lucide-react"
 import { APP_VERSION } from "@/version"
@@ -59,7 +60,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <span className="text-xs font-medium text-[var(--muted-foreground)]">v{APP_VERSION}</span>
         </div>
         <div className="hidden group-data-[collapsible=icon]:flex h-9 items-center justify-center">
-          <span className="flex aspect-square size-6 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground text-[11px] font-bold">SF</span>
+          <span className="flex aspect-square size-6 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+            <SetFlowMark className="h-3.5 w-auto" />
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>

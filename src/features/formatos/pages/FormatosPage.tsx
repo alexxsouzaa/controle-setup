@@ -17,6 +17,7 @@ import { useDialogAccessibility } from '../../../components/shared/useDialogAcce
 import { ConfirmDialog } from '../../../components/shared/ConfirmDialog';
 import { PageHeader } from '../../../components/shared/PageHeader';
 import { DataTable } from '../../../components/shared/DataTable';
+import { DataTableSelectionBar } from '../../../components/shared/DataTableSelectionBar';
 import { Formato, Piece, Machine, Config } from '../../../types';
 
 const STEPS = ['Configuração', 'Máquina', 'Peças', 'Revisão', 'Concluído'];
@@ -301,11 +302,7 @@ export function FormatosPage() {
           </div>
 
           {selectionMode && selectedCount > 0 && (
-            <div className="flex items-center gap-3 mb-4 px-4 py-2 rounded-[6px] border border-[var(--fg-muted)] bg-[var(--accent-muted)]">
-              <span className="text-[12px] font-medium text-[var(--fg)]">{selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}</span>
-              <button type="button" onClick={handleBulkDelete} className="ml-auto text-[11px] font-medium text-[var(--danger)] hover:underline">Excluir selecionados</button>
-              <button type="button" onClick={clearSelection} className="text-[11px] text-[var(--fg-muted)] hover:text-[var(--fg)]">Cancelar</button>
-            </div>
+            <DataTableSelectionBar count={selectedCount} allSelected={allSelected} onCancel={clearSelection} actionLabel="Excluir selecionados" onAction={handleBulkDelete} />
           )}
 
           {filtered.length === 0 ? (

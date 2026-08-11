@@ -23,7 +23,7 @@ export function UnitsPage() {
   const perPage = 10;
 
   const filtered = units.filter((u: Unit) =>
-    (!search || u.name.toLowerCase().includes(search.toLowerCase()) || u.code.toLowerCase().includes(search.toLowerCase())) &&
+    (!search || u.name.toLowerCase().includes(search.toLowerCase())) &&
     (!statusFilter || u.status === statusFilter)
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
@@ -33,7 +33,7 @@ export function UnitsPage() {
 
   const handleDelete = (u: Unit) => {
     deleteUnit(u.id);
-    logAction({ type: 'delete', entity: 'UO', detail: `${u.name} (${u.code}) excluída` });
+    logAction({ type: 'delete', entity: 'UO', detail: `${u.name} excluída` });
     toast('UO excluída com sucesso!');
     setConfirmDelete(null);
   };
@@ -63,7 +63,7 @@ export function UnitsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <SearchInput className="flex-1 max-w-xs" placeholder="Buscar por nome ou código..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); }} aria-label="Buscar UOs" />
+        <SearchInput className="flex-1 max-w-xs" placeholder="Buscar por nome..." value={search} onChange={(e) => { setSearch(e.target.value.toLowerCase()); setPage(1); }} aria-label="Buscar UOs" />
         <select className="shad-select py-1.5 text-[12px] max-w-[160px]" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} aria-label="Filtrar por status">
           <option value="">Todos os status</option>
           <option value="active">Ativas</option>
@@ -91,7 +91,6 @@ export function UnitsPage() {
                 </div>
               </div>
             ) },
-            { key: 'code', header: 'Código', render: (u: Unit) => <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-mono bg-[var(--accent-muted)] text-[var(--fg-secondary)]">{u.code}</span> },
             { key: 'status', header: 'Status', render: (u: Unit) => u.status === 'active'
               ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--success-muted)] text-[var(--success)]">Ativa</span>
               : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-[var(--danger-muted)] text-[var(--danger)]">Inativa</span> },

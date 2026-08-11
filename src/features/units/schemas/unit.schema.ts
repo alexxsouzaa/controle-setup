@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 export const unitSchema = z.object({
-  code: z.string().trim().min(1, 'Código é obrigatório.'),
   name: z.string().trim().min(1, 'Nome é obrigatório.'),
   status: z.enum(['active', 'inactive']).default('active'),
   description: z.string().trim().optional(),

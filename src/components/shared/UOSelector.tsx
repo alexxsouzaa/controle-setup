@@ -42,7 +42,6 @@ export function UOSelector() {
               onClick={() => setActiveUnit(u)}
               className={u.id === activeUnitId ? 'bg-[var(--accent-muted)]' : ''}
             >
-              <span className="font-mono text-[11px] text-[var(--fg-muted)] mr-1.5">{u.code}</span>
               {u.name}
             </DropdownMenuItem>
           ))}

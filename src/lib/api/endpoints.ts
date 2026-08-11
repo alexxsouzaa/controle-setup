@@ -16,7 +16,7 @@ export const unitsApi = {
     return fsGet<Unit>('units', id);
   },
 
-  async create(input: Partial<Unit> & { code: string; name: string }): Promise<Unit> {
+  async create(input: Partial<Unit> & { name: string }): Promise<Unit> {
     const unit: Unit = {
       ...input,
       status: input.status ?? 'active',

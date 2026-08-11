@@ -14,7 +14,7 @@ export function useUnits() {
 export function useAddUnit() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (u: Partial<Unit> & { code: string; name: string }) => unitsApi.create(u),
+    mutationFn: (u: Partial<Unit> & { name: string }) => unitsApi.create(u),
     onSuccess: () => qc.invalidateQueries({ queryKey: [UNITS_KEY] }),
   });
 }
