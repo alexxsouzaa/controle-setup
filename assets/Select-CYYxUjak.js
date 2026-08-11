@@ -1,1 +1,0 @@
-import{y as e}from"./client-DGuqiG8f.js";var t=e();function n({children:e,className:n=``,...r}){return(0,t.jsx)(`select`,{className:`shad-select ${n}`,...r,children:e})}export{n as t};

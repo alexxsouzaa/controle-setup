@@ -1,0 +1,1 @@
+import{w as e}from"./client-B6fQEmHO.js";var t=e(),n={success:`badge-success`,warning:`badge-warning`,danger:`badge-danger`,info:`badge-info`,secondary:`badge-secondary`};function r({variant:e=`secondary`,children:r}){return(0,t.jsx)(`span`,{className:`shad-badge ${n[e]||n.secondary}`,children:r})}export{r as t};

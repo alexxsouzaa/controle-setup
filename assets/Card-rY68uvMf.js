@@ -1,0 +1,1 @@
+import{w as e}from"./client-B6fQEmHO.js";var t=e();function n({children:e,className:n=``}){return(0,t.jsx)(`div`,{className:`shad-card ${n}`,children:e})}export{n as t};

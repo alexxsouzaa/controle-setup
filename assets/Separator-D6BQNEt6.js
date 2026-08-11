@@ -1,0 +1,1 @@
+import{D as e,T as t}from"./client-B6fQEmHO.js";import{s as n}from"./button-Dlw5yX3G.js";var r=e(t(),1).forwardRef(function(e,t){let{className:r,render:i,orientation:a=`horizontal`,style:o,...s}=e;return n(`div`,e,{state:{orientation:a},ref:t,props:[{role:`separator`,"aria-orientation":a},s]})});export{r as t};
