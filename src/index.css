@@ -153,8 +153,8 @@ body {
   .shad-btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .shad-btn:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 1px; }
   .shad-btn svg { width: 15px; height: 15px; }
-  .shad-btn-primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent-fg); }
-  .shad-btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .shad-btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+  .shad-btn-primary:hover:not(:disabled) { background: color-mix(in oklch, var(--primary), transparent 20%); border-color: color-mix(in oklch, var(--primary), transparent 20%); }
   .shad-btn-secondary { background: var(--surface); color: var(--fg); border-color: var(--border); }
   .shad-btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); }
   .shad-btn-ghost { background: transparent; color: var(--fg-secondary); border-color: transparent; }
